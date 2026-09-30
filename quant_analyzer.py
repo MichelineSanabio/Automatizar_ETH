@@ -396,13 +396,33 @@ class QuantTradingEngine:
 
                 status = f"DISTÂNCIA: -{diff_pct:.2f}%"
 
+            prob_bar = self._render_unicode_progress(prob, 100.0, 10)
+            if prob >= 70:
+                prob_color = "green"
+            elif prob >= 40:
+                prob_color = "yellow"
+            else:
+                prob_color = "red"
+
+            if o["label"] == "Ordem A":
+                size_str = f"R$ 2.100,00 ({o['amount_eth']:.4f} ETH)"
+            else:
+                size_str = f"{o['amount_eth']:.4f} ETH (${o['total_usdt']:,.2f})"
+
             evaluated.append({
                 "label": o["label"],
+                "name": o["label"],
                 "price": o["price"],
+                "price_usdt": o["price"],
                 "amount_eth": o["amount_eth"],
                 "total_usdt": o["total_usdt"],
+                "size_str": size_str,
                 "notes": o["notes"],
+                "confluence": o["notes"],
                 "probability": round(prob, 1),
+                "prob_pct": round(prob, 1),
+                "prob_bar": f"[{prob_bar}]",
+                "prob_color": prob_color,
                 "diff_pct": round(diff_pct, 2),
                 "status": status,
                 "progress_bar": self._render_ascii_bar(prob, 100.0, 10)

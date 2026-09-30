@@ -177,37 +177,46 @@ document.addEventListener("DOMContentLoaded", () => {
     // 5. Bloco 1B: Medidor de Probabilidade das 4 Ordens Limite
     if (ordersProbContainer) {
       ordersProbContainer.innerHTML = orders.map(o => {
-        const prob = o.prob_pct || 50;
+        const name = o.name || o.label || "Ordem";
+        const price = o.price_usdt || o.price || 0;
+        const sizeStr = o.size_str || (o.amount_eth ? `${o.amount_eth} ETH ($${(o.total_usdt || 0).toFixed(2)})` : "");
+        const prob = typeof o.prob_pct === "number" ? o.prob_pct : (typeof o.probability === "number" ? o.probability : 50);
+        const confluence = o.confluence || o.notes || "Suporte técnico institucional";
+        const probBar = o.prob_bar || (o.progress_bar ? `[${o.progress_bar}]` : "[████░░░░░░]");
+        
         let probClass = "prob-mid";
         let fillGrad = "linear-gradient(90deg, #f59e0b, #fbbf24)";
+        let barColor = o.prob_color || "#fbbf24";
         if (prob >= 70) {
           probClass = "prob-high";
           fillGrad = "linear-gradient(90deg, #059669, #10b981)";
+          barColor = "#10b981";
         } else if (prob < 40) {
           probClass = "prob-low";
           fillGrad = "linear-gradient(90deg, #dc2626, #ef4444)";
+          barColor = "#ef4444";
         }
 
         return `
           <div class="order-prob-card">
             <div class="order-prob-top">
               <div class="order-title-group">
-                <span class="order-id">${o.name}</span>
-                <span class="order-price">${fmtUsd(o.price_usdt)}</span>
-                <span class="order-size">(${o.size_str})</span>
+                <span class="order-id">${name}</span>
+                <span class="order-price">${fmtUsd(price)}</span>
+                <span class="order-size">(${sizeStr})</span>
               </div>
               <div class="order-prob-badge ${probClass}">
                 ${prob.toFixed(1)}% PROB
               </div>
             </div>
             <div class="order-bar-row">
-              <span class="order-ascii-bar" style="color: ${o.prob_color || '#fbbf24'};">${o.prob_bar}</span>
+              <span class="order-ascii-bar" style="color: ${barColor};">${probBar}</span>
               <div class="order-prog-track">
                 <div class="order-prog-fill" style="width: ${prob}%; background: ${fillGrad};"></div>
               </div>
             </div>
             <div class="order-confluence">
-              <strong>Confluência:</strong> ${o.confluence}
+              <strong>Confluência:</strong> ${confluence}
             </div>
           </div>
         `;
@@ -370,10 +379,15 @@ document.addEventListener("DOMContentLoaded", () => {
     lines.push("├─────────────────────────────────────────────────┴──────────────────────────────────────┤");
     lines.push("│ MEDIDOR DE PROBABILIDADE DAS ORDENS LIMITE:                                           │");
     orders.forEach(o => {
-      const pStr = `${o.name} ($${o.price_usdt.toFixed(2)}) ${o.size_str}`.padEnd(32);
-      const bStr = `${o.prob_bar} ${o.prob_pct.toFixed(1)}%`.padEnd(25);
-      const cStr = o.confluence.substring(0, 27);
-      lines.push(`│ • ${pStr} ${bStr} ${cStr} │`);
+      const name = o.name || o.label || "Ordem";
+      const price = o.price_usdt || o.price || 0;
+      const sizeStr = o.size_str || (o.amount_eth ? `${o.amount_eth} ETH` : "");
+      const prob = typeof o.prob_pct === "number" ? o.prob_pct : (typeof o.probability === "number" ? o.probability : 50);
+      const probBar = o.prob_bar || (o.progress_bar ? `[${o.progress_bar}]` : "[████░░░░░░]");
+      const confluence = (o.confluence || o.notes || "Suporte").substring(0, 27);
+      const pStr = `${name} ($${price.toFixed(2)}) ${sizeStr}`.padEnd(32);
+      const bStr = `${probBar} ${prob.toFixed(1)}%`.padEnd(25);
+      lines.push(`│ • ${pStr} ${bStr} ${confluence} │`);
     });
     lines.push("└────────────────────────────────────────────────────────────────────────────────────────┘");
 
