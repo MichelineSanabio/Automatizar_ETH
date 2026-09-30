@@ -79,7 +79,12 @@ Além de servir a interface gráfica, o backend Flask disponibiliza rotas REST p
 | :--- | :---: | :--- |
 | `/` | `GET` | Renderiza a página principal do terminal (`index.html`). |
 | `/tui` ou `/tui.html` | `GET` | Renderiza a interface do Terminal Quant Institucional (`tui.html`). |
-| `/api/quant/state` | `GET` | Retorna o estado completo quantitativo (descida, ordens, altseason e Fibo). |
+| `/api/quant/state` | `GET` | Retorna o estado quantitativo consolidado (ordens, descida, altseason, Fibo). |
+| `/api/quant/orders` | `GET` | Lista as 4 ordens limites estratégicas canônicas (A, B, C, D) com probabilidade e distâncias. |
+| `/api/quant/onchain` | `GET` | Métricas do Radar On-Chain (Net Issuance EIP-1559, Blobs EIP-4844, Staking Ratio, TVL DefiLlama). |
+| `/api/quant/valuation` | `GET` | Matriz de Valuation Macro (MVRV Z-Score, múltiplos TVL, ETH/BTC, Fibo de ciclo e cenários). |
+| `/api/quant/macro-summary` | `GET` | Resumo 360° em tempo real para alimentar widgets, TUI e semáforos de topo. |
+| `/api/quant/config` | `GET` | Parâmetros canônicos de configuração do motor (`quant_config.json`). |
 | `/api/price/<symbol>` | `GET` | Retorna o preço atual do par (ex: `/api/price/ETHUSDT`). |
 | `/api/ticker/<symbol>` | `GET` | Retorna métricas de 24 horas (máx, mín, variação, volume). |
 | `/api/klines/<symbol>` | `GET` | Retorna candles históricos (`?interval=15m&limit=500`). |

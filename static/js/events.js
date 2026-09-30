@@ -142,6 +142,7 @@ function setupEventListeners() {
         : tab.dataset.tab === 'trades' ? 'paneTrades'
         : tab.dataset.tab === 'whales' ? 'paneWhales'
         : tab.dataset.tab === 'metrics' ? 'paneMetrics'
+        : tab.dataset.tab === 'quantmacro' ? 'paneQuantMacro'
         : 'paneAPI';
       const targetPane = document.getElementById(paneId);
       if (targetPane) targetPane.classList.add('active');
@@ -154,6 +155,9 @@ function setupEventListeners() {
       }
       if (tab.dataset.tab === 'metrics' && typeof updateMetricsPanel === 'function') {
         updateMetricsPanel();
+      }
+      if (tab.dataset.tab === 'quantmacro' && typeof updateQuantMacroPanel === 'function') {
+        updateQuantMacroPanel();
       }
       if (tab.dataset.tab === 'api' && typeof updateApiPanel === 'function') {
         updateApiPanel();

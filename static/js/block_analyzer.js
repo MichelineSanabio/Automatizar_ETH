@@ -42,7 +42,8 @@ function initBlockAnalyzer() {
   function openModal() {
     if (!modalBackdrop) return;
     modalBackdrop.style.display = "flex";
-    if (typeof lucide !== "undefined") lucide.createIcons();
+    if (window.refreshIcons) window.refreshIcons();
+    else if (typeof lucide !== "undefined") lucide.createIcons();
 
     // Sincronizar par com o par atualmente selecionado no terminal
     if (symbolSelect && typeof currentSymbol !== "undefined" && currentSymbol) {
@@ -250,6 +251,7 @@ function initBlockAnalyzer() {
       }
     }
 
-    if (typeof lucide !== "undefined") lucide.createIcons();
+    if (window.refreshIcons) window.refreshIcons();
+    else if (typeof lucide !== "undefined") lucide.createIcons();
   }
 }

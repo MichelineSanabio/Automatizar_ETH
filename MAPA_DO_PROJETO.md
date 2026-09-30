@@ -11,8 +11,11 @@ Automatizar_ETH/
 ├── app.py                         # Ponto de entrada Flask (bootstrap, favicon e registro de Blueprints)
 ├── services.py                    # Singleton de serviços compartilhados (BinanceClient, Analisadores, Cache-Busting)
 ├── quant_analyzer.py              # Motor Quantitativo Institucional (Spot, Futuros, Altseason, Macro, Fibonacci)
+├── onchain_engine.py              # Radar On-Chain (Net Issuance EIP-1559, Blobs EIP-4844, Staking Ratio, TVL DefiLlama)
+├── valuation_models.py            # Motor de Valuation Macro (MVRV Z-Score, Múltiplos TVL, Matriz ETH/BTC, Fibo)
+├── quant_config.json              # Configurações de ordens canônicas A-D, spoofing $2.660, pivô e alvos
 ├── telegram_notifier.py           # Mensageria e alertas assíncronos no Telegram (Histerese, Spoofing, Proximidade)
-├── tui_terminal.py                # Interface Gráfica de Console Terminal (TUI) rica via biblioteca Rich (2Hz Live)
+├── tui_terminal.py                # Interface Gráfica de Console Terminal (TUI) rica via Rich (4 Blocos + Live 2Hz)
 ├── Iniciar_TUI.bat                # Inicializador em lote (1 clique) do console TUI em Windows com suporte UTF-8
 ├── terminal_layout.json           # Persistência do layout do usuário, marcações e preferências
 ├── Definir_Baleias.json           # Definição e faixas de volume para classificação de baleias e tiers
@@ -25,7 +28,7 @@ Automatizar_ETH/
 │   ├── volatility.py              # Análise estatística de volatilidade horária e relatórios CSV
 │   ├── whales.py                  # Rastreador de baleias on-chain (Etherscan V2) e cotas
 │   ├── settings.py                # Persistência de layout e parâmetros de baleias (Definir_Baleias)
-│   └── quant.py                   # API REST do Motor Quantitativo (/api/quant/state e recálculo Fibonacci)
+│   └── quant.py                   # API REST Quantitativa (/api/quant/state, /orders, /onchain, /valuation, /macro-summary)
 │
 ├── core_engines/ (Python)
 │   ├── binance_client.py          # Cliente HTTP REST para Binance API & Binance Vision (com fallbacks)
@@ -70,6 +73,7 @@ Automatizar_ETH/
         ├── ticker.js              # Atualização das métricas de 24h na barra superior
         ├── loader.js              # Carga inicial de dados históricos e sincronização de abas
         ├── events.js              # Event listeners centralizados de botões, abas e atalhos de teclado
+        ├── quant_macro.js         # Renderização do painel lateral Quant & Macro e cards institucionais
         └── app.js                 # Inicializador central do frontend (boot lifecycle)
 
 ```
@@ -88,10 +92,13 @@ Automatizar_ETH/
 | **routes/volatility.py**| `api_volatility_analysis`, `export_csv` | Estatísticas históricas por período (madrugada/manhã/tarde/noite). | `services.volatility_analyzer` |
 | **routes/whales.py** | `get_whales`, `get_whales_quota` | Top 50 holders on-chain e consumo da quota da Etherscan. | `services.whale_tracker` |
 | **routes/settings.py**| `get_settings`, `save_settings` | Leitura e gravação no `terminal_layout.json` e `Definir_Baleias.json`. | `os`, `json`, `datetime` |
-| **routes/quant.py**   | `get_quant_state`, `recalculate_fibonacci` | API do motor quantitativo com estado consolidado e recálculo Fibonacci. | `quant_analyzer.quant_engine` |
+| **routes/quant.py**   | `get_quant_state`, `get_quant_orders`, `get_quant_onchain`, `get_quant_valuation`, `get_quant_macro_summary` | API REST Quantitativa consolidada (ordens canônicas, on-chain, valuation e macro 360°). | `quant_analyzer`, `onchain_engine`, `valuation_models` |
+| **onchain_engine.py** | `OnChainEngine`, `get_metrics` | Radar On-Chain institucional: Net Issuance EIP-1559, Blobs EIP-4844, Staking vs CEX Ratio e TVL DefiLlama L1+L2 com cache TTL. | `web3`, `requests`, `services.whale_tracker` |
+| **valuation_models.py**| `ValuationEngine`, `calculate_valuation_matrix` | Modelagem matemática de Valuation Macro: MVRV Z-Score, múltiplos TVL, matriz ETH/BTC, projeções Fibo e triangulação de cenários. | `math`, `onchain_engine` |
+| **quant_config.json** | Arquivo de Configuração | Definição declarativa canônica das 4 ordens limites (A-D), spoofing $2.660, pivô e alvos de ciclo. | Consumido por `routes/quant.py` e engines |
 | **telegram_notifier.py**| `TelegramAlertManager`, `check_and_notify` | Alertas no Telegram (Proximidade <= 1%, Variação +-10%, Spoofing e Pivô). | `requests`, `threading`, `time` |
 | **quant_analyzer.py** | `QuantTradingEngine`, `get_full_quant_state` | Motor quantitativo: Spot/Futuros, Altseason, Livro 2660, Probabilidades e Fibo. | `requests`, `math`, `time` |
-| **tui_terminal.py**   | `build_full_layout`, `async_main` | Terminal rico (TUI) com 3 blocos, painel de descida, ordens e Live 2Hz. | `rich`, `asyncio`, `quant_analyzer` |
+| **tui_terminal.py**   | `build_full_layout`, `make_onchain_valuation_panel`, `async_main` | Terminal rico (TUI) com 4 blocos analíticos (incluindo Radar On-Chain e Valuation) e Live 2Hz. | `rich`, `asyncio`, `quant_analyzer`, `onchain_engine`, `valuation_models` |
 | **binance_client.py**| `BinanceClient` | Requisições HTTP com fallback multi-domínio (`api.binance.com` / `vision`). | `requests`, `time` |
 | **orderbook_analyzer.py**| `OrderBookAnalyzer` | Análise quantitativa via desvio padrão, Z-Score de ordens, risco de spoofing, buffer circular de 3.000 trades, cálculo contínuo de agressão (Buy/Sell/Delta/Absorção) e thread daemon em segundo plano. | `numpy`, `requests`, `threading` |
 | **volatility_analyzer.py**| `VolatilityAnalyzer` | Quebra de volatilidade em turnos horários, cálculo de amplitude e spikes. | `datetime`, `numpy`, `csv` |
@@ -103,6 +110,7 @@ Automatizar_ETH/
 | **static/js/orders.js** | `addManualOrder`, `updatePositions` | Gestão de ordens manuais, cálculo de PnL não realizado e breakeven. | `chart.js`, `storage.js` |
 | **static/js/tui.js**    | `fetchQuantState`, `renderState` | Atualização do TUI Web a 1.5s, checklist de descida e visualizador Rich. | `fetch`, `lucide` |
 | **static/js/events.js** | `setupEventListeners` | Ligações de cliques, atalhos de teclado (Alt+T, Alt+L) e seletores. | Todos os módulos frontend |
+| **static/js/quant_macro.js** | `initQuantMacroPanel`, `fetchQuantMacroSummary` | Polling a 5s do macro-summary, renderização dos 4 cards de ordens, radar on-chain, cenários e semáforos. | `state.js`, `utils.js` |
 
 ---
 
@@ -133,6 +141,12 @@ Automatizar_ETH/
    - Ingestão contínua alimenta um buffer circular de até 3.000 trades, classificando a agressão de ordens de compra e venda a mercado (`isBuyerMaker`), calculando Delta de volume e taxa de absorção de liquidez dentro da faixa do degrau/bloco selecionado.
    - No frontend [templates/block_analyzer.html](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/templates/block_analyzer.html), um **Blob Web Worker** roda em thread dedicada de SO para contornar o congelamento/throttling de abas dos navegadores (Chrome/Edge/Firefox), mantendo as requisições ativas ininterruptamente mesmo quando o usuário navega em outras abas ou telas.
 
+6. **Radar On-Chain & Motor de Valuation Institucional (Ciclo Macro & Topo)**:
+   - [onchain_engine.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/onchain_engine.py) consome nós RPC públicos de Ethereum (com fallbacks e TTL de 60s) para calcular a queima EIP-1559 (`baseFeePerGas`), a emissão PoS (~2.600 ETH/dia) e a saturação de Blobs EIP-4844 (`blobGasUsed`).
+   - Integração com a API pública DefiLlama L1+L2 (TTL 600s) e reuso do classificador de baleias (`EtherscanWhaleTracker`, TTL 300s) para computar a proporção Staking vs Corretoras (choque de oferta).
+   - [valuation_models.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/valuation_models.py) processa 4 modelos quantitativos (MVRV Z-Score, múltiplos TVL, paridade ETH/BTC e extensões de Fibonacci 1.272-2.618), triangulando três cenários de topo (Conservador ~$4.1k, Base ~$5.7k e Otimista ~$7.4k) com semáforos de exaustão de ciclo.
+   - Os dados são expostos em `/api/quant/macro-summary`, alimentando o Bloco 4 do [tui_terminal.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/tui_terminal.py), a tela TUI Web [tui.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/tui.js) e o painel lateral do terminal principal [quant_macro.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/quant_macro.js).
+
 ---
 
 ## 4. Tags de Busca Rápida (Catálogo de Contexto LLM)
@@ -140,6 +154,7 @@ Automatizar_ETH/
 | Tag de Busca | Arquivos Relevantes | Quando Modificar |
 | :--- | :--- | :--- |
 | `[TUI_QUANT_TERMINAL]` | `tui_terminal.py`, `quant_analyzer.py`, `templates/tui.html`, `static/js/tui.js` | Modificar layout TUI console (rich), termômetro Altseason, ordens limite A-D ou recálculo Fibo. |
+| `[ONCHAIN_VALUATION_RADAR]` | `onchain_engine.py`, `valuation_models.py`, `quant_config.json`, `routes/quant.py`, `static/js/quant_macro.js` | Ajustar dinâmicas de queima EIP-1559, blobs EIP-4844, métricas DefiLlama, MVRV Z-Score ou triangulação de valuation. |
 | `[TELEGRAM_NOTIFIER]` | `telegram_notifier.py`, `routes/quant.py`, `.env` | Ajustar regras de alertas do bot Telegram, histerese (±10%), proximidade (<1%) ou rate-limit. |
 | `[QUANT_ENGINE_MATH]` | `quant_analyzer.py`, `routes/quant.py` | Ajustar fórmulas de indicadores avançados (SuperTrend, SAR, KDJ), Z-Score de 2.660 ou Macro. |
 | `[CHART_CANDLES_ZOOM]` | `static/js/chart.js`, `static/css/chart.css` | Alterar comportamento de velas, zoom TradingView, navegação, escala de preço ou HUD OHLC. |

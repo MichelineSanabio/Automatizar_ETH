@@ -293,7 +293,103 @@ def make_logs_panel(state: dict) -> Panel:
         padding=(0, 1)
     )
 
-def build_full_layout(state: dict) -> Layout:
+from onchain_engine import OnChainEngine
+
+# Instância Singleton do motor on-chain
+onchain_engine = OnChainEngine()
+
+def make_onchain_valuation_panel(onchain: dict) -> Panel:
+    """Gera o Bloco 4: Radar On-Chain, MVRV Z-Score e Triangulação de Valuation."""
+    if not onchain:
+        return Panel(Text("Carregando métricas on-chain...", style="dim white"), title="[bold green]BLOCO 4: RADAR ON-CHAIN & VALUATION MACRO[/bold green]", border_style="green")
+
+    net = onchain.get("net_issuance", {})
+    blob = onchain.get("blob_gas_saturation", {})
+    stk = onchain.get("staking_vs_exchanges", {})
+    tvl = onchain.get("tvl", {})
+    mvrv = onchain.get("mvrv", {})
+    cenarios = onchain.get("cenarios_valuation", {}).get("cenarios", {})
+    topo = onchain.get("avaliacao_topo_macro", {})
+
+    grid = Table.grid(expand=True)
+    grid.add_column(ratio=1)
+
+    # 1. Tabela On-Chain Radar
+    onchain_table = Table(title="RADAR ON-CHAIN (EMISSÃO, BLOBS E CHOQUE DE OFERTA)", expand=True, show_header=True, header_style="bold green", border_style="green")
+    onchain_table.add_column("Métrica On-Chain", style="bold white", ratio=3)
+    onchain_table.add_column("Valor Atual", justify="right", style="bold yellow", ratio=3)
+    onchain_table.add_column("Meta Ciclo / Topo", justify="center", style="cyan", ratio=3)
+    onchain_table.add_column("Semáforo", justify="center", ratio=3)
+
+    # Net Issuance
+    net_val = net.get("net_issuance_diaria_eth", 0.0)
+    net_str = f"{net_val:+.1f} ETH/d"
+    s_net = topo.get("net_issuance", {})
+    onchain_table.add_row(
+        "Net Issuance (PoS - Queima)",
+        net_str,
+        f"{net.get('limiar_esperado_topo', -1500)} ETH/d",
+        f"{s_net.get('emoji', '🟢')} {s_net.get('semaforo', 'NEUTRO')}"
+    )
+
+    # Blobs EIP-4844
+    blob_sat = blob.get("saturation_target_pct", 0.0)
+    onchain_table.add_row(
+        "Blob Saturation (EIP-4844)",
+        f"{blob_sat:.1f}% ({blob.get('estimated_blobs_count', 0)} blobs)",
+        f"Alvo 3 / Máx 6",
+        f"{blob.get('semaforo', '🟢 VERDE')}"
+    )
+
+    # Staking vs Exchanges
+    ratio_stk = stk.get("ratio", 0.0)
+    onchain_table.add_row(
+        "Staking / Corretoras Ratio",
+        f"{ratio_stk:.2f}x ({stk.get('staking_eth_total', 0)/1e6:.1f}M / {stk.get('exchanges_eth_total', 0)/1e6:.1f}M)",
+        f"{stk.get('limiar_esperado_topo', 5.0)}x",
+        f"{stk.get('semaforo', '🟢 NORMAL')}"
+    )
+
+    # TVL DefiLlama
+    tvl_tot = tvl.get("tvl_total_usd", 0.0)
+    s_tvl = topo.get("tvl", {})
+    chains_b = tvl.get("chains_breakdown", [{}])
+    l1_share = chains_b[0].get("share_pct", 85.0) if chains_b else 85.0
+    onchain_table.add_row(
+        "TVL Consolidado (L1+L2s)",
+        f"${tvl_tot/1e9:.2f}B (L1: {l1_share}%)",
+        f"${tvl.get('limiar_esperado_topo_usd', 160e9)/1e9:.0f}B",
+        f"{s_tvl.get('emoji', '🟢')} {s_tvl.get('semaforo', 'NEUTRO')}"
+    )
+
+    # 2. Tabela de Valuation Triangulado
+    val_table = Table(title="TRIANGULAÇÃO DE VALUATION & CENÁRIOS DE TOPO", expand=True, show_header=True, header_style="bold gold1", border_style="gold1")
+    val_table.add_column("Cenário", style="bold white", ratio=3)
+    val_table.add_column("Faixa de Preço", justify="center", style="bold yellow", ratio=4)
+    val_table.add_column("Ponto Central", justify="right", style="bold green", ratio=3)
+    val_table.add_column("Upside", justify="center", style="bold cyan", ratio=2)
+
+    for k in ["conservador", "base", "otimista"]:
+        c = cenarios.get(k, {})
+        val_table.add_row(
+            c.get("cenario", k.capitalize()),
+            c.get("faixa_str", "--"),
+            c.get("ponto_central_str", "--"),
+            c.get("upside_str", "--")
+        )
+
+    grid.add_row(onchain_table)
+    grid.add_row(Text(""))
+    grid.add_row(val_table)
+
+    return Panel(
+        grid,
+        title="[bold green]BLOCO 4: RADAR ON-CHAIN & MOTOR DE VALUATION MACRO[/bold green]",
+        border_style="green",
+        padding=(0, 1)
+    )
+
+def build_full_layout(state: dict, onchain_state: dict) -> Layout:
     """Monta o Layout hierárquico do terminal com rich."""
     layout = Layout(name="root")
 
@@ -306,12 +402,12 @@ def build_full_layout(state: dict) -> Layout:
         Layout(name="header", size=4),
         Layout(name="altseason", size=4),
         Layout(name="body", ratio=1),
-        Layout(name="footer_logs", size=9)
+        Layout(name="footer_logs", size=8)
     )
 
     # No body, dividimos horizontalmente:
     # Esquerda: Bloco 1 (Fatores + Ordens Limite) -> 50%
-    # Direita: Bloco 3 (Pivô de Alta + Recálculo Fibonacci) -> 50%
+    # Direita: Bloco 3 (Pivô de Alta) + Bloco 4 (Radar On-Chain & Valuation) -> 50%
     layout["body"].split_row(
         Layout(name="left_block", ratio=1),
         Layout(name="right_block", ratio=1)
@@ -323,12 +419,19 @@ def build_full_layout(state: dict) -> Layout:
         Layout(name="order_probs", ratio=1)
     )
 
+    # Bloco Direito dividido verticalmente: Pivô (topo) e On-Chain Valuation (base)
+    layout["right_block"].split_column(
+        Layout(name="pivot", ratio=1),
+        Layout(name="onchain_valuation", ratio=1)
+    )
+
     # Renderiza componentes
     layout["header"].update(make_header_panel(state))
     layout["altseason"].update(make_altseason_panel(state))
     layout["left_block"]["down_factors"].update(Panel(make_down_factors_table(state), title="[bold blue]BLOCO 1A: FATORES DA DESCIDA[/bold blue]", border_style="blue", padding=(0, 0)))
     layout["left_block"]["order_probs"].update(Panel(make_order_probabilities_table(state), title="[bold magenta]BLOCO 1B: PROBABILIDADE DAS ORDENS LIMITE[/bold magenta]", border_style="magenta", padding=(0, 0)))
-    layout["right_block"].update(make_pivot_detector_panel(state))
+    layout["right_block"]["pivot"].update(make_pivot_detector_panel(state))
+    layout["right_block"]["onchain_valuation"].update(make_onchain_valuation_panel(onchain_state))
     layout["footer_logs"].update(make_logs_panel(state))
 
     return layout
@@ -344,7 +447,9 @@ async def async_main():
             try:
                 # Obter estado de mercado mais recente (com cache interno de 2s para evitar rate-limit)
                 state = quant_engine.get_full_market_state()
-                layout = build_full_layout(state)
+                eth_p = state.get("prices", {}).get("eth", 2650.0)
+                onchain_state = onchain_engine.get_onchain_state(eth_price_usd=eth_p)
+                layout = build_full_layout(state, onchain_state)
                 live.update(layout, refresh=True)
             except Exception as e:
                 quant_engine._add_log("ERROR", f"Falha no ciclo TUI: {str(e)}")

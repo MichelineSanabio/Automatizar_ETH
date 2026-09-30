@@ -283,8 +283,8 @@ function initChart() {
         oTime.textContent = dt.toLocaleTimeString();
       }
     }
-    // Update live volume display on splitter com busca rápida O(1)
-    const matched = candlesByTimeMap.get(param.time) || historicalCandles.find(c => c.time === param.time);
+    // Update live volume display on splitter com busca rápida O(1) via Map
+    const matched = candlesByTimeMap ? candlesByTimeMap.get(param.time) : null;
     if (matched) {
       const liveVolEl = el.splitterLiveVol || document.getElementById('splitterLiveVol');
       if (liveVolEl) {

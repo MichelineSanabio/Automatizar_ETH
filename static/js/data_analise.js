@@ -208,7 +208,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTopSpikesTable(data);
 
     // Atualizar ícones Lucide recém-injetados
-    if (window.lucide) {
+    if (window.refreshIcons) {
+      window.refreshIcons();
+    } else if (window.lucide) {
       lucide.createIcons();
     }
   }

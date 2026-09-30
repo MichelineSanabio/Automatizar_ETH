@@ -170,8 +170,9 @@ const AccessibilityManager = {
       e.stopPropagation();
       const isVisible = dropdown.style.display === 'block';
       dropdown.style.display = isVisible ? 'none' : 'block';
-      if (!isVisible && window.lucide) {
-        try { lucide.createIcons(); } catch(err){}
+      if (!isVisible) {
+        if (window.refreshIcons) window.refreshIcons();
+        else if (window.lucide) { try { lucide.createIcons(); } catch(err){} }
       }
     });
 

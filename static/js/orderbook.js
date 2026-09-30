@@ -1113,18 +1113,20 @@ function initBinanceDepthCanvas() {
     drawBinanceDepthChart();
   });
 
-  window.addEventListener('resize', () => {
-    if (binanceActiveSubtab === 'depth') {
-      drawBinanceDepthChart();
-    }
-  });
-
-  if (window.ResizeObserver) {
-    const ro = new ResizeObserver(() => {
+  let depthResizeTimer = null;
+  const debouncedDrawDepth = () => {
+    if (depthResizeTimer) clearTimeout(depthResizeTimer);
+    depthResizeTimer = setTimeout(() => {
       if (binanceActiveSubtab === 'depth') {
         drawBinanceDepthChart();
       }
-    });
+    }, 100);
+  };
+
+  window.addEventListener('resize', debouncedDrawDepth);
+
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(debouncedDrawDepth);
     ro.observe(wrapper);
   }
 }

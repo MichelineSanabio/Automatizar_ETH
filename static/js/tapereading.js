@@ -60,6 +60,13 @@ function setMainView(view) {
       el.iframeDataAnalysis.src = '/data-analise?embedded=1';
     }
   }
+  if (el.quantMainView) {
+    el.quantMainView.style.display = view === 'quant' ? 'flex' : 'none';
+    el.quantMainView.classList.toggle('active', view === 'quant');
+    if (view === 'quant' && el.iframeQuant && (!el.iframeQuant.src || el.iframeQuant.src === 'about:blank' || el.iframeQuant.src === window.location.href)) {
+      el.iframeQuant.src = '/tui?embedded=1';
+    }
+  }
 
   // 3. Toolbar Controls (Indicators and Intervals only relevant in Chart view)
   if (el.chartControlsGroup) {

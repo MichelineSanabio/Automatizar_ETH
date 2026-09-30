@@ -199,12 +199,15 @@ function initDOMElements() {
   el.btnViewTape = document.getElementById('btnViewTape');
   el.btnViewLiquidity = document.getElementById('btnViewLiquidity');
   el.btnViewDataAnalysis = document.getElementById('btnViewDataAnalysis');
+  el.btnViewQuant = document.getElementById('btnViewQuant');
   el.chartMainView = document.getElementById('chartMainView');
   el.tapeReadingMainView = document.getElementById('tapeReadingMainView');
   el.liquidityMainView = document.getElementById('liquidityMainView');
   el.dataAnalysisMainView = document.getElementById('dataAnalysisMainView');
+  el.quantMainView = document.getElementById('quantMainView');
   el.iframeLiquidity = document.getElementById('iframeLiquidity');
   el.iframeDataAnalysis = document.getElementById('iframeDataAnalysis');
+  el.iframeQuant = document.getElementById('iframeQuant');
   el.chartControlsGroup = document.getElementById('chartControlsGroup');
   el.chartLegend = document.getElementById('chartLegend');
   el.tapeBuyVol = document.getElementById('tapeBuyVol');

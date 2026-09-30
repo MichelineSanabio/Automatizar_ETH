@@ -877,12 +877,4 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Inicialização imediata ou no DOMContentLoaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initOrdersUI();
-  });
-} else {
-  initOrdersUI();
-}
 

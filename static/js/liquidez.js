@@ -173,7 +173,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btcPriceEl) btcPriceEl.textContent = `$${data.btc_price.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
     if (ethbtcRatioEl) ethbtcRatioEl.textContent = data.ethbtc_ratio.toFixed(5);
 
-    if (window.lucide) {
+    if (window.refreshIcons) {
+      window.refreshIcons();
+    } else if (window.lucide) {
       lucide.createIcons();
     }
   }

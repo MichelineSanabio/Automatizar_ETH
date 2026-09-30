@@ -1,0 +1,111 @@
+{
+  "versao": "1.0",
+  "descricao": "Configurações institucionais do Motor Quantitativo, Radar On-Chain e Valuation",
+  "ordens": [
+    {
+      "id": "ordem_a",
+      "preco_usdt": 2585.0,
+      "qtd_eth": 0.1557,
+      "valor_referencia": "R$ 2.100,00",
+      "rotulo": "Frente da EMA 25 diária (~$2.580)",
+      "alocacao_pct": 20.0
+    },
+    {
+      "id": "ordem_b",
+      "preco_usdt": 2530.0,
+      "qtd_eth": 0.9570,
+      "valor_referencia": "$2.421,21",
+      "rotulo": "Zona de suporte estrutural / EMA 99 semanal",
+      "alocacao_pct": 40.0
+    },
+    {
+      "id": "ordem_c",
+      "preco_usdt": 2480.0,
+      "qtd_eth": 0.3188,
+      "valor_referencia": "$790,62",
+      "rotulo": "Suporte no SAR diário / Stop Hunt abaixo de 2.500",
+      "alocacao_pct": 25.0
+    },
+    {
+      "id": "ordem_d",
+      "preco_usdt": 2355.0,
+      "qtd_eth": 0.5000,
+      "valor_referencia": "$1.177,50",
+      "rotulo": "Cisne Negro / Frente do bloco institucional de $2.350",
+      "alocacao_pct": 15.0
+    }
+  ],
+  "spoofing": {
+    "nivel_preco_usdt": 2660.0,
+    "limiar_queda_volume_pct": 0.50,
+    "janela_analise_segundos": 15.0,
+    "tempo_queda_rapida_segundos": 10.0,
+    "distancia_maxima_alerta_usd": 40.0
+  },
+  "pivo": {
+    "fechamento_4h": 2740.0,
+    "fechamento_1d": 2750.0,
+    "ethbtc": 0.03230,
+    "btc_confirmacao": 84500.0,
+    "throwback": [2720.0, 2730.0]
+  },
+  "fibonacci_retracoes": [0.382, 0.618, 0.65],
+  "fibonacci_ciclo_extensoes": [1.272, 1.414, 1.618, 2.0, 2.618],
+  "telegram": {
+    "histerese_pp": 10.0,
+    "proximidade_pct": 1.0,
+    "cooldown_s": 60,
+    "cooldown_criticos_s": 15
+  },
+  "pesos_score_direcional": {
+    "tecnico_derivativos": 0.35,
+    "oferta_escassez": 0.35,
+    "rede_atividade_l2": 0.30,
+    "k_logistica": 0.045
+  },
+  "cenarios_topo": {
+    "btc_alvo": {
+      "conservador": 100000.0,
+      "base": 110000.0,
+      "otimista": 120000.0
+    },
+    "bandas_ethbtc": [0.042, 0.055, 0.065, 0.080],
+    "z_score_pico": {
+      "min": 4.5,
+      "max": 6.0
+    },
+    "faixas_referencia_eth": {
+      "conservador": {
+        "min": 4200.0,
+        "max": 4850.0,
+        "descricao": "Conservador (MVRV Z=4.5 | ETH/BTC 0.042-0.048)"
+      },
+      "base": {
+        "min": 5930.0,
+        "max": 7165.0,
+        "descricao": "Base (MVRV Z=5.0-5.5 | Fib 1.272-1.618 | ETH/BTC 0.055-0.065)"
+      },
+      "otimista": {
+        "min": 8500.0,
+        "max": 9500.0,
+        "descricao": "Otimista / Euforia (MVRV Z=6.0 | ETH/BTC 0.080+)"
+      }
+    }
+  },
+  "limiares_esperados_topo": {
+    "net_issuance_diaria_eth": -1500.0,
+    "blob_saturation_pct": 95.0,
+    "staking_exchanges_ratio": 5.0,
+    "tvl_total_usd": 160000000000.0,
+    "mvrv_zscore": 4.5
+  },
+  "rede_parametros": {
+    "blob_target_per_block": 3,
+    "blob_max_per_block": 6,
+    "bytes_per_blob": 131072,
+    "pos_emissao_diaria_base_eth": 2740.0,
+    "circulating_supply_eth_estimado": 120400000.0,
+    "realized_cap_usd_estimado": 242000000000.0,
+    "std_market_cap_hist_usd": 68000000000.0
+  }
+}

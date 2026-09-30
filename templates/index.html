@@ -310,6 +310,9 @@
               <button class="view-tab-btn" data-view="data-analysis" id="btnViewDataAnalysis" title="Exibir Data Análise e Volatilidade no frame abaixo">
                 <i data-lucide="pie-chart"></i> <span>Data Análise</span>
               </button>
+              <button class="view-tab-btn" data-view="quant" id="btnViewQuant" title="Exibir Terminal Quant & Radar On-Chain no frame abaixo">
+                <i data-lucide="terminal"></i> <span>Quant & On-Chain</span>
+              </button>
             </div>
 
             <div class="toolbar-separator"></div>
@@ -733,6 +736,11 @@
         <div class="main-subview" id="dataAnalysisMainView" style="display: none; height: 100%; flex: 1; flex-direction: column;">
           <iframe id="iframeDataAnalysis" class="embedded-subview-frame" title="Data Análise e Volatilidade"></iframe>
         </div>
+
+        <!-- VIEW 6: QUANT TERMINAL & RADAR ON-CHAIN SUBVIEW -->
+        <div class="main-subview" id="quantMainView" style="display: none; height: 100%; flex: 1; flex-direction: column;">
+          <iframe id="iframeQuant" class="embedded-subview-frame" title="Terminal Quant & Radar On-Chain"></iframe>
+        </div>
       </section>
 
       <!-- RIGHT: ORDER BOOK & RECENT TRADES SECTION -->
@@ -753,6 +761,10 @@
           <button class="side-tab" data-tab="metrics" id="tabMetrics" title="Métricas Técnicas e Análise">
             <i data-lucide="bar-chart-2"></i>
             <span>Métricas</span>
+          </button>
+          <button class="side-tab" data-tab="quantmacro" id="tabQuantMacro" title="Radar On-Chain & Valuation Macro">
+            <i data-lucide="compass"></i>
+            <span>Radar Macro</span>
           </button>
           <button class="side-tab" data-tab="api" id="tabApi" title="Centro de Controle de APIs e Cotas">
             <i data-lucide="cpu"></i>
@@ -997,6 +1009,97 @@
                 <span class="font-mono" id="metricVolQuote24">---</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: QUANT MACRO & RADAR ON-CHAIN -->
+        <div class="tab-pane" id="paneQuantMacro">
+          <div class="api-panel-scroll">
+            
+            <!-- Header Card: Preço ETH e Ordem Mais Próxima -->
+            <div class="etherscan-status-card api-tab-card" style="border-left: 3px solid var(--accent-gold);">
+              <div class="status-card-header">
+                <span class="status-card-title"><i data-lucide="crosshair"></i> Radar de Ordens Limite (A–D)</span>
+                <span class="badge yellow" id="qmNearestOrderBadge">Ordem Próxima: --</span>
+              </div>
+              <div class="status-metrics" style="margin-top: 8px;">
+                <div class="metric-pill">
+                  <span>Preço Spot ETH:</span>
+                  <strong class="font-mono yellow" id="qmEthPrice">$0.00</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Próxima Ordem:</span>
+                  <strong class="font-mono" id="qmNearestOrderPrice">$0.00</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Distância ($):</span>
+                  <strong class="font-mono" id="qmNearestOrderDist">$0.00</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Distância (%):</span>
+                  <strong class="font-mono" id="qmNearestOrderDistPct">0.00%</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Radar On-Chain Card -->
+            <div class="etherscan-status-card api-tab-card" style="border-left: 3px solid var(--green);">
+              <div class="status-card-header">
+                <span class="status-card-title"><i data-lucide="activity"></i> Radar On-Chain em Tempo Real</span>
+                <span class="badge green" id="qmOnchainBadge">Rede Ativa</span>
+              </div>
+              <div class="status-metrics" style="margin-top: 8px;">
+                <div class="metric-pill">
+                  <span>Net Issuance (PoS - Burn):</span>
+                  <strong class="font-mono" id="qmNetIssuance">-- ETH/dia</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Blobs EIP-4844 (L2):</span>
+                  <strong class="font-mono" id="qmBlobSat">--%</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Staking / Exchanges:</span>
+                  <strong class="font-mono" id="qmStakingRatio">--x</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>TVL Total (L1+L2):</span>
+                  <strong class="font-mono" id="qmTotalTvl">$--B</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Valuation de Topo de Ciclo -->
+            <div class="etherscan-status-card api-tab-card" style="border-left: 3px solid var(--blue);">
+              <div class="status-card-header">
+                <span class="status-card-title"><i data-lucide="compass"></i> Valuation de Ciclo (Triangulação)</span>
+                <span class="badge blue">MVRV + TVL + ETH/BTC</span>
+              </div>
+              <div class="status-metrics" style="margin-top: 8px;">
+                <div class="metric-pill">
+                  <span>Cenário Base (Faixa):</span>
+                  <strong class="font-mono yellow" id="qmValuationFaixa">$5,306 - $7,165</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Ponto Central:</span>
+                  <strong class="font-mono green" id="qmValuationPonto">$5,705.19</strong>
+                </div>
+                <div class="metric-pill">
+                  <span>Upside Potencial:</span>
+                  <strong class="font-mono green" id="qmValuationUpside">+115.3%</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Semáforos Institucionais -->
+            <div class="etherscan-status-card api-tab-card" style="border-left: 3px solid var(--magenta);">
+              <div class="status-card-header">
+                <span class="status-card-title"><i data-lucide="shield-alert"></i> Semáforos de Topo Institucionais</span>
+              </div>
+              <div id="qmSemaforosList" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+                <!-- Preenchido dinamicamente -->
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -1302,6 +1405,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <!-- MODAL: ANALISADOR ESTATÍSTICO DE BLOCOS E PAREDES (Z-SCORE & RISCO DE SPOOFING) -->
   <div class="modal-backdrop" id="modalBlockAnalyzerBackdrop" style="display: none;">
     <div class="modal-dialog block-analyzer-modal">
@@ -1459,6 +1564,7 @@
   <script src="{{ url_for('static', filename='js/ticker.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/loader.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/events.js') }}?v={{ version }}"></script>
+  <script src="{{ url_for('static', filename='js/quant_macro.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
   <script>
     // Initialize Lucide Icons

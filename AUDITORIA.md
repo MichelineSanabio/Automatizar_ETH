@@ -156,13 +156,10 @@ window.addEventListener('resize', () => {
 
 ---
 
-## ⚡ TOP 5 CORREÇÕES DE MAIOR IMPACTO (Quick Wins)
+## ⚡ TOP 5 CORREÇÕES DE MAIOR IMPACTO (Quick Wins) — [APLICADAS E CONCLUÍDAS ✅]
 
-1. **Remover `DOMContentLoaded` de `orders.js`** — evita listeners duplos
-2. **Debounce `lucide.createIcons()`** — 1 única função centralizada
-3. **Remover `mousemove` vazio de `utils.js`** — CPU desperdiçada
-4. **Debounce `window.resize`** — evita jank ao redimensionar
-5. **Map para `historicalCandles` no crosshair** — busca O(1) vs O(n)
-
-> [!TIP]
-> Posso aplicar essas 5 correções agora? Basta confirmar.
+1. ✅ **Remover `DOMContentLoaded` redundante de `orders.js`**: Inicialização delegada exclusivamente para `app.js` com guarda idempotente `isOrdersUIInitialized`, eliminando qualquer possibilidade de listeners duplicados.
+2. ✅ **Debounce `lucide.createIcons()` centralizado**: Unificado via `window.refreshIcons()` (com debounce de 40ms) nos módulos `whales.js`, `storage.js`, `orders.js`, `tapereading.js`, `chart.js`, `accessibility.js`, `liquidez.js`, `data_analise.js` e `block_analyzer.js`, eliminando dezenas de varreduras completas no DOM.
+3. ✅ **Remover `mousemove` vazio**: Verificado e limpo em `utils.js`, poupando processamento contínuo de eventos do ponteiro.
+4. ✅ **Debounce em `window.resize` e `ResizeObserver`**: Aplicado no gráfico de profundidade do order book (`orderbook.js`), além do gráfico principal (`chart.js`), eliminando engasgos (jank) no redimensionamento da janela.
+5. ✅ **Map para `historicalCandles` no crosshair**: Busca pura $O(1)$ via `candlesByTimeMap.get(param.time)` sem varredura residual linear $O(n)$ por frame no movimento do mouse.

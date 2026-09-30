@@ -120,8 +120,24 @@
         <span class="macro-value" id="valOil">$--</span>
       </div>
       <div class="macro-item">
+        <span class="macro-label">NET ISSUANCE (DIÁRIA):</span>
+        <span class="macro-value" id="valNetIssuance">-- ETH/dia</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">BLOB SATURATION:</span>
+        <span class="macro-value" id="valBlobSaturation">--%</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">STAKING / CEX RATIO:</span>
+        <span class="macro-value" id="valStakingRatio">--x</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">TVL TOTAL (L1+L2):</span>
+        <span class="macro-value" id="valTotalTvl">$--B</span>
+      </div>
+      <div class="macro-item">
         <span class="macro-label">WEB3 ETH ON-CHAIN:</span>
-        <span class="macro-value status-ok" id="valWeb3Status">● Conectado (Infura/Public RPC)</span>
+        <span class="macro-value status-ok" id="valWeb3Status">● Conectado (RPC Node Ativo)</span>
       </div>
       <div class="macro-item">
         <span class="macro-label">TELEGRAM ALERTAS:</span>
@@ -303,6 +319,87 @@
         </div>
       </section>
 
+    <!-- BLOCO 4: RADAR ON-CHAIN & MOTOR DE VALUATION MACRO (MVRV, TVL & FIBONACCI) -->
+    <section class="tui-panel tui-panel-onchain" style="margin-bottom: 16px;">
+      <div class="panel-header header-green">
+        <div class="panel-title-group">
+          <span class="block-tag tag-green">BLOCO 4</span>
+          <h3>RADAR ON-CHAIN & MOTOR DE VALUATION MACRO INSTITUCIONAL</h3>
+        </div>
+        <span class="panel-sub-tag">EIP-1559 • BLOBS EIP-4844 • DEFILLAMA • MVRV Z-SCORE</span>
+      </div>
+
+      <!-- 4.1 Grid de 4 Métricas Chave On-Chain -->
+      <div class="altseason-details-grid" style="margin-top: 14px;">
+        <div class="alt-detail-box">
+          <span class="dt-title">Net Issuance Diária (PoS vs Queima)</span>
+          <span class="dt-val font-mono" id="cardNetIssuance">-- ETH/dia</span>
+          <span class="dt-sub" id="cardNetIssuanceStatus">Calculando dinâmica de queima...</span>
+        </div>
+        <div class="alt-detail-box">
+          <span class="dt-title">Blob Gas Saturation (EIP-4844)</span>
+          <span class="dt-val font-mono" id="cardBlobSat">--% (0 blobs)</span>
+          <span class="dt-sub" id="cardBlobStatus">Target 3 blobs / Máx 6</span>
+        </div>
+        <div class="alt-detail-box">
+          <span class="dt-title">Choque de Oferta (Staking / Corretoras)</span>
+          <span class="dt-val font-mono" id="cardStakingRatio">--x</span>
+          <span class="dt-sub" id="cardStakingStatus">Meta de pico: 5.0x</span>
+        </div>
+        <div class="alt-detail-box">
+          <span class="dt-title">TVL Consolidado (DefiLlama L1 + L2s)</span>
+          <span class="dt-val font-mono" id="cardTotalTvl">$-- Bilhões</span>
+          <span class="dt-sub" id="cardTvlStatus">Meta de pico: $160B</span>
+        </div>
+      </div>
+
+      <!-- 4.2 Triangulação de Cenários de Valuation & Semáforos -->
+      <div class="tui-main-grid" style="margin-top: 14px; margin-bottom: 0;">
+        <div class="sub-card" style="margin-bottom: 0;">
+          <div class="sub-card-header">
+            <h4><i data-lucide="compass"></i> Triangulação Quantitativa de Cenários de Topo de Ciclo</h4>
+            <span class="badge-status-counter" style="color: var(--accent-gold); border-color: var(--accent-gold);">MVRV + TVL + ETH/BTC + Fib</span>
+          </div>
+          <div class="checklist-table-wrapper">
+            <table class="tui-table" id="tableValuationScenarios">
+              <thead>
+                <tr>
+                  <th>Cenário</th>
+                  <th>Faixa de Preço</th>
+                  <th style="text-align: right;">Ponto Central</th>
+                  <th style="text-align: center;">Upside Potencial</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyValuationScenarios">
+                <!-- Preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="sub-card" style="margin-bottom: 0;">
+          <div class="sub-card-header">
+            <h4><i data-lucide="shield-alert"></i> Semáforos Institucionais de Topo de Ciclo</h4>
+            <span class="badge-status-counter" style="color: var(--accent-cyan); border-color: var(--accent-cyan);">Diagnóstico 360°</span>
+          </div>
+          <div class="checklist-table-wrapper">
+            <table class="tui-table" id="tableSemaforosTopo">
+              <thead>
+                <tr>
+                  <th>Métrica</th>
+                  <th style="text-align: center;">Progresso</th>
+                  <th style="text-align: center;">Semáforo</th>
+                  <th>Leitura Institucional</th>
+                </tr>
+              </thead>
+              <tbody id="tbodySemaforosTopo">
+                <!-- Preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
     </main>
 
     <!-- JANELA INFERIOR: LOGS QUANTITATIVOS INSTITUCIONAIS EM TEMPO REAL -->

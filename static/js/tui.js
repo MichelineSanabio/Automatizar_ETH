@@ -446,11 +446,160 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Polling inicial e loop de 1.5s
+  // =========================================================================
+  // BLOCO 4: RADAR ON-CHAIN & MOTOR DE VALUATION MACRO
+  // =========================================================================
+  const valNetIssuance = document.getElementById("valNetIssuance");
+  const valBlobSaturation = document.getElementById("valBlobSaturation");
+  const valStakingRatio = document.getElementById("valStakingRatio");
+  const valTotalTvl = document.getElementById("valTotalTvl");
+
+  const cardNetIssuance = document.getElementById("cardNetIssuance");
+  const cardNetIssuanceStatus = document.getElementById("cardNetIssuanceStatus");
+  const cardBlobSat = document.getElementById("cardBlobSat");
+  const cardBlobStatus = document.getElementById("cardBlobStatus");
+  const cardStakingRatio = document.getElementById("cardStakingRatio");
+  const cardStakingStatus = document.getElementById("cardStakingStatus");
+  const cardTotalTvl = document.getElementById("cardTotalTvl");
+  const cardTvlStatus = document.getElementById("cardTvlStatus");
+
+  const tbodyValuationScenarios = document.getElementById("tbodyValuationScenarios");
+  const tbodySemaforosTopo = document.getElementById("tbodySemaforosTopo");
+
+  async function fetchOnChainAndValuation() {
+    try {
+      const res = await fetch("/api/quant/valuation");
+      const resMacro = await fetch("/api/quant/macro-summary");
+      if (!res.ok || !resMacro.ok) return;
+
+      const valData = (await res.json()).data || {};
+      const macroData = (await resMacro.json()).data || {};
+
+      // 1. Barra Macro Superior
+      const netIss = macroData.net_issuance || {};
+      const netVal = netIss.net_diaria_eth || 0;
+      if (valNetIssuance) {
+        valNetIssuance.textContent = `${netVal > 0 ? "+" : ""}${netVal.toFixed(1)} ETH/d`;
+        valNetIssuance.className = netVal < 0 ? "macro-value status-ok" : "macro-value";
+      }
+
+      const blob = macroData.blob_saturation || {};
+      if (valBlobSaturation) {
+        valBlobSaturation.textContent = `${(blob.saturation_target_pct || 0).toFixed(1)}%`;
+      }
+
+      const stk = macroData.staking_ratio || {};
+      if (valStakingRatio) {
+        valStakingRatio.textContent = `${(stk.ratio || 0).toFixed(2)}x`;
+      }
+
+      const tvlUsd = macroData.tvl_total_usd || 0;
+      if (valTotalTvl) {
+        valTotalTvl.textContent = `$${(tvlUsd / 1e9).toFixed(2)}B`;
+      }
+
+      // 2. Cards On-Chain do Bloco 4
+      if (cardNetIssuance) {
+        cardNetIssuance.textContent = `${netVal > 0 ? "+" : ""}${netVal.toFixed(1)} ETH/dia`;
+        cardNetIssuance.style.color = netVal < 0 ? "var(--accent-green-bright)" : "var(--accent-yellow)";
+      }
+      if (cardNetIssuanceStatus) {
+        cardNetIssuanceStatus.textContent = netIss.status || "Emissão líquida calculada";
+      }
+
+      if (cardBlobSat) {
+        cardBlobSat.textContent = `${(blob.saturation_target_pct || 0).toFixed(1)}% [${blob.semaforo || '🟢'}]`;
+      }
+      if (cardBlobStatus) {
+        cardBlobStatus.textContent = blob.regime || "Target 3 blobs / Máx 6";
+      }
+
+      if (cardStakingRatio) {
+        cardStakingRatio.textContent = `${(stk.ratio || 0).toFixed(2)}x [${stk.semaforo || '🟢'}]`;
+      }
+      if (cardStakingStatus) {
+        cardStakingStatus.textContent = "Choque de oferta: Staking domina amplamente corretoras";
+      }
+
+      if (cardTotalTvl) {
+        cardTotalTvl.textContent = `$${(tvlUsd / 1e9).toFixed(2)} Bilhões`;
+      }
+      if (cardTvlStatus) {
+        const pctTvl = ((tvlUsd / 160e9) * 100).toFixed(1);
+        cardTvlStatus.textContent = `${pctTvl}% da meta de topo de ciclo ($160B)`;
+      }
+
+      // 3. Tabela de Cenários de Valuation
+      if (tbodyValuationScenarios) {
+        const triang = valData.triangulacao_cenarios || {};
+        const cenarios = triang.cenarios || {};
+        const rows = [];
+
+        for (const [key, c] of Object.entries(cenarios)) {
+          const nome = c.cenario || key.toUpperCase();
+          const faixa = c.faixa_str || "--";
+          const ponto = c.ponto_central_str || "--";
+          const upside = c.upside_str || "--";
+          const corBadge = key === "base" ? "var(--accent-green-bright)" : (key === "otimista" ? "var(--accent-magenta)" : "var(--accent-cyan)");
+
+          rows.push(`
+            <tr>
+              <td><strong style="color: ${corBadge}">${nome}</strong></td>
+              <td class="font-mono">${faixa}</td>
+              <td class="font-mono" style="text-align: right; color: var(--accent-gold); font-weight: bold;">${ponto}</td>
+              <td class="font-mono" style="text-align: center; color: var(--accent-green-bright); font-weight: bold;">${upside}</td>
+            </tr>
+          `);
+        }
+        tbodyValuationScenarios.innerHTML = rows.join("");
+      }
+
+      // 4. Semáforos Institucionais de Topo
+      if (tbodySemaforosTopo) {
+        const semaforos = macroData.semaforos_topo || {};
+        const semaforoRows = [];
+        const labelMap = {
+          net_issuance: "Net Issuance (Queima EIP-1559)",
+          blob_saturation: "Saturação Blobs (EIP-4844)",
+          staking_exchanges: "Staking vs Exchanges Ratio",
+          tvl: "Expansão TVL L1+L2 (DefiLlama)",
+          mvrv_zscore: "MVRV Z-Score de Ciclo"
+        };
+
+        for (const [key, s] of Object.entries(semaforos)) {
+          const lbl = labelMap[key] || key;
+          const prog = (s.progresso_pct || 0).toFixed(1);
+          const emoji = s.emoji || "🟢";
+          const semTexto = s.semaforo || "NEUTRO";
+          const statusTxt = s.status_texto || "Patamar Normal";
+
+          semaforoRows.push(`
+            <tr>
+              <td><strong>${lbl}</strong></td>
+              <td class="font-mono" style="text-align: center;">${prog}%</td>
+              <td style="text-align: center;">${emoji} <span style="font-size: 11px; font-weight: 700;">${semTexto}</span></td>
+              <td style="color: var(--text-dim); font-size: 11px;">${statusTxt}</td>
+            </tr>
+          `);
+        }
+        tbodySemaforosTopo.innerHTML = semaforoRows.join("");
+      }
+
+      if (window.refreshIcons) window.refreshIcons();
+    } catch (e) {
+      console.warn("[TUI] Erro ao carregar métricas On-Chain e Valuation:", e);
+    }
+  }
+
+  // Polling inicial e loops
   fetchQuantState();
   pollInterval = setInterval(fetchQuantState, 1500);
 
   // Status do Telegram
   fetchTelegramStatus();
   setInterval(fetchTelegramStatus, 15000);
+
+  // Radar On-Chain & Valuation (a cada 6 segundos)
+  fetchOnChainAndValuation();
+  setInterval(fetchOnChainAndValuation, 6000);
 });
