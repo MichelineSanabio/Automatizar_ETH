@@ -42,6 +42,15 @@ def block_analyzer_page():
     """Renderiza a página dedicada do Analisador Estatístico de Blocos & Paredes (Z-Score)."""
     return render_template("block_analyzer.html", version=int(get_app_version()))
 
+@views_bp.route("/tui")
+@views_bp.route("/tui.html")
+@views_bp.route("/TUI.html")
+@views_bp.route("/terminal-tui")
+@views_bp.route("/quant-tui")
+def tui_page():
+    """Renderiza o módulo TUI Web Institucional (Quant Terminal em Rich Web)."""
+    return render_template("tui.html", version=int(get_app_version()))
+
 @views_bp.route("/dev/version")
 def dev_version():
     """Retorna o timestamp de modificação dos arquivos para LiveReload automático no navegador."""

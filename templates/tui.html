@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUI Quant Terminal Institucional | Binance & On-Chain</title>
+  <meta name="description" content="Terminal TUI Institucional para monitoramento quantitativo de ETH e BTC, Checklist de Descida, Altseason Index, Probabilidades de Ordens Limite e Recálculo Fibonacci.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <!-- Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tui.css') }}?v={{ version }}">
+</head>
+<body class="tui-body">
+  <div class="tui-wrapper">
+
+    <!-- HEADER INSTITUCIONAL -->
+    <header class="tui-header">
+      <div class="tui-brand">
+        <div class="tui-brand-badge">
+          <i data-lucide="terminal"></i>
+        </div>
+        <div>
+          <div class="tui-brand-title">
+            <span>QUANT TERMINAL INSTITUCIONAL (TUI)</span>
+            <span class="tui-badge-live">LIVE 2Hz</span>
+            <span class="tui-badge-tag">BINANCE FUTURES & ON-CHAIN</span>
+          </div>
+          <div class="tui-brand-sub">
+            Monitoramento de Probabilidade de Execução, Paredão 2.660 USDT, Altseason Index e Recálculo Fibonacci
+          </div>
+        </div>
+      </div>
+
+      <div class="tui-header-right">
+        <!-- Tickers Rápidos -->
+        <div class="tui-quick-tickers">
+          <div class="tui-ticker-pill">
+            <span class="pill-lbl">ETH</span>
+            <span class="pill-val" id="pillEthPrice">$--,--</span>
+          </div>
+          <div class="tui-ticker-pill">
+            <span class="pill-lbl">BTC</span>
+            <span class="pill-val" id="pillBtcPrice">$--,--</span>
+          </div>
+          <div class="tui-ticker-pill">
+            <span class="pill-lbl">ETH/BTC</span>
+            <span class="pill-val" id="pillEthBtc">--.-----</span>
+          </div>
+          <div class="tui-ticker-pill">
+            <span class="pill-lbl">USDT/BRL</span>
+            <span class="pill-val" id="pillUsdtBrl">R$--,--</span>
+          </div>
+        </div>
+
+        <div class="tui-nav-actions">
+          <button id="btnToggleTerminalView" class="btn-tui btn-outline" title="Alternar entre Visualização Terminal Mono e Dashboard Quant">
+            <i data-lucide="code"></i>
+            <span>Modo Rich Console</span>
+          </button>
+          <a href="/" class="btn-tui" title="Terminal Principal">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Terminal</span>
+          </a>
+          <a href="/liquidez" class="btn-tui" title="Monitor de Liquidez">
+            <i data-lucide="crosshair"></i>
+            <span>Liquidez</span>
+          </a>
+          <a href="/data-analise" class="btn-tui" title="Data Análise">
+            <i data-lucide="bar-chart-2"></i>
+            <span>Data Análise</span>
+          </a>
+          <a href="/block-analyzer" class="btn-tui" title="Z-Score de Paredões">
+            <i data-lucide="layers"></i>
+            <span>Z-Score</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- FAIXA DE STATUS MACRO, FUTUROS E WEB3 -->
+    <section class="tui-macro-bar">
+      <div class="macro-item">
+        <span class="macro-label">FUNDING RATE (8H):</span>
+        <span class="macro-value" id="valFundingRate">--.----%</span>
+        <span class="macro-sub" id="valFundingAnn">(--% a.a)</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">OPEN INTEREST ETH:</span>
+        <span class="macro-value" id="valOpenInterest">-- ETH</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">LONG / SHORT RATIO:</span>
+        <span class="macro-value" id="valLongShort">-- (L: --% / S: --%)</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">S&P 500:</span>
+        <span class="macro-value" id="valSp500">--</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">DXY (DÓLAR):</span>
+        <span class="macro-value" id="valDxy">--</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">OURO (GC=F):</span>
+        <span class="macro-value" id="valGold">$--</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">PETRÓLEO WTI:</span>
+        <span class="macro-value" id="valOil">$--</span>
+      </div>
+      <div class="macro-item">
+        <span class="macro-label">WEB3 ETH ON-CHAIN:</span>
+        <span class="macro-value status-ok" id="valWeb3Status">● Conectado (Infura/Public RPC)</span>
+      </div>
+    </section>
+
+    <!-- BLOCO 2: TERMÔMETRO DE ALTSEASON (SUPERIOR / 1/3 CENTRAL) -->
+    <section class="tui-altseason-card">
+      <div class="altseason-header">
+        <div class="altseason-title-group">
+          <span class="block-tag">BLOCO 2</span>
+          <h2>TERMÔMETRO DE ALTSEASON & FLUXO DE CAPITAL GLOBAL</h2>
+        </div>
+        <div class="altseason-score-display">
+          <span class="alt-label">ALTSEASON INDEX:</span>
+          <span class="alt-score-val" id="altseasonScoreVal">--%</span>
+          <span class="alt-stage-badge" id="altseasonStageBadge">Calculando...</span>
+        </div>
+      </div>
+
+      <div class="altseason-bar-container">
+        <div class="altseason-ascii-bar" id="altseasonAsciiBar">[░░░░░░░░░░░░░░░░░░░░] 0.0%</div>
+        <div class="altseason-progress-track">
+          <div class="altseason-progress-fill" id="altseasonProgressFill" style="width: 35%;"></div>
+        </div>
+      </div>
+
+      <div class="altseason-details-grid">
+        <div class="alt-detail-box">
+          <span class="dt-title">Paridade ETH/BTC</span>
+          <span class="dt-val" id="altEthBtcRatio">--.----- BTC</span>
+          <span class="dt-sub" id="altEthBtcStatus">Abaixo de 0,03220 BTC</span>
+        </div>
+        <div class="alt-detail-box">
+          <span class="dt-title">Dominância Bitcoin (BTC.D)</span>
+          <span class="dt-val" id="altBtcDominance">--%</span>
+          <span class="dt-sub">Estimativa Ponderada Spot/Futuros</span>
+        </div>
+        <div class="alt-detail-box">
+          <span class="dt-title">Top 50 Altcoins vs BTC</span>
+          <span class="dt-val" id="altTop50Outperforming">-- / 50</span>
+          <span class="dt-sub">Superando BTC nos últimos 30-90 dias</span>
+        </div>
+        <div class="alt-detail-box">
+          <span class="dt-title">Diagnóstico de Ciclo</span>
+          <span class="dt-val" id="altCycleSummary">Acumulação BTC / Paridade Deprimida</span>
+          <span class="dt-sub">Alts aguardando rompimento de 0,03230</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRID PRINCIPAL DE DOIS BLOCOS: BLOCO 1 (ESQUERDA 50%) & BLOCO 3 (DIREITA 50%) -->
+    <main class="tui-main-grid">
+
+      <!-- BLOCO 1: PAINEL DA DESCIDA & PROBABILIDADES DE EXECUÇÃO (LADO ESQUERDO) -->
+      <section class="tui-panel tui-panel-left">
+        <div class="panel-header header-blue">
+          <div class="panel-title-group">
+            <span class="block-tag tag-blue">BLOCO 1</span>
+            <h3>PAINEL DA DESCIDA & PROBABILIDADES DE EXECUÇÃO</h3>
+          </div>
+          <span class="panel-sub-tag">50% DA TELA</span>
+        </div>
+
+        <!-- 1.1 Checklist de Fatores da Descida -->
+        <div class="sub-card">
+          <div class="sub-card-header">
+            <h4><i data-lucide="check-square"></i> Quadro de Fatores da Descida (Checklist de Gatilhos)</h4>
+            <span class="badge-status-counter" id="activeFactorsCounter">0/6 Ativos</span>
+          </div>
+
+          <div class="checklist-table-wrapper">
+            <table class="tui-table" id="tableDownFactors">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">Fator Analisado</th>
+                  <th style="width: 35%;">Diagnóstico Técnico</th>
+                  <th style="width: 20%; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyDownFactors">
+                <!-- Preenchido via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 1.2 Medidor de Probabilidade Individual das Ordens Limite -->
+        <div class="sub-card" style="margin-top: 14px;">
+          <div class="sub-card-header">
+            <h4><i data-lucide="target"></i> Medidor de Probabilidade Individual das Ordens Limite</h4>
+            <span class="badge-status-counter" style="color: var(--accent-magenta); border-color: var(--accent-magenta);">4 Ordens Monitoradas</span>
+          </div>
+
+          <div class="orders-prob-list" id="ordersProbContainer">
+            <!-- Cartões Dinâmicos A, B, C, D preenchidos via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- BLOCO 3: PAINEL DE PIVÔ DE ALTA & RECÁLCULO AUTOMÁTICO DE ENTRADAS (LADO DIREITO) -->
+      <section class="tui-panel tui-panel-right">
+        <div class="panel-header header-green">
+          <div class="panel-title-group">
+            <span class="block-tag tag-green">BLOCO 3</span>
+            <h3>PAINEL DE PIVÔ DE ALTA & RECÁLCULO AUTOMÁTICO</h3>
+          </div>
+          <span class="panel-sub-tag">50% DA TELA</span>
+        </div>
+
+        <!-- 3.1 Banner de Status de Reversão / Descida -->
+        <div class="pivot-status-banner" id="pivotStatusBanner">
+          <div class="banner-icon"><i data-lucide="alert-triangle"></i></div>
+          <div class="banner-content">
+            <div class="banner-main" id="pivotStatusText">[MODO VIGENTE: CORREÇÃO / DESCIDA ATIVA]</div>
+            <div class="banner-detail" id="pivotStatusDetail">Ordens limite na base permanecem ativas e válidas para captura de liquidez.</div>
+          </div>
+        </div>
+
+        <!-- 3.2 Detector de Invalidação da Queda -->
+        <div class="sub-card" style="margin-top: 12px;">
+          <div class="sub-card-header">
+            <h4><i data-lucide="shield-alert"></i> Detector de Invalidação da Queda (Gatilho Estrutural)</h4>
+            <span class="badge-status-counter" id="pivotConditionsCounter">0/4 Rompidos</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="tui-table" id="tablePivotConditions">
+              <thead>
+                <tr>
+                  <th style="width: 44%;">Critério de Anulação</th>
+                  <th style="width: 20%; text-align: center;">Nível Chave</th>
+                  <th style="width: 20%; text-align: center;">Atual</th>
+                  <th style="width: 16%; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyPivotConditions">
+                <!-- Preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3.3 Motor de Recálculo Dinâmico de Novas Entradas -->
+        <div class="sub-card" style="margin-top: 14px;">
+          <div class="sub-card-header">
+            <h4><i data-lucide="trending-up"></i> Motor de Recálculo Dinâmico de Novas Entradas (Fibonacci)</h4>
+            <span class="badge-status-counter" style="color: var(--accent-green); border-color: var(--accent-green);">Ativação em Reversão</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="tui-table" id="tableDynamicEntries">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Nível de Entrada</th>
+                  <th style="width: 20%; text-align: right;">Preço (USDT)</th>
+                  <th style="width: 15%; text-align: center;">Alocação</th>
+                  <th style="width: 35%;">Critério Matemático</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyDynamicEntries">
+                <!-- Preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3.4 Alvos de Realização Proporcional -->
+        <div class="sub-card" style="margin-top: 14px;">
+          <div class="sub-card-header">
+            <h4><i data-lucide="award"></i> Alvos de Realização Proporcional (Lucro Máximo)</h4>
+            <span class="badge-status-counter" style="color: var(--accent-gold); border-color: var(--accent-gold);">Fibo Extension</span>
+          </div>
+
+          <div class="targets-grid" id="targetsContainer">
+            <!-- Preenchido via JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- JANELA INFERIOR: LOGS QUANTITATIVOS INSTITUCIONAIS EM TEMPO REAL -->
+    <footer class="tui-logs-footer">
+      <div class="logs-header">
+        <div class="logs-title">
+          <i data-lucide="activity"></i>
+          <span>LOGS & EVENTOS QUANTITATIVOS INSTITUCIONAIS EM TEMPO REAL</span>
+        </div>
+        <div class="logs-controls">
+          <span class="log-indicator"></span>
+          <span id="logUpdateCount">0 eventos</span>
+          <button id="btnClearLogs" class="btn-text" title="Limpar visualização de logs">Limpar</button>
+        </div>
+      </div>
+
+      <div class="logs-console-window" id="logsConsoleWindow">
+        <!-- Linhas de log injetadas pelo script -->
+      </div>
+    </footer>
+
+    <!-- MODAL DE VISUALIZAÇÃO DIRETA EM TERMINAL RICH (ASCII/UNICODE MONO) -->
+    <div class="tui-modal-overlay" id="terminalModalOverlay" style="display: none;">
+      <div class="tui-modal-box">
+        <div class="tui-modal-header">
+          <div class="tui-modal-title">
+            <i data-lucide="terminal"></i>
+            <span>RICH CONSOLE OUTPUT (VIEW EMULADA)</span>
+          </div>
+          <button class="tui-modal-close" id="btnCloseTerminalModal">&times;</button>
+        </div>
+        <div class="tui-modal-body">
+          <pre class="rich-console-pre" id="richConsoleOutput">Carregando buffer do terminal Rich...</pre>
+        </div>
+        <div class="tui-modal-footer">
+          <span style="font-size: 11px; color: var(--text-dim);">Execute também localmente com: <code>python tui_terminal.py</code> ou <code>Iniciar_TUI.bat</code></span>
+          <button class="btn-tui" id="btnRefreshConsole">Atualizar Buffer</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/tui.js') }}?v={{ version }}"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@ from .orderbook import orderbook_bp
 from .volatility import volatility_bp
 from .whales import whales_bp
 from .settings import settings_bp
+from .quant import quant_bp
 
 def register_blueprints(app):
     """Registra todos os Blueprints no aplicativo Flask principal."""
@@ -17,3 +18,4 @@ def register_blueprints(app):
     app.register_blueprint(volatility_bp)
     app.register_blueprint(whales_bp)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(quant_bp)

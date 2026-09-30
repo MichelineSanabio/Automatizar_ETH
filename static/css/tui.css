@@ -1,0 +1,924 @@
+/**
+ * tui.css - Estilização do Terminal TUI Institucional
+ * Padrão Dark Mode Institucional com tipografia JetBrains Mono & Inter,
+ * bordas de alta definição, cartões diagnósticos, barras visuais e feed de logs.
+ */
+
+:root {
+  --bg-primary: #07090e;
+  --bg-card: #0d111a;
+  --bg-subcard: #121824;
+  --bg-table-hover: #182030;
+  
+  --border-dim: #1e293b;
+  --border-light: #2c3e55;
+  --border-accent-blue: #1e40af;
+  --border-accent-green: #065f46;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-dim: #64748b;
+
+  --accent-cyan: #06b6d4;
+  --accent-green: #10b981;
+  --accent-green-bright: #34d399;
+  --accent-red: #ef4444;
+  --accent-red-bright: #f87171;
+  --accent-yellow: #f59e0b;
+  --accent-gold: #fbbf24;
+  --accent-magenta: #ec4899;
+  --accent-blue: #3b82f6;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace, Consolas, "Courier New";
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body.tui-body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-x: hidden;
+  padding-bottom: 20px;
+}
+
+.tui-wrapper {
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   HEADER INSTITUCIONAL
+   ========================================================================== */
+.tui-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 10px 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.tui-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tui-brand-badge {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2));
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tui-brand-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+}
+
+.tui-badge-live {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green-bright);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tui-badge-tag {
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tui-brand-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.tui-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tui-quick-tickers {
+  display: flex;
+  gap: 8px;
+}
+
+.tui-ticker-pill {
+  background: var(--bg-subcard);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  padding: 4px 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 90px;
+}
+
+.tui-ticker-pill .pill-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.tui-ticker-pill .pill-val {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent-gold);
+}
+
+.tui-nav-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-tui {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-subcard);
+  border: 1px solid var(--border-dim);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-mono);
+}
+
+.btn-tui:hover {
+  background: #1e293b;
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.btn-tui.btn-outline {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   FAIXA MACRO HORIZONTAL
+   ========================================================================== */
+.tui-macro-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.macro-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.macro-label {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.macro-value {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.macro-sub {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.status-ok {
+  color: var(--accent-green-bright);
+}
+
+/* ==========================================================================
+   BLOCO 2: TERMÔMETRO DE ALTSEASON (SUPERIOR / 1/3 CENTRAL)
+   ========================================================================== */
+.tui-altseason-card {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-yellow);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.08);
+}
+
+.altseason-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.altseason-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.altseason-title-group h2 {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--accent-yellow);
+  font-family: var(--font-mono);
+}
+
+.block-tag {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--accent-yellow);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.block-tag.tag-blue {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-blue);
+}
+
+.block-tag.tag-green {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green);
+}
+
+.altseason-score-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+}
+
+.alt-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.alt-score-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent-yellow);
+}
+
+.alt-stage-badge {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid var(--accent-yellow);
+  color: var(--accent-gold);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.altseason-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.altseason-ascii-bar {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent-yellow);
+  text-align: center;
+}
+
+.altseason-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #182233;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border-dim);
+}
+
+.altseason-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #f59e0b, #10b981);
+  transition: width 0.5s ease;
+}
+
+.altseason-details-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.alt-detail-box {
+  background: var(--bg-subcard);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dt-title {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.dt-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+.dt-sub {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   GRID PRINCIPAL (BLOCO 1 & BLOCO 3 - 50% / 50%)
+   ========================================================================== */
+.tui-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.tui-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tui-panel-left {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.tui-panel-right {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-dim);
+  margin-bottom: 10px;
+}
+
+.panel-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title-group h3 {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.header-blue h3 {
+  color: var(--accent-blue);
+}
+
+.header-green h3 {
+  color: var(--accent-green-bright);
+}
+
+.panel-sub-tag {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.sub-card {
+  background: var(--bg-subcard);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.sub-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sub-card-header h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+}
+
+.badge-status-counter {
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid var(--border-light);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+/* ==========================================================================
+   TABELAS TUI INSTITUCIONAIS
+   ========================================================================== */
+.checklist-table-wrapper, .table-wrapper {
+  overflow-x: auto;
+}
+
+.tui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.tui-table th {
+  background: #090d14;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 6px 8px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tui-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tui-table tr:hover td {
+  background: var(--bg-table-hover);
+}
+
+.status-badge-active {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green-bright);
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.status-badge-inactive {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red-bright);
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 10px;
+}
+
+/* ==========================================================================
+   CARTÕES DE PROBABILIDADE DAS ORDENS LIMITE (1.2)
+   ========================================================================== */
+.orders-prob-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-prob-card {
+  background: #0a0e17;
+  border: 1px solid var(--border-light);
+  border-left: 4px solid var(--accent-cyan);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+}
+
+.order-prob-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-id {
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.order-price {
+  font-weight: 800;
+  color: var(--accent-gold);
+}
+
+.order-size {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.order-prob-badge {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.prob-high {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green-bright);
+}
+
+.prob-mid {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid var(--accent-yellow);
+  color: var(--accent-gold);
+}
+
+.prob-low {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red-bright);
+}
+
+.order-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.order-ascii-bar {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.order-prog-track {
+  flex: 1;
+  height: 6px;
+  background: #16202e;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.order-prog-fill {
+  height: 100%;
+}
+
+.order-confluence {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   BANNER DE STATUS DE PIVÔ (BLOCO 3)
+   ========================================================================== */
+.pivot-status-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid var(--accent-red);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+}
+
+.pivot-status-banner.banner-active-pivot {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: var(--accent-green);
+}
+
+.banner-icon {
+  font-size: 18px;
+  color: var(--accent-red-bright);
+}
+
+.banner-active-pivot .banner-icon {
+  color: var(--accent-green-bright);
+}
+
+.banner-main {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--accent-red-bright);
+}
+
+.banner-active-pivot .banner-main {
+  color: var(--accent-green-bright);
+}
+
+.banner-detail {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   ALVOS DE REALIZAÇÃO (BLOCO 3.4)
+   ========================================================================== */
+.targets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.target-card {
+  background: #0a0e17;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+}
+
+.target-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.target-price {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 2px 0;
+}
+
+.target-exp {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.target-exit {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-green-bright);
+}
+
+/* ==========================================================================
+   RODAPÉ DE LOGS QUANTITATIVOS INSTITUCIONAIS
+   ========================================================================== */
+.tui-logs-footer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.logs-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+}
+
+.logs-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.log-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  animation: pulse-indicator 1.5s infinite;
+}
+
+@keyframes pulse-indicator {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.btn-text:hover {
+  color: var(--text-primary);
+}
+
+.logs-console-window {
+  background: #05070a;
+  border: 1px solid #141c2b;
+  border-radius: 4px;
+  padding: 8px 10px;
+  height: 120px;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.log-time {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.log-tag {
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.log-tag-INFO { color: var(--accent-cyan); }
+.log-tag-TICK { color: var(--accent-magenta); }
+.log-tag-WARN { color: var(--accent-yellow); }
+.log-tag-ERROR { color: var(--accent-red); }
+.log-tag-ONCHAIN { color: var(--accent-green-bright); }
+
+.log-msg {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+/* ==========================================================================
+   MODAL RICH CONSOLE VIEW
+   ========================================================================== */
+.tui-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.tui-modal-box {
+  background: #090c14;
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 1100px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+}
+
+.tui-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-dim);
+}
+
+.tui-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+}
+
+.tui-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.tui-modal-close:hover {
+  color: #fff;
+}
+
+.tui-modal-body {
+  padding: 14px;
+  overflow: auto;
+  flex: 1;
+}
+
+.rich-console-pre {
+  background: #030508;
+  border: 1px solid #141c2b;
+  border-radius: 4px;
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #38bdf8;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.35;
+}
+
+.tui-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-dim);
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .tui-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .altseason-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
