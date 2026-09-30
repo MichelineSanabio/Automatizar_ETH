@@ -333,63 +333,88 @@ class QuantTradingEngine:
     # ---------------------------------------------------------
     # 4. MOTOR DE PROBABILIDADES DAS ORDENS LIMITE DO USUÁRIO
     # ---------------------------------------------------------
+    def load_orders_from_layout(self) -> List[Dict[str, Any]]:
+        """
+        Lê diretamente as ordens cadastradas pelo usuário na fonte 'Ordens & PnL' (terminal_layout.json).
+        Garante sincronização total entre o painel de Ordens & PnL e o Medidor de Probabilidade TUI.
+        """
+        layout_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terminal_layout.json")
+        raw_orders = []
+        if os.path.exists(layout_path):
+            try:
+                with open(layout_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    raw_orders = data.get("orders", [])
+            except Exception as e:
+                logger.warning(f"Erro ao ler terminal_layout.json: {e}")
+
+        # Se não houver ordens no layout, fallback para as 4 ordens oficiais padrão de Ordens & PnL
+        if not raw_orders:
+            raw_orders = [
+                {"id": "ord_buy_2", "price": 2585.0, "amount": 0.1557, "total": 402.4845, "notes": "Ordem de Compra Limit (0,1557 ETH @ $2585)"},
+                {"id": "ord_buy_4", "price": 2530.0, "amount": 0.9570, "total": 2421.21, "notes": "Ordem de Compra Limit (0,9570 ETH @ $2530)"},
+                {"id": "ord_buy_1", "price": 2530.0, "amount": 0.2662, "total": 673.486, "notes": "Ordem de Compra Limit (0,2662 ETH @ $2530)"},
+                {"id": "ord_buy_3", "price": 2480.0, "amount": 0.3188, "total": 790.624, "notes": "Ordem de Compra Limit (0,3188 ETH @ $2480)"},
+            ]
+
+        # Ordenar por preço decrescente (da mais alta/próxima até a mais profunda)
+        # Em caso de empate de preço, ordenar por volume/montante decrescente
+        sorted_orders = sorted(
+            raw_orders,
+            key=lambda o: (float(o.get("price", 0)), float(o.get("total", 0))),
+            reverse=True
+        )
+        return sorted_orders
+
     def evaluate_order_probabilities(self, current_eth_price: float, btc_price: float) -> List[Dict[str, Any]]:
         """
-        Calcula probabilidades matemáticas das 4 ordens limites cadastradas pelo usuário:
-        - Ordem A: 2.585,00 USDT
-        - Ordem B: 2.530,00 USDT
-        - Ordem C: 2.480,00 USDT
-        - Ordem D: 2.355,00 USDT
+        Calcula probabilidades matemáticas das ordens limites sincronizadas com 'Ordens & PnL':
+        - Ordem A: 2.585,00 USDT (0,1557 ETH | R$ 2.100,00) -> ~80-85% (Frente da EMA 25 diária)
+        - Ordem B: 2.530,00 USDT (0,9570 ETH | $2.421,21)   -> ~70-75% (Violação da EMA 99 semanal)
+        - Ordem C: 2.530,00 USDT (0,2662 ETH | $673,49)     -> ~70-75% (Reteste em $2.530 / EMA 99)
+        - Ordem D: 2.480,00 USDT (0,3188 ETH | $790,62)     -> ~55-60% (Suporte no SAR diário / Stop Hunt abaixo de 2.500)
         """
-        orders = [
-            {
-                "label": "Ordem A",
-                "price": 2585.00,
-                "amount_eth": 0.1557,
-                "total_usdt": 402.48,
-                "notes": "Frente da EMA 25 diária (~$2.580)",
-                "base_prob": 82.0,
-            },
-            {
-                "label": "Ordem B",
-                "price": 2530.00,
-                "amount_eth": 0.9570,
-                "total_usdt": 2421.21,
-                "notes": "Zona de suporte estrutural / EMA 99 semanal",
-                "base_prob": 72.0,
-            },
-            {
-                "label": "Ordem C",
-                "price": 2480.00,
-                "amount_eth": 0.3188,
-                "total_usdt": 790.62,
-                "notes": "Suporte no SAR diário / Stop Hunt abaixo de 2.500",
-                "base_prob": 58.0,
-            },
-            {
-                "label": "Ordem D",
-                "price": 2355.00,
-                "amount_eth": 0.5000,
-                "total_usdt": 1177.50,
-                "notes": "Frente do bloco institucional de $2.350",
-                "base_prob": 23.0,
-            }
-        ]
-
+        orders_source = self.load_orders_from_layout()
         evaluated = []
-        for o in orders:
-            p_target = o["price"]
+
+        for idx, o in enumerate(orders_source):
+            label_char = chr(65 + idx) if idx < 26 else str(idx + 1)
+            label = f"Ordem {label_char}"
+            p_target = float(o.get("price", 0))
+            amount_eth = float(o.get("amount", 0))
+            total_usdt = float(o.get("total", p_target * amount_eth))
+
+            # Confluência baseada no nível de preço e estrutura institucional
+            if abs(p_target - 2585.0) < 5:
+                confluence = "Frente da EMA 25 diária (~$2.580)"
+                base_prob = 82.0
+            elif abs(p_target - 2530.0) < 5 and amount_eth >= 0.5:
+                confluence = "Zona de suporte estrutural / EMA 99 semanal"
+                base_prob = 72.0
+            elif abs(p_target - 2530.0) < 5:
+                confluence = "Reteste em $2.530 / Suporte EMA 99"
+                base_prob = 72.0
+            elif abs(p_target - 2480.0) < 5:
+                confluence = "Suporte no SAR diário / Stop Hunt abaixo de 2.500"
+                base_prob = 58.0
+            elif abs(p_target - 2355.0) < 10:
+                confluence = "Frente do bloco institucional de $2.350"
+                base_prob = 25.0
+            else:
+                confluence = o.get("notes") or f"Ordem Limite no nível ${p_target:,.2f}"
+                base_prob = max(15.0, min(90.0, 90.0 - (max(0, current_eth_price - p_target) / max(1, current_eth_price)) * 400))
+
             diff_pct = ((current_eth_price - p_target) / current_eth_price) * 100
 
-            prob = o["base_prob"]
             if current_eth_price <= p_target:
                 prob = 100.0
                 status = "EXECUTADA (Preço Atingido)"
             else:
+                prob = base_prob
                 if diff_pct < 1.0:
-                    prob = min(95.0, prob + 12.0)
+                    prob = min(96.0, prob + 12.0)
                 elif diff_pct < 3.0:
-                    prob = min(90.0, prob + 6.0)
+                    prob = min(92.0, prob + 6.0)
                 
                 if btc_price < 82500:
                     prob = min(98.0, prob + 5.0)
@@ -404,21 +429,23 @@ class QuantTradingEngine:
             else:
                 prob_color = "red"
 
-            if o["label"] == "Ordem A":
-                size_str = f"R$ 2.100,00 ({o['amount_eth']:.4f} ETH)"
+            # Formatação de exibição do montante (Ordem A com R$ 2.100 e ETH)
+            if abs(p_target - 2585.0) < 5 and abs(amount_eth - 0.1557) < 0.01:
+                size_str = f"R$ 2.100,00 ({amount_eth:.4f} ETH)"
             else:
-                size_str = f"{o['amount_eth']:.4f} ETH (${o['total_usdt']:,.2f})"
+                size_str = f"{amount_eth:.4f} ETH (${total_usdt:,.2f})"
 
             evaluated.append({
-                "label": o["label"],
-                "name": o["label"],
-                "price": o["price"],
-                "price_usdt": o["price"],
-                "amount_eth": o["amount_eth"],
-                "total_usdt": o["total_usdt"],
+                "id": o.get("id", f"ord_{idx+1}"),
+                "label": label,
+                "name": label,
+                "price": p_target,
+                "price_usdt": p_target,
+                "amount_eth": amount_eth,
+                "total_usdt": total_usdt,
                 "size_str": size_str,
-                "notes": o["notes"],
-                "confluence": o["notes"],
+                "notes": confluence,
+                "confluence": confluence,
                 "probability": round(prob, 1),
                 "prob_pct": round(prob, 1),
                 "prob_bar": f"[{prob_bar}]",
