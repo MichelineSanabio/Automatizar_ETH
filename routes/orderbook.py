@@ -51,12 +51,14 @@ def api_orderbook_analyze_block():
         side = payload.get("side", "auto")
         limit = payload.get("limit", 1000)
         atol = payload.get("atol")
+        grouping = payload.get("grouping")
     else:
         symbol = request.args.get("symbol", "ETHUSDT")
         target_price = request.args.get("target_price")
         side = request.args.get("side", "auto" if target_price else "bids")
         limit = request.args.get("limit", 1000)
         atol = request.args.get("atol")
+        grouping = request.args.get("grouping")
 
     try:
         limit = int(limit)
@@ -74,12 +76,18 @@ def api_orderbook_analyze_block():
         atol = None
 
     try:
+        grouping = float(grouping) if grouping is not None and str(grouping).strip() != "" else None
+    except (ValueError, TypeError):
+        grouping = None
+
+    try:
         result = orderbook_analyzer.analyze_support_block(
             symbol=symbol,
             target_price=target_price,
             side=side,
             limit=limit,
-            atol=atol
+            atol=atol,
+            grouping=grouping
         )
         return jsonify(result)
     except Exception as e:

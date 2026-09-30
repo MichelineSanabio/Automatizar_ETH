@@ -70,11 +70,13 @@ class OrderBookAnalyzer:
         target_price: Optional[float] = 2660.0,
         side: str = "bids",
         limit: int = 1000,
-        atol: Optional[float] = None
+        atol: Optional[float] = None,
+        grouping: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Analisa um degrau de preço específico ou identifica a presença institucional
         utilizando média, desvio padrão e Z-Score (sigmas acima da média).
+        Suporta agrupamento de spread manual (ex: 1.0 ou 10.0).
         """
         symbol = symbol.upper()
         depth = self.fetch_depth(symbol=symbol, limit=limit)
@@ -87,7 +89,18 @@ class OrderBookAnalyzer:
 
         best_bid = float(bids_data[0, 0]) if len(bids_data) > 0 else 0.0
         best_ask = float(asks_data[0, 0]) if len(asks_data) > 0 else 0.0
-        spread = round(best_ask - best_bid, 4) if (best_bid and best_ask) else 0.0
+        spread_raw = round(best_ask - best_bid, 4) if (best_bid and best_ask) else 0.0
+
+        if grouping is not None and grouping > 0.01:
+            best_bid_grouped = float(np.floor(best_bid / grouping) * grouping)
+            best_ask_grouped = float(np.ceil(best_ask / grouping) * grouping)
+            if best_ask_grouped <= best_bid_grouped:
+                best_ask_grouped = best_bid_grouped + grouping
+            spread = round(max(grouping, best_ask_grouped - best_bid_grouped), 2)
+        else:
+            best_bid_grouped = best_bid
+            best_ask_grouped = best_ask
+            spread = spread_raw
 
         # Seleciona o lado do livro
         target_side = side.lower()
@@ -246,6 +259,10 @@ class OrderBookAnalyzer:
             "best_bid": round(best_bid, 2),
             "best_ask": round(best_ask, 2),
             "spread": spread,
+            "spread_raw": spread_raw,
+            "grouping": grouping,
+            "best_bid_grouped": round(best_bid_grouped, 2),
+            "best_ask_grouped": round(best_ask_grouped, 2),
             "bloco": result_bloco,
             "estatisticas_livro": {
                 "total_degraus_analisados": len(active_data),

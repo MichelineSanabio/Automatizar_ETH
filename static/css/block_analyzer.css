@@ -339,6 +339,112 @@ body.block-analyzer-body {
   font-family: var(--font-mono);
 }
 
+.stat-item.stat-item-spread {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.stat-spread-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.spread-val-main {
+  color: var(--binance-yellow);
+  font-weight: 700;
+}
+
+.spread-val-detail {
+  color: #c9d1d9;
+  font-size: 11.5px;
+}
+
+.spread-val-raw {
+  font-size: 11px;
+  color: #848e9c;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-spread-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(18, 24, 38, 0.95);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-spread-label {
+  font-size: 10.5px;
+  color: #848e9c;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.stat-spread-pills {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.btn-spread-pill {
+  background: #1a2233;
+  border: 1px solid #2b3548;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.btn-spread-pill:hover {
+  background: #2b3548;
+  color: #ffffff;
+  border-color: #3b475e;
+}
+
+.btn-spread-pill.active {
+  background: var(--binance-yellow);
+  color: #000000;
+  font-weight: 700;
+  border-color: var(--binance-yellow);
+  box-shadow: 0 0 8px rgba(240, 185, 11, 0.35);
+}
+
+.input-spread-custom {
+  width: 52px;
+  background: #121824;
+  border: 1px solid #2b3548;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-spread-custom:focus {
+  border-color: var(--binance-yellow);
+}
+
+.input-spread-custom::placeholder {
+  color: #556173;
+}
+
 /* PAINEL GRÁFICO E TABELA */
 .ba-dashboard-columns {
   display: grid;

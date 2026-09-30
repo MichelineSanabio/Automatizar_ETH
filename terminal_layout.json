@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-30T11:03:04Z",
+  "lastUpdated": "2026-09-30T11:34:57Z",
   "chart": {
     "symbol": "ETHUSDT",
     "interval": "1h",
@@ -20,15 +20,15 @@
     "showMacd": false
   },
   "views": {
-    "activeMainView": "chart",
+    "activeMainView": "data-analysis",
     "activeSideTab": "orderbook",
     "whaleSubview": "holders",
     "tapeSizeFilter": "all",
     "tapeSideFilter": "all"
   },
   "accessibility": {
-    "tvMode": true,
-    "scaleLevel": "120",
+    "tvMode": false,
+    "scaleLevel": "100",
     "highContrast": false,
     "hoverZoom": true,
     "floatingLens": true

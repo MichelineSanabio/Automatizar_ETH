@@ -37,7 +37,7 @@ Automatizar_ETH/
 │
 ├── templates/                     # Interfaces HTML (Jinja2)
 │   ├── index.html                 # Interface do Terminal Principal (Gráfico, Book, Tape, Ordens, Ticker)
-│   ├── block_analyzer.html        # Interface dedicada ao Z-Score e Análise de Blocos/Paredes
+│   ├── block_analyzer.html        # Interface dedicada ao Z-Score, Análise de Blocos e Spread Manual (0.01, 1, 10)
 │   ├── liquidez.html              # Interface de Monitoramento de Liquidez e Caça de Stops
 │   ├── data_analise.html          # Interface de Estatísticas de Volatilidade e Turnos
 │   └── tui.html                   # Interface Web do Terminal Quant Institucional (TUI Web & Rich Buffer)
@@ -93,7 +93,7 @@ Automatizar_ETH/
 | **quant_analyzer.py** | `QuantTradingEngine`, `get_full_quant_state` | Motor quantitativo: Spot/Futuros, Altseason, Livro 2660, Probabilidades e Fibo. | `requests`, `math`, `time` |
 | **tui_terminal.py**   | `build_full_layout`, `async_main` | Terminal rico (TUI) com 3 blocos, painel de descida, ordens e Live 2Hz. | `rich`, `asyncio`, `quant_analyzer` |
 | **binance_client.py**| `BinanceClient` | Requisições HTTP com fallback multi-domínio (`api.binance.com` / `vision`). | `requests`, `time` |
-| **orderbook_analyzer.py**| `OrderBookAnalyzer` | Análise quantitativa via desvio padrão, Z-Score de ordens e spoofing. | `numpy`, `requests` |
+| **orderbook_analyzer.py**| `OrderBookAnalyzer` | Análise quantitativa via desvio padrão, Z-Score de ordens, spoofing e agrupamento de spread manual. | `numpy`, `requests` |
 | **volatility_analyzer.py**| `VolatilityAnalyzer` | Quebra de volatilidade em turnos horários, cálculo de amplitude e spikes. | `datetime`, `numpy`, `csv` |
 | **static/js/state.js** | `initDOMElements`, `MARKET_TIERS` | Declaração do estado reativo global e cache de nós do DOM. | Global Scope |
 | **static/js/storage.js** | `saveLayoutImmediate`, `restoreLayout` | Sincroniza estado da UI com `terminal_layout.json` no backend. | `fetch`, `localStorage` |
@@ -138,7 +138,7 @@ Automatizar_ETH/
 | `[TELEGRAM_NOTIFIER]` | `telegram_notifier.py`, `routes/quant.py`, `.env` | Ajustar regras de alertas do bot Telegram, histerese (±10%), proximidade (<1%) ou rate-limit. |
 | `[QUANT_ENGINE_MATH]` | `quant_analyzer.py`, `routes/quant.py` | Ajustar fórmulas de indicadores avançados (SuperTrend, SAR, KDJ), Z-Score de 2.660 ou Macro. |
 | `[CHART_CANDLES_ZOOM]` | `static/js/chart.js`, `static/css/chart.css` | Alterar comportamento de velas, zoom TradingView, navegação, escala de preço ou HUD OHLC. |
-| `[ORDER_BOOK_GROUPING]`| `static/js/orderbook.js`, `routes/orderbook.py`, `orderbook_analyzer.py` | Modificar agrupamento de ticks, profundidade de linhas, radar de paredes ou cálculo de Z-Score. |
+| `[ORDER_BOOK_GROUPING]`| `static/js/orderbook.js`, `routes/orderbook.py`, `orderbook_analyzer.py`, `templates/block_analyzer.html` | Modificar agrupamento de ticks, profundidade de linhas, spread manual (0.01, 1, 10) ou cálculo de Z-Score. |
 | `[INDICATORS_MATH]` | `indicators.py`, `static/js/indicators.js`, `routes/market.py` | Incluir ou refinar fórmulas de indicadores técnicos (RSI, Bollinger, Médias, MACD). |
 | `[TAPE_READING_TRADES]`| `static/js/tapereading.js`, `static/js/websocket.js` | Ajustar fita de trades, classificação de ordens por porte (Varejo/Baleia) ou delta. |
 | `[LAYOUT_PERSISTENCE]` | `static/js/storage.js`, `routes/settings.py`, `terminal_layout.json` | Adicionar novas preferências que devem ser lembradas ao recarregar a página. |

@@ -155,8 +155,24 @@
       <div class="stat-item">📊 <span>Volume Médio por Nível:</span> <strong id="statMean">---</strong></div>
       <div class="stat-item">📈 <span>Desvio Padrão (σ):</span> <strong id="statStd">---</strong></div>
       <div class="stat-item">🎯 <span>Mediana do Livro:</span> <strong id="statMedian">---</strong></div>
-      <div class="stat-item">⚡ <span>Volume Máximo:</span> <strong id="statMax">---</strong></div>
-      <div class="stat-item">⚖️ <span>Spread Atual:</span> <strong id="statSpread">---</strong></div>
+      <div class="stat-item stat-item-spread">
+        <div class="stat-spread-top">
+          <span>⚖️ Spread Atual:</span>
+          <strong id="statSpread">---</strong>
+        </div>
+        <div class="stat-spread-controls" title="Ajuste manual do agrupamento / spread">
+          <span class="stat-spread-label">Spread Manual:</span>
+          <div class="stat-spread-pills" id="spreadPills">
+            <button type="button" class="btn-spread-pill" data-step="0.01" title="Spread Nativo do Livro (0.01)">0.01</button>
+            <button type="button" class="btn-spread-pill" data-step="0.1" title="Agrupamento 0.1">0.1</button>
+            <button type="button" class="btn-spread-pill" data-step="1" title="Spread Manual 1 USDT">1</button>
+            <button type="button" class="btn-spread-pill active" data-step="10" title="Spread Manual 10 USDT (Padrão Binance)">10</button>
+          </div>
+          <div class="stat-spread-custom-wrap">
+            <input type="number" id="inputManualSpreadCustom" class="input-spread-custom" placeholder="Outro" min="0.01" step="any" title="Spread Manual Customizado (pressione Enter)" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- VISUALIZAÇÃO GRÁFICA & TABELA DE MAIORES PAREDES -->
@@ -217,6 +233,8 @@
     // Inicialização da Página Standalone do Analisador de Blocos
     let currentBlockData = null;
     let autoRefreshTimer = null;
+    let manualSpreadStep = parseFloat(localStorage.getItem("ba_manual_spread") || "10");
+    if (isNaN(manualSpreadStep) || manualSpreadStep <= 0) manualSpreadStep = 10;
 
     document.addEventListener("DOMContentLoaded", () => {
       if (window.lucide) lucide.createIcons();
@@ -233,6 +251,25 @@
       }, 1000);
     }
 
+    function updateSpreadPillsUI(step) {
+      const pills = document.querySelectorAll(".btn-spread-pill");
+      const inputCustom = document.getElementById("inputManualSpreadCustom");
+      let matched = false;
+      pills.forEach(pill => {
+        const pStep = parseFloat(pill.dataset.step);
+        const isActive = Math.abs(pStep - step) < 0.0001;
+        pill.classList.toggle("active", isActive);
+        if (isActive) matched = true;
+      });
+      if (inputCustom) {
+        if (!matched && step > 0) {
+          inputCustom.value = step;
+        } else if (matched) {
+          inputCustom.value = "";
+        }
+      }
+    }
+
     function initControls() {
       const selSymbol = document.getElementById("selSymbol");
       const inputPrice = document.getElementById("inputTargetPrice");
@@ -241,6 +278,44 @@
       const btnAnalyze = document.getElementById("btnAnalyze");
       const btnFillCurrent = document.getElementById("btnFillCurrentPrice");
       const chkAuto = document.getElementById("chkAutoRefresh");
+
+      // Controles de Spread Manual (0.01, 0.1, 1, 10, Custom)
+      const spreadPills = document.querySelectorAll(".btn-spread-pill");
+      const inputSpreadCustom = document.getElementById("inputManualSpreadCustom");
+
+      updateSpreadPillsUI(manualSpreadStep);
+
+      spreadPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+          const stepVal = parseFloat(pill.dataset.step);
+          if (!isNaN(stepVal) && stepVal > 0) {
+            manualSpreadStep = stepVal;
+            localStorage.setItem("ba_manual_spread", manualSpreadStep);
+            updateSpreadPillsUI(manualSpreadStep);
+            runBlockAnalysis(true);
+          }
+        });
+      });
+
+      if (inputSpreadCustom) {
+        const applyCustomSpread = () => {
+          const customVal = parseFloat(inputSpreadCustom.value);
+          if (!isNaN(customVal) && customVal > 0) {
+            manualSpreadStep = customVal;
+            localStorage.setItem("ba_manual_spread", manualSpreadStep);
+            updateSpreadPillsUI(manualSpreadStep);
+            runBlockAnalysis(true);
+          }
+        };
+
+        inputSpreadCustom.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            applyCustomSpread();
+          }
+        });
+        inputSpreadCustom.addEventListener("change", applyCustomSpread);
+      }
 
       btnAnalyze.addEventListener("click", () => runBlockAnalysis());
 
@@ -310,7 +385,8 @@
         const params = new URLSearchParams({
           symbol: symbol,
           side: side,
-          limit: limit
+          limit: limit,
+          grouping: manualSpreadStep
         });
         if (!isNaN(targetPrice)) {
           params.append("target_price", targetPrice);
@@ -403,7 +479,30 @@
       document.getElementById("statStd").textContent = `${stats.desvio_padrao || 0} ${baseAsset}`;
       document.getElementById("statMedian").textContent = `${stats.mediana_volume || 0} ${baseAsset}`;
       document.getElementById("statMax").textContent = `${stats.volume_maximo || 0} ${baseAsset}`;
-      document.getElementById("statSpread").textContent = `$${data.spread || 0} (Bid: $${data.best_bid} | Ask: $${data.best_ask})`;
+      // Spread Manual & Detalhamento Visual
+      const statSpread = document.getElementById("statSpread");
+      const currentGrouping = data.grouping !== undefined && data.grouping !== null ? data.grouping : manualSpreadStep;
+      const isManual = currentGrouping && currentGrouping > 0.01;
+
+      const spreadVal = data.spread !== undefined ? data.spread : 0.01;
+      const spreadRaw = data.spread_raw !== undefined ? data.spread_raw : (data.best_ask - data.best_bid);
+      const bidVal = data.best_bid_grouped !== undefined ? data.best_bid_grouped : data.best_bid;
+      const askVal = data.best_ask_grouped !== undefined ? data.best_ask_grouped : data.best_ask;
+
+      if (isManual) {
+        statSpread.innerHTML = `
+          <span class="spread-val-main">$${spreadVal.toFixed(2)}</span>
+          <span class="spread-val-detail">(Bid: $${bidVal.toFixed(2)} | Ask: $${askVal.toFixed(2)})</span>
+          <span class="spread-val-raw" title="Spread Nativo do Livro Binance da Moeda">[Mercado: $${spreadRaw.toFixed(2)}]</span>
+        `;
+      } else {
+        statSpread.innerHTML = `
+          <span class="spread-val-main">$${spreadVal.toFixed(2)}</span>
+          <span class="spread-val-detail">(Bid: $${bidVal.toFixed(2)} | Ask: $${askVal.toFixed(2)})</span>
+        `;
+      }
+
+      updateSpreadPillsUI(manualSpreadStep);
 
       // 3. Tabela de Top Paredes
       const tblBody = document.getElementById("tblTopWallsBody");
