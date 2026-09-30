@@ -309,3 +309,51 @@ function bindIndicatorTooltips() {
     btn.addEventListener('mouseleave', hideAppTooltip);
   });
 }
+
+/**
+ * Formata timestamp, Date ou string ISO para o Fuso Horário de Brasília (America/Sao_Paulo, UTC-3) no formato 24 horas (HH:mm:ss ou HH:mm).
+ * @param {Date|number|string} dateOrTs 
+ * @param {boolean} includeSeconds 
+ * @returns {string} Ex: "20:25:30"
+ */
+function formatBrasiliaTime(dateOrTs, includeSeconds = true) {
+  if (dateOrTs === undefined || dateOrTs === null || dateOrTs === '') return '--:--:--';
+  const date = (dateOrTs instanceof Date)
+    ? dateOrTs
+    : new Date(typeof dateOrTs === 'number' && dateOrTs < 1e11 ? dateOrTs * 1000 : dateOrTs);
+  if (isNaN(date.getTime())) return '--:--:--';
+  return date.toLocaleTimeString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: includeSeconds ? '2-digit' : undefined,
+  });
+}
+window.formatBrasiliaTime = formatBrasiliaTime;
+
+/**
+ * Formata data e horário completos para o Fuso Horário de Brasília (America/Sao_Paulo, UTC-3) em formato 24h (dd/mm/aaaa HH:mm:ss).
+ * @param {Date|number|string} dateOrTs 
+ * @param {boolean} includeSeconds 
+ * @returns {string} Ex: "30/09/2026 20:25:30"
+ */
+function formatBrasiliaDateTime(dateOrTs, includeSeconds = true) {
+  if (dateOrTs === undefined || dateOrTs === null || dateOrTs === '') return '--/--/---- --:--';
+  const date = (dateOrTs instanceof Date)
+    ? dateOrTs
+    : new Date(typeof dateOrTs === 'number' && dateOrTs < 1e11 ? dateOrTs * 1000 : dateOrTs);
+  if (isNaN(date.getTime())) return '--/--/---- --:--';
+  return date.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    hour12: false,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: includeSeconds ? '2-digit' : undefined,
+  });
+}
+window.formatBrasiliaDateTime = formatBrasiliaDateTime;
+

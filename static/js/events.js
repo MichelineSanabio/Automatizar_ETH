@@ -238,12 +238,13 @@ function setupEventListeners() {
     });
   }
 
-  // View Switcher (Chart vs Livro Binance vs Expanded Tape vs Liquidez vs Data Análise)
+  // View Switcher (Chart vs Livro Binance vs Expanded Tape vs Liquidez vs Data Análise vs Quant)
   if (el.btnViewChart) el.btnViewChart.addEventListener('click', () => setMainView('chart'));
   if (el.btnViewOrderBook) el.btnViewOrderBook.addEventListener('click', () => setMainView('orderbook'));
   if (el.btnViewTape) el.btnViewTape.addEventListener('click', () => setMainView('tape'));
   if (el.btnViewLiquidity) el.btnViewLiquidity.addEventListener('click', () => setMainView('liquidity'));
   if (el.btnViewDataAnalysis) el.btnViewDataAnalysis.addEventListener('click', () => setMainView('data-analysis'));
+  if (el.btnViewQuant) el.btnViewQuant.addEventListener('click', () => setMainView('quant'));
 
   // Tape Reading Controls
   if (el.btnPauseTape && typeof togglePauseTape === 'function') {

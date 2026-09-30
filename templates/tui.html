@@ -20,6 +20,11 @@
 
   <!-- CSS Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tui.css') }}?v={{ version }}">
+  <script>
+    if (window.self !== window.top || window.location.search.includes('embedded=1')) {
+      document.documentElement.classList.add('embedded-in-frame');
+    }
+  </script>
 </head>
 <body class="tui-body">
   <div class="tui-wrapper">

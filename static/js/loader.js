@@ -73,7 +73,9 @@ function renderTrades(trades) {
   sorted.forEach(t => {
     const price = parseFloat(t.price);
     const qty = parseFloat(t.qty);
-    const time = new Date(t.time).toLocaleTimeString();
+    const time = typeof formatBrasiliaTime === 'function'
+      ? formatBrasiliaTime(t.time)
+      : new Date(t.time).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
     const tradeType = t.isBuyerMaker ? 'sell' : 'buy';
 
     const row = document.createElement('div');

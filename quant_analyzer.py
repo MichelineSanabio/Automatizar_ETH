@@ -10,6 +10,12 @@ import math
 import json
 import logging
 from datetime import datetime, timezone
+try:
+    from zoneinfo import ZoneInfo
+    TZ_BRASILIA = ZoneInfo("America/Sao_Paulo")
+except Exception:
+    from datetime import timedelta
+    TZ_BRASILIA = timezone(timedelta(hours=-3))
 from typing import Dict, Any, List, Optional, Tuple
 import requests
 
@@ -38,7 +44,7 @@ class QuantTradingEngine:
         self.cache_ttl = 2.0  # 2 segundos de cache para performance no Live
 
     def _add_log(self, level: str, message: str):
-        now_str = datetime.now().strftime("%H:%M:%S")
+        now_str = datetime.now(TZ_BRASILIA).strftime("%H:%M:%S")
         entry = {"time": now_str, "level": level, "msg": message}
         self.log_history.append(entry)
         if len(self.log_history) > 40:
@@ -472,21 +478,41 @@ class QuantTradingEngine:
 
         if altseason_pct < 25:
             phase = "Bitcoin Season (Dominância Extrema)"
+            stage = "Bitcoin Season"
+            color = "#ef4444"
+            desc = "Capital concentrado no BTC. Altcoins e ETH em consolidação defensiva."
         elif altseason_pct < 50:
             phase = "Pré-Altseason (Acumulação Institucional de ETH)"
+            stage = "Pré-Altseason"
+            color = "#eab308"
+            desc = "Início de compressão de paridade ETH/BTC. Acumulação em suportes chave."
         elif altseason_pct < 75:
             phase = "Altseason Inicial (ETH e Grandes Alts liderando)"
+            stage = "Altseason Inicial"
+            color = "#00e676"
+            desc = "ETH superando BTC. Rotação inicial para Layer-1s e ecossistema."
         else:
             phase = "Altseason Plena (Hiper-rotação de Capital)"
+            stage = "Altseason Plena"
+            color = "#3b82f6"
+            desc = "Rali generalizado de altcoins com ganho de dominância massivo."
 
         bar = self._render_unicode_progress(altseason_pct, 100.0, 20)
+        ethbtc_status = "Em Compressão / Suporte" if ethbtc_ratio < 0.033 else "Em Expansão Relativa"
 
         return {
             "index_pct": altseason_pct,
             "phase": phase,
+            "stage": stage,
+            "color": color,
             "bar": bar,
+            "unicode_bar": bar,
+            "desc": desc,
+            "ethbtc_status": ethbtc_status,
             "ethbtc_factor": round(ethbtc_factor, 1),
-            "btcd_dominance": btc_dominance
+            "btc_dominance": btc_dominance,
+            "btcd_dominance": btc_dominance,
+            "alt_vs_btc_outperforming": int(round((altseason_pct / 100.0) * 50))
         }
 
     # ---------------------------------------------------------
@@ -699,7 +725,8 @@ class QuantTradingEngine:
             self._add_log("TICK", f"ETH ${eth:,.2f} | BTC ${btc:,.2f} | Altseason {altseason['index_pct']}% | Paredão 2660: {book_wall['z_score']}σ")
 
         state = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(TZ_BRASILIA).isoformat(),
+            "time_brasilia": datetime.now(TZ_BRASILIA).strftime("%H:%M:%S"),
             "prices": {
                 "eth": eth,
                 "btc": btc,

@@ -11,6 +11,12 @@ import os
 import time
 import asyncio
 from datetime import datetime, timezone
+try:
+    from zoneinfo import ZoneInfo
+    TZ_BRASILIA = ZoneInfo("America/Sao_Paulo")
+except Exception:
+    from datetime import timedelta
+    TZ_BRASILIA = timezone(timedelta(hours=-3))
 
 try:
     from rich.console import Console
@@ -58,7 +64,7 @@ def make_header_panel(state: dict) -> Panel:
     long_pct = fut.get("long_pct", 50.0)
     short_pct = fut.get("short_pct", 50.0)
 
-    now_str = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    now_str = datetime.now(TZ_BRASILIA).strftime("%d/%m/%Y %H:%M:%S")
 
     grid = Table.grid(expand=True)
     grid.add_column(justify="left", ratio=2)

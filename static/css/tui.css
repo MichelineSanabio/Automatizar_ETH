@@ -922,3 +922,17 @@ body.tui-body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Modo Embutido no Frame do Terminal Principal */
+.embedded-in-frame .tui-wrapper {
+  padding: 8px 12px 20px;
+}
+
+.embedded-in-frame a[href="/"],
+.embedded-in-frame a[href="/liquidez"],
+.embedded-in-frame a[href="/data-analise"],
+.embedded-in-frame a[href="/block-analyzer"],
+.embedded-in-frame a[href="/zscore-blocos"] {
+  display: none !important;
+}
+

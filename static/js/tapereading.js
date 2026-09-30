@@ -32,6 +32,7 @@ function setMainView(view) {
   if (el.btnViewTape) el.btnViewTape.classList.toggle('active', view === 'tape');
   if (el.btnViewLiquidity) el.btnViewLiquidity.classList.toggle('active', view === 'liquidity');
   if (el.btnViewDataAnalysis) el.btnViewDataAnalysis.classList.toggle('active', view === 'data-analysis');
+  if (el.btnViewQuant) el.btnViewQuant.classList.toggle('active', view === 'quant');
 
   // 2. Toggle Subviews
   if (el.chartMainView) {
@@ -168,9 +169,12 @@ function processTapeReadingTrade(trade) {
   const totalUSD = price * qty;
   const tier = getTradeTier(qty, price, currentSymbol);
 
-  // Format millisecond time (HH:MM:SS.mmm)
+  // Format millisecond time (HH:MM:SS.mmm) no fuso de Brasília 24h
   const dateObj = new Date(timeMs);
-  const timeFormatted = dateObj.toTimeString().slice(0, 8) + '.' + String(dateObj.getMilliseconds()).padStart(3, '0');
+  const baseTime = typeof formatBrasiliaTime === 'function'
+    ? formatBrasiliaTime(timeMs)
+    : dateObj.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
+  const timeFormatted = baseTime + '.' + String(dateObj.getMilliseconds()).padStart(3, '0');
 
   // 1. Update Aggression & Tape Metrics
   if (side === 'buy') {

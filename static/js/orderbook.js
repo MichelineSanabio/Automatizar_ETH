@@ -1134,8 +1134,11 @@ function initBinanceDepthCanvas() {
 // Add Real-time Trade to Binance Live Trades Feed
 function addBinanceLiveTrade(trade) {
   const price = parseFloat(trade.p || trade.price);
-  const qty = parseFloat(trade.q || trade.qty);
-  const time = trade.T ? new Date(trade.T).toLocaleTimeString() : (trade.time ? new Date(trade.time).toLocaleTimeString() : new Date().toLocaleTimeString());
+  const qty = parseFloat(trade.q || trade.qty || 0);
+  const rawTime = trade.T || trade.time || Date.now();
+  const time = typeof formatBrasiliaTime === 'function'
+    ? formatBrasiliaTime(rawTime)
+    : new Date(rawTime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
   const isBuyerMaker = trade.m !== undefined ? trade.m : (trade.isBuyerMaker || false);
   const isBuy = !isBuyerMaker;
   const isWhale = (currentSymbol.startsWith('ETH') && qty >= 10.0) ||

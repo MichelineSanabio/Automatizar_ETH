@@ -1,11 +1,11 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-30T21:50:30Z",
+  "lastUpdated": "2026-09-30T23:39:42Z",
   "chart": {
     "symbol": "ETHUSDT",
-    "interval": "1d",
+    "interval": "15m",
     "isVolumeSeparated": true,
-    "volumeHeight": 135
+    "volumeHeight": 130
   },
   "spreads": {
     "orderBookGrouping": 10,
@@ -21,8 +21,8 @@
   },
   "views": {
     "activeMainView": "chart",
-    "activeSideTab": "orderbook",
-    "whaleSubview": "holders",
+    "activeSideTab": "whales",
+    "whaleSubview": "orders",
     "tapeSizeFilter": "all",
     "tapeSideFilter": "all"
   },
@@ -48,41 +48,49 @@
     {
       "amount": 0.2662,
       "date": "2026-09-29 22:12",
+      "executedAt": "2026-09-30T23:18:50.779Z",
+      "executedPrice": 0.03212,
       "id": "ord_buy_1",
       "notes": "Ordem de Compra Limit (0,2662 ETH @ $2530)",
       "price": 2530,
       "side": "BUY",
-      "status": "PENDING",
+      "status": "FILLED",
       "total": 673.486
     },
     {
       "amount": 0.1557,
       "date": "2026-09-29 22:12",
+      "executedAt": "2026-09-30T23:18:50.780Z",
+      "executedPrice": 0.03212,
       "id": "ord_buy_2",
       "notes": "Ordem de Compra Limit (0,1557 ETH @ $2585)",
       "price": 2585,
       "side": "BUY",
-      "status": "PENDING",
+      "status": "FILLED",
       "total": 402.4845
     },
     {
       "amount": 0.3188,
       "date": "2026-09-29 22:12",
+      "executedAt": "2026-09-30T23:18:50.780Z",
+      "executedPrice": 0.03212,
       "id": "ord_buy_3",
       "notes": "Ordem de Compra Limit (0,3188 ETH @ $2480)",
       "price": 2480,
       "side": "BUY",
-      "status": "PENDING",
+      "status": "FILLED",
       "total": 790.624
     },
     {
       "amount": 0.957,
       "date": "2026-09-29 22:12",
+      "executedAt": "2026-09-30T23:18:50.780Z",
+      "executedPrice": 0.03212,
       "id": "ord_buy_4",
       "notes": "Ordem de Compra Limit (0,9570 ETH @ $2530)",
       "price": 2530,
       "side": "BUY",
-      "status": "PENDING",
+      "status": "FILLED",
       "total": 2421.21
     }
   ],

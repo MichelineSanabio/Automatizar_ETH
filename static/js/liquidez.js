@@ -78,7 +78,10 @@ document.addEventListener("DOMContentLoaded", () => {
       renderDashboard(data);
       if (lastUpdatedEl) {
         const d = new Date();
-        lastUpdatedEl.textContent = `Atualizado às ${d.toLocaleTimeString("pt-BR")}`;
+        const timeStr = typeof formatBrasiliaTime === 'function'
+          ? formatBrasiliaTime(d)
+          : d.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour12: false });
+        lastUpdatedEl.textContent = `Atualizado às ${timeStr}`;
       }
     } catch (err) {
       console.error("[!] Erro ao buscar liquidez:", err);

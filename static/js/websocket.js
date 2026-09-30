@@ -163,8 +163,16 @@ function handleRealtimeKline(k) {
     liveVolEl.textContent = `${volume.toFixed(2)} ${symbolLabel} ($${formatCompactNumber(volume * close)})`;
   }
 
-  // Update Live Price Flash
+  // Update Live Price Flash & Footer Stats
   updateLivePrice(close);
+  if (el.statLastUpdate) {
+    el.statLastUpdate.textContent = typeof formatBrasiliaTime === 'function'
+      ? formatBrasiliaTime(new Date())
+      : new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
+  }
+  if (el.statClose && typeof formatPrice === 'function') {
+    el.statClose.textContent = formatPrice(close);
+  }
 
   // If candle closed, add to historical list and recalculate indicators
   if (k.x) {
@@ -191,7 +199,9 @@ function handleRealtimeKline(k) {
 function handleRealtimeTrade(trade) {
   const price = parseFloat(trade.p);
   const qty = parseFloat(trade.q);
-  const time = new Date(trade.T).toLocaleTimeString();
+  const time = typeof formatBrasiliaTime === 'function'
+    ? formatBrasiliaTime(trade.T)
+    : new Date(trade.T).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
   const isBuyerMaker = trade.m; // true = sell taker, false = buy taker
   const tradeType = isBuyerMaker ? 'sell' : 'buy';
 

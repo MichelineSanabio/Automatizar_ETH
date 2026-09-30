@@ -46,6 +46,11 @@ function initChart() {
         labelBackgroundColor: '#1f273b',
       },
     },
+    localization: {
+      locale: 'pt-BR',
+      dateFormat: 'dd/MM/yyyy',
+      timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
+    },
     rightPriceScale: {
       autoScale: true,
       mode: LightweightCharts.PriceScaleMode.Normal,
@@ -174,6 +179,11 @@ function initChart() {
           labelVisible: false,
         },
       },
+      localization: {
+        locale: 'pt-BR',
+        dateFormat: 'dd/MM/yyyy',
+        timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
+      },
       rightPriceScale: {
         borderColor: 'rgba(255, 255, 255, 0.08)',
         scaleMargins: {
@@ -279,8 +289,9 @@ function initChart() {
       if (oLow) oLow.textContent = lowStr;
       if (oClose) oClose.textContent = closeStr;
       if (oTime && param.time) {
-        const dt = new Date(typeof param.time === 'number' ? param.time * 1000 : param.time);
-        oTime.textContent = dt.toLocaleTimeString();
+        oTime.textContent = typeof formatBrasiliaTime === 'function'
+          ? formatBrasiliaTime(param.time)
+          : new Date(typeof param.time === 'number' ? param.time * 1000 : param.time).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
       }
     }
     // Update live volume display on splitter com busca rápida O(1) via Map
@@ -554,14 +565,19 @@ function processAndRenderCandles(rawKlines) {
     const highStr = formatPrice(last.high);
     const lowStr = formatPrice(last.low);
     const closeStr = formatPrice(last.close);
-    const timeStr = new Date(last.closeTime).toLocaleTimeString();
+    const candleCloseStr = typeof formatBrasiliaTime === 'function'
+      ? formatBrasiliaTime(last.closeTime)
+      : new Date(last.closeTime).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
+    const currentUpdateTime = typeof formatBrasiliaTime === 'function'
+      ? formatBrasiliaTime(new Date())
+      : new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
 
     if (el.statCandlesCount) el.statCandlesCount.textContent = historicalCandles.length;
     if (el.statOpen) el.statOpen.textContent = openStr;
     if (el.statHigh) el.statHigh.textContent = highStr;
     if (el.statLow) el.statLow.textContent = lowStr;
     if (el.statClose) el.statClose.textContent = closeStr;
-    if (el.statLastUpdate) el.statLastUpdate.textContent = timeStr;
+    if (el.statLastUpdate) el.statLastUpdate.textContent = currentUpdateTime;
 
     const oOpen = document.getElementById('ohlcValOpen');
     const oHigh = document.getElementById('ohlcValHigh');
@@ -574,7 +590,7 @@ function processAndRenderCandles(rawKlines) {
     if (oHigh) oHigh.textContent = highStr;
     if (oLow) oLow.textContent = lowStr;
     if (oClose) oClose.textContent = closeStr;
-    if (oTime) oTime.textContent = timeStr;
+    if (oTime) oTime.textContent = candleCloseStr;
     if (oSym) oSym.textContent = currentSymbol;
 
     // Update Splitter Volume Label
@@ -758,6 +774,11 @@ function initMacdChart() {
         visible: false,
         labelVisible: false,
       },
+    },
+    localization: {
+      locale: 'pt-BR',
+      dateFormat: 'dd/MM/yyyy',
+      timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
     },
     rightPriceScale: {
       borderColor: 'rgba(255, 255, 255, 0.08)',

@@ -202,8 +202,9 @@ function showLayoutSaveStatus(status) {
     badge.classList.add('status-saving');
     text.textContent = '💾 Salvando em terminal_layout.json...';
   } else if (status === 'saved') {
-    badge.classList.add('status-saved');
-    const timeStr = new Date().toLocaleTimeString();
+    const timeStr = typeof formatBrasiliaTime === 'function'
+      ? formatBrasiliaTime(new Date())
+      : new Date().toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false });
     text.textContent = `💾 Salvo (${timeStr})`;
     badge.title = `Configurações salvas com sucesso em terminal_layout.json às ${timeStr}`;
 
@@ -395,6 +396,7 @@ function applySettingsObject(settings) {
           : settings.views.activeSideTab === 'trades' ? 'paneTrades'
           : settings.views.activeSideTab === 'whales' ? 'paneWhales'
           : settings.views.activeSideTab === 'metrics' ? 'paneMetrics'
+          : settings.views.activeSideTab === 'quantmacro' ? 'paneQuantMacro'
           : 'paneAPI';
         const targetPane = document.getElementById(paneId);
         if (targetPane) targetPane.classList.add('active');

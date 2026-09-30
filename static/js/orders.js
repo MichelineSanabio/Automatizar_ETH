@@ -424,7 +424,9 @@ function addUserTradeOrder(side, amount, price, notes = '', date = null, status 
   }
 
   const now = new Date();
-  const dateStr = date || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const dateStr = date || (typeof formatBrasiliaDateTime === 'function'
+    ? formatBrasiliaDateTime(now, false)
+    : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
 
   const curPrice = (typeof lastPrice === 'number' && lastPrice > 0) ? lastPrice : 0;
   let finalStatus = status;
