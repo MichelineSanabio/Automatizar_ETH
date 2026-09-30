@@ -261,7 +261,7 @@ class MarketLiquidityAnalyzer:
         # Histórico recente para mini gráficos
         eth_recent_spark = eth_df[["open_time", "close", "ema25", "ema99"]].tail(24).to_dict(orient="records")
         for r in eth_recent_spark:
-            r["open_time"] = r["open_time"].strftime("%H:%M")
+            r["open_time"] = r["open_time"].strftime("%d/%m" if timeframe in ["1d", "1w"] else "%H:%M")
 
         return {
             "success": True,

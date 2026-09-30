@@ -152,7 +152,7 @@ def api_liquidity_status():
     """
     Retorna o status em tempo real do setup de liquidez e probabilidade de varredura de stops.
     Parâmetros:
-      - timeframe: 1h (padrão), 15m, 4h
+      - timeframe: 1h (padrão), 15m, 4h, 1d
       - target_high: 2530.0 (padrão)
       - target_low: 2480.0 (padrão)
     """
