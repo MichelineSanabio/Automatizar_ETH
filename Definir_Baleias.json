@@ -1,0 +1,67 @@
+{
+  "_comentario": "Defina aqui as quantidades (em moedas) e valores (em USDT) para classificar cada categoria. Qualquer mudanca refletira no Grafico, Tape Reading, Livro de Ofertas e Radar de Grandes Ordens.",
+  "ETHUSDT": {
+    "retail": {
+      "label": "🦐 Varejo",
+      "maxQty": 1.0,
+      "maxUsd": 2500.0,
+      "descricao": "Ordens pequenas de pessoas físicas / varejo abaixo de 1 ETH"
+    },
+    "medium": {
+      "label": "🐟 Médio",
+      "minQty": 1.0,
+      "minUsd": 2500.0,
+      "descricao": "Traders regulares (1 a 5 ETH)"
+    },
+    "shark": {
+      "label": "🐬 Tubarão",
+      "minQty": 5.0,
+      "minUsd": 12000.0,
+      "descricao": "Traders grandes / tubarões (5 a 10 ETH)"
+    },
+    "whale": {
+      "label": "🐋 Baleia",
+      "minQty": 10.0,
+      "minUsd": 25000.0,
+      "descricao": "Institucionais e Baleias: plota marcador de seta e parede no gráfico!"
+    },
+    "mega_whale": {
+      "label": "🐳 Mega Baleia",
+      "minQty": 40.0,
+      "minUsd": 90000.0,
+      "descricao": "Mega Baleias gigantes: plota destaque visual de alta prioridade no gráfico!"
+    }
+  },
+  "BTCUSDT": {
+    "retail": {
+      "label": "🦐 Varejo",
+      "maxQty": 0.05,
+      "maxUsd": 3000.0,
+      "descricao": "Ordens de varejo abaixo de 0.05 BTC"
+    },
+    "medium": {
+      "label": "🐟 Médio",
+      "minQty": 0.05,
+      "minUsd": 3000.0,
+      "descricao": "Traders médios de BTC (0.05 a 0.25 BTC)"
+    },
+    "shark": {
+      "label": "🐬 Tubarão",
+      "minQty": 0.25,
+      "minUsd": 15000.0,
+      "descricao": "Tubarões de BTC (0.25 a 0.50 BTC)"
+    },
+    "whale": {
+      "label": "🐋 Baleia",
+      "minQty": 0.50,
+      "minUsd": 30000.0,
+      "descricao": "Baleias de BTC: plota no gráfico a partir de 0.50 BTC ou $30.000"
+    },
+    "mega_whale": {
+      "label": "🐳 Mega Baleia",
+      "minQty": 1.80,
+      "minUsd": 100000.0,
+      "descricao": "Mega Baleias de BTC: a partir de 1.80 BTC ou $100.000"
+    }
+  }
+}

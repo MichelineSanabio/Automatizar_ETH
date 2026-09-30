@@ -4,18 +4,23 @@
  * with the physical file 'terminal_layout.json' on disk and browser localStorage.
  */
 
-let isRestoringSettings = false;
-let isSettingsLoaded = false;
+isRestoringSettings = true; // Mantém ativo durante o boot para prevenir que eventos da UI sobrescrevam o layout
 let saveLayoutTimeout = null;
 
 /**
  * Gathers the current state of all terminal modules
  */
 function exportCurrentLayoutState() {
-  // 1. Chart Settings
+  // 1. Chart Settings (Lê o estado ativo do DOM com fallback no runtime)
+  const activeIntervalBtn = document.querySelector('#intervalSelector .interval-btn.active');
+  const activeSymbolBtn = document.querySelector('#symbolTabs .symbol-btn.active');
+
+  const effInterval = (activeIntervalBtn && activeIntervalBtn.dataset.interval) || currentInterval || '15m';
+  const effSymbol = (activeSymbolBtn && activeSymbolBtn.dataset.symbol) || currentSymbol || 'ETHUSDT';
+
   const chartState = {
-    symbol: currentSymbol || 'ETHUSDT',
-    interval: currentInterval || '15m',
+    symbol: (effSymbol + '').toUpperCase(),
+    interval: (effInterval + '').toLowerCase(),
     isVolumeSeparated: Boolean(isVolumeSeparated),
     volumeHeight: typeof volumeHeight === 'number' ? volumeHeight : 120,
   };
@@ -67,6 +72,14 @@ function exportCurrentLayoutState() {
   // 6. User Manual Trade Orders (Buy/Sell, Amounts, Costs, Notes)
   const ordersState = Array.isArray(userTradeOrders) ? [...userTradeOrders] : [];
 
+  // 6.1 Order Chart Overlay Preferences
+  const chkOrders = document.getElementById('chkShowOrdersOnChart');
+  const chkBreakeven = document.getElementById('chkShowBreakevenOnChart');
+  const ordersOptionsState = {
+    showOrdersOnChart: chkOrders ? chkOrders.checked : (showChartOrders !== undefined ? showChartOrders : true),
+    showBreakevenOnChart: chkBreakeven ? chkBreakeven.checked : (showChartBreakeven !== undefined ? showChartBreakeven : true),
+  };
+
   // 7. Visual Accessibility & 55" TV Settings
   const accessibilityState = (window.AccessibilityManager && AccessibilityManager.settings)
     ? { ...AccessibilityManager.settings }
@@ -82,6 +95,7 @@ function exportCurrentLayoutState() {
     accessibility: accessibilityState,
     markings: markingsState,
     orders: ordersState,
+    ordersOptions: ordersOptionsState,
   };
 }
 
@@ -89,7 +103,7 @@ function exportCurrentLayoutState() {
  * Saves state instantly (0ms delay) into localStorage and dispatches keepalive HTTP POST to /api/settings
  */
 function saveLayoutImmediate() {
-  if (isRestoringSettings) return;
+  if (isRestoringSettings || !isSettingsLoaded) return;
 
   if (saveLayoutTimeout) {
     clearTimeout(saveLayoutTimeout);
@@ -137,7 +151,7 @@ function saveLayoutImmediate() {
  * Auto-save dispatcher: if immediate is true, saves instantly; otherwise debounces (for dragging splitters)
  */
 function saveLayoutDebounced(immediate = false) {
-  if (isRestoringSettings) return;
+  if (isRestoringSettings || !isSettingsLoaded) return;
 
   if (immediate) {
     saveLayoutImmediate();
@@ -157,13 +171,13 @@ function saveLayoutDebounced(immediate = false) {
 
 // Ensure pending state is saved even if user refreshes or closes the page abruptly
 window.addEventListener('beforeunload', () => {
-  if (!isRestoringSettings) {
+  if (!isRestoringSettings && isSettingsLoaded) {
     saveLayoutImmediate();
   }
 });
 
 window.addEventListener('pagehide', () => {
-  if (!isRestoringSettings) {
+  if (!isRestoringSettings && isSettingsLoaded) {
     saveLayoutImmediate();
   }
 });
@@ -213,21 +227,21 @@ function applySettingsObject(settings) {
   // 1. Chart Settings (Symbol, Interval, Volume pane)
   if (settings.chart) {
     if (settings.chart.symbol) {
-      currentSymbol = settings.chart.symbol;
+      currentSymbol = (settings.chart.symbol + '').toUpperCase();
       const symbolTabs = document.getElementById('symbolTabs');
       if (symbolTabs) {
         symbolTabs.querySelectorAll('.symbol-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.symbol === currentSymbol);
+          btn.classList.toggle('active', (btn.dataset.symbol || '').toUpperCase() === currentSymbol);
         });
       }
     }
 
     if (settings.chart.interval) {
-      currentInterval = settings.chart.interval;
+      currentInterval = (settings.chart.interval + '').toLowerCase();
       const intervalSelector = document.getElementById('intervalSelector');
       if (intervalSelector) {
         intervalSelector.querySelectorAll('.interval-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.interval === currentInterval);
+          btn.classList.toggle('active', (btn.dataset.interval || '').toLowerCase() === currentInterval);
         });
       }
     }
@@ -342,6 +356,20 @@ function applySettingsObject(settings) {
     }
   }
 
+  // 4.1.1 User Orders Overlay Options
+  if (settings.ordersOptions) {
+    if (settings.ordersOptions.showOrdersOnChart !== undefined) {
+      showChartOrders = Boolean(settings.ordersOptions.showOrdersOnChart);
+      const chkOrders = document.getElementById('chkShowOrdersOnChart');
+      if (chkOrders) chkOrders.checked = showChartOrders;
+    }
+    if (settings.ordersOptions.showBreakevenOnChart !== undefined) {
+      showChartBreakeven = Boolean(settings.ordersOptions.showBreakevenOnChart);
+      const chkBreakeven = document.getElementById('chkShowBreakevenOnChart');
+      if (chkBreakeven) chkBreakeven.checked = showChartBreakeven;
+    }
+  }
+
   // 4.2 Visual Accessibility & 55" TV Settings
   if (settings.accessibility && window.AccessibilityManager) {
     if (typeof AccessibilityManager.syncFromSettings === 'function') {
@@ -411,12 +439,10 @@ function applyLocalSettingsImmediately() {
       const parsed = JSON.parse(localStr);
       isRestoringSettings = true;
       applySettingsObject(parsed);
-      isRestoringSettings = false;
       console.log('[Layout] Configurações locais pré-aplicadas com sucesso do localStorage');
     }
   } catch (e) {
     console.warn('[Layout] Falha na pré-aplicação local:', e);
-    isRestoringSettings = false;
   }
 }
 
@@ -450,17 +476,21 @@ async function loadAndApplyLayoutSettings() {
     } catch (e) {}
   }
 
-  if (settings) {
-    applySettingsObject(settings);
-    // Keep local backup synchronized
-    try {
-      localStorage.setItem('binance_terminal_layout', JSON.stringify(settings));
-    } catch (e) {}
+  try {
+    if (settings) {
+      applySettingsObject(settings);
+      // Keep local backup synchronized
+      try {
+        localStorage.setItem('binance_terminal_layout', JSON.stringify(settings));
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.error('[Layout] Erro ao aplicar settings:', err);
+  } finally {
+    isRestoringSettings = false;
+    isSettingsLoaded = true;
+    console.log('[Layout] Sincronização inicial de layout concluída.');
   }
-
-  isRestoringSettings = false;
-  isSettingsLoaded = true;
-  console.log('[Layout] Sincronização inicial de layout concluída.');
 }
 
 /**
@@ -561,7 +591,10 @@ function openMarkingsModal(prefilledPrice = null) {
 
   renderMarkingsListInModal();
   modal.style.display = 'flex';
-  if (inputLabel) inputLabel.focus();
+  if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+  setTimeout(() => {
+    if (inputLabel) inputLabel.focus();
+  }, 60);
 }
 
 function closeMarkingsModal() {
@@ -580,21 +613,27 @@ function initMarkingsUI() {
   const colorPresets = document.getElementById('markingColorPresets');
   const listContainer = document.getElementById('markingsListContainer');
   const btnReset = document.getElementById('btnResetLayout');
-
   const btnStartDraw = document.getElementById('btnStartDrawOnChart');
+  const inputPrice = document.getElementById('inputMarkingPrice');
+  const inputLabel = document.getElementById('inputMarkingLabel');
 
+  // 1. Botão "+ Linha": Abre o modal diretamente com o foco no formulário
   if (btnOpen) {
-    btnOpen.addEventListener('click', () => {
-      // Alterna o modo desenho com clique no gráfico; se já ativo, abre o modal
-      if (window.isDrawingLineModeActive) {
-        if (typeof toggleDrawingLineMode === 'function') toggleDrawingLineMode(false);
-        openMarkingsModal();
-      } else {
-        if (typeof toggleDrawingLineMode === 'function') toggleDrawingLineMode(true);
-      }
+    btnOpen.addEventListener('click', (e) => {
+      e.preventDefault();
+      openMarkingsModal();
     });
   }
 
+  // 2. Botão "Linhas": Abre o modal mostrando a lista de linhas e o formulário
+  if (btnManage) {
+    btnManage.addEventListener('click', (e) => {
+      e.preventDefault();
+      openMarkingsModal();
+    });
+  }
+
+  // 3. Botão "Traçar com Clique" dentro do modal
   if (btnStartDraw) {
     btnStartDraw.addEventListener('click', () => {
       closeMarkingsModal();
@@ -604,10 +643,7 @@ function initMarkingsUI() {
     });
   }
 
-  if (btnManage) {
-    btnManage.addEventListener('click', () => openMarkingsModal());
-  }
-
+  // 4. Fechar modal
   if (btnClose) {
     btnClose.addEventListener('click', closeMarkingsModal);
   }
@@ -622,29 +658,29 @@ function initMarkingsUI() {
     btnReset.addEventListener('click', resetLayoutToDefaults);
   }
 
+  // 5. Seletor de cores da linha
   if (colorPresets) {
     colorPresets.addEventListener('click', (e) => {
       const btn = e.target.closest('.color-preset-btn');
       if (!btn) return;
       colorPresets.querySelectorAll('.color-preset-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      selectedMarkingColor = btn.dataset.color;
+      selectedMarkingColor = btn.dataset.color || '#0ecb81';
     });
   }
 
+  // 6. Preencher com o preço atual negociado
   if (btnUseLive) {
     btnUseLive.addEventListener('click', () => {
-      const inputPrice = document.getElementById('inputMarkingPrice');
       if (inputPrice && lastPrice > 0) {
         inputPrice.value = lastPrice.toFixed(2);
       }
     });
   }
 
+  // 7. Confirmar Criação da Linha
   if (btnConfirm) {
     btnConfirm.addEventListener('click', () => {
-      const inputPrice = document.getElementById('inputMarkingPrice');
-      const inputLabel = document.getElementById('inputMarkingLabel');
       if (!inputPrice) return;
       const price = parseFloat(inputPrice.value);
       if (isNaN(price) || price <= 0) {
@@ -652,13 +688,32 @@ function initMarkingsUI() {
         inputPrice.focus();
         return;
       }
-      const label = inputLabel ? inputLabel.value.trim() : '';
-      addUserPriceMarking(price, label, selectedMarkingColor, 0);
+      const label = inputLabel && inputLabel.value.trim() ? inputLabel.value.trim() : `Nível $${formatPrice(price)}`;
+      const mark = addUserPriceMarking(price, label, selectedMarkingColor, 0);
+
       if (inputLabel) inputLabel.value = '';
       inputPrice.value = lastPrice > 0 ? lastPrice.toFixed(2) : '';
+
+      closeMarkingsModal();
+      if (typeof showDrawingToast === 'function') {
+        showDrawingToast(`Linha traçada em $${formatPrice(price)} e salva com sucesso!`);
+      }
     });
   }
 
+  // Suporte a tecla Enter para confirmar adição da linha
+  [inputPrice, inputLabel].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (btnConfirm) btnConfirm.click();
+        }
+      });
+    }
+  });
+
+  // 8. Excluir linha individual da lista
   if (listContainer) {
     listContainer.addEventListener('click', (e) => {
       const btnDel = e.target.closest('.marking-btn-delete');
@@ -670,6 +725,7 @@ function initMarkingsUI() {
     });
   }
 
+  // 9. Limpar todas as marcações
   if (btnClearAll) {
     btnClearAll.addEventListener('click', () => {
       if (userPriceMarkings.length === 0) return;

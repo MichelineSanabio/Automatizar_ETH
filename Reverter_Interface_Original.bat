@@ -10,11 +10,14 @@ echo            RESTAURANDO INTERFACE ANTERIOR (ROLLBACK)
 echo =======================================================================
 echo.
 
-if exist "templates\index.html.original_backup" (
+if exist "backups\index.html.original_backup" (
+    copy /y "backups\index.html.original_backup" "templates\index.html" >nul
+    echo  [OK] templates\index.html restaurado para a versao original (de backups\).
+) else if exist "templates\index.html.original_backup" (
     copy /y "templates\index.html.original_backup" "templates\index.html" >nul
     echo  [OK] templates\index.html restaurado para a versao original.
 ) else (
-    echo  [!] Arquivo de backup templates\index.html.original_backup nao encontrado.
+    echo  [!] Arquivo de backup index.html.original_backup nao encontrado.
 )
 
 if exist "static\css\style.css.original_backup" (

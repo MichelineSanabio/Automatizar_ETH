@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analisador Estatístico de Blocos & Z-Score | Binance Terminal</title>
+  <meta name="description" content="Detecção quantitativa de blocos de suporte e resistência institucional com Z-Score e avaliação de risco de spoofing (evaporação) no Livro de Ofertas da Binance.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <!-- Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/block_analyzer.css') }}?v={{ version }}">
+</head>
+<body class="block-analyzer-body">
+  <div class="block-analyzer-container">
+
+    <!-- TOP HEADER -->
+    <header class="ba-header">
+      <div class="ba-brand">
+        <div class="ba-brand-icon">
+          <i data-lucide="calculator"></i>
+        </div>
+        <div>
+          <div class="ba-brand-title">
+            <span>ANALISADOR DE BLOCOS & Z-SCORE</span>
+            <span class="ba-badge-tag">ORDER BOOK QUANT</span>
+          </div>
+          <div class="ba-brand-subtitle">
+            Detecção Estatística de Paredes Institucionais e Risco de Evaporação (Spoofing) na Binance
+          </div>
+        </div>
+      </div>
+
+      <div class="ba-header-actions">
+        <span id="lastUpdatedClock" style="font-size: 11px; color: var(--text-secondary); margin-right: 8px; font-family: var(--font-mono);"></span>
+        <a href="/" class="btn-ba" title="Voltar ao Terminal Principal">
+          <i data-lucide="terminal"></i>
+          <span>Terminal</span>
+        </a>
+        <a href="/liquidez" class="btn-ba" title="Monitor de Liquidez e Stops (Sweep Hunter)">
+          <i data-lucide="crosshair"></i>
+          <span>Liquidez</span>
+        </a>
+        <a href="/data-analise" class="btn-ba" title="Data Análise e Volatilidade">
+          <i data-lucide="bar-chart-2"></i>
+          <span>Data Análise</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- FORMULÁRIO DE CONTROLE -->
+    <section class="ba-control-card">
+      <div class="ba-form-grid">
+        <div class="ba-form-group">
+          <label class="ba-form-label" for="selSymbol">Par de Moeda</label>
+          <select id="selSymbol" class="ba-form-control">
+            <option value="ETHUSDT" selected>ETH / USDT</option>
+            <option value="BTCUSDT">BTC / USDT</option>
+            <option value="SOLUSDT">SOL / USDT</option>
+            <option value="BNBUSDT">BNB / USDT</option>
+          </select>
+        </div>
+
+        <div class="ba-form-group">
+          <label class="ba-form-label" for="inputTargetPrice">Preço Alvo do Degrau ($)</label>
+          <div class="input-with-button">
+            <input type="number" id="inputTargetPrice" class="ba-form-control" step="any" placeholder="Ex: 2660.0" value="2660.0" />
+            <button type="button" class="btn-inline-action" id="btnFillCurrentPrice" title="Preencher com a cotação atual do topo do livro">Atual</button>
+          </div>
+        </div>
+
+        <div class="ba-form-group">
+          <label class="ba-form-label" for="selSide">Lado do Livro</label>
+          <select id="selSide" class="ba-form-control">
+            <option value="auto" selected>Automático (Detectar)</option>
+            <option value="bids">Suporte (Bids / Compras)</option>
+            <option value="asks">Resistência (Asks / Vendas)</option>
+          </select>
+        </div>
+
+        <div class="ba-form-group">
+          <label class="ba-form-label" for="selDepthLimit">Profundidade</label>
+          <select id="selDepthLimit" class="ba-form-control">
+            <option value="100">100 níveis</option>
+            <option value="500">500 níveis</option>
+            <option value="1000" selected>1000 níveis (Recomendado)</option>
+          </select>
+        </div>
+
+        <div class="ba-form-group">
+          <button type="button" class="btn-ba btn-primary" id="btnAnalyze" style="height: 42px; padding: 0 20px;">
+            <i data-lucide="search"></i>
+            <span>Analisar Degrau</span>
+          </button>
+        </div>
+
+        <div class="ba-form-group">
+          <label class="auto-refresh-toggle" title="Atualiza automaticamente a profundidade a cada 5 segundos">
+            <input type="checkbox" id="chkAutoRefresh" checked />
+            <span>Ao Vivo (5s)</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARDS DE MÉTRICAS DO DEGRAU ANALISADO -->
+    <section class="ba-metrics-grid" id="metricsContainer">
+      <div class="ba-metric-card card-accent-yellow">
+        <span class="card-title-sm">Preço Analisado</span>
+        <div class="card-val-lg" id="valPrice">$0.00</div>
+        <div class="card-val-sub" id="valDist">Distância do topo: ---</div>
+      </div>
+
+      <div class="ba-metric-card card-accent-cyan">
+        <span class="card-title-sm">Volume do Degrau</span>
+        <div class="card-val-lg" id="valVolume">0.00</div>
+        <div class="card-val-sub" id="valUsd">$0.00 USD</div>
+      </div>
+
+      <div class="ba-metric-card card-accent-purple">
+        <span class="card-title-sm">Z-Score (Desvios Padrão)</span>
+        <div class="card-val-lg" id="valZScore" style="color: var(--accent-cyan);">+0.00σ</div>
+        <div class="card-val-sub" id="valTier">Classificação: ---</div>
+      </div>
+
+      <div class="ba-metric-card card-accent-green">
+        <span class="card-title-sm">Presença Institucional</span>
+        <div class="card-val-lg" id="valInstitutional" style="font-size: 16px;">Detectando...</div>
+        <div class="card-val-sub" id="valSignificance">Inferência de liquidez estatística</div>
+      </div>
+
+      <div class="ba-metric-card card-accent-red">
+        <span class="card-title-sm">Risco de Evaporação (Spoofing)</span>
+        <div class="card-val-lg" id="valRisk" style="font-size: 16px;">INDEFINIDO</div>
+        <div class="card-val-sub">Probabilidade de cancelamento súbito</div>
+      </div>
+    </section>
+
+    <!-- RESUMO ESTATÍSTICO GLOBAL DA PROFUNDIDADE -->
+    <div class="ba-stats-banner" id="statsBanner">
+      <div class="stat-item">📊 <span>Volume Médio por Nível:</span> <strong id="statMean">---</strong></div>
+      <div class="stat-item">📈 <span>Desvio Padrão (σ):</span> <strong id="statStd">---</strong></div>
+      <div class="stat-item">🎯 <span>Mediana do Livro:</span> <strong id="statMedian">---</strong></div>
+      <div class="stat-item">⚡ <span>Volume Máximo:</span> <strong id="statMax">---</strong></div>
+      <div class="stat-item">⚖️ <span>Spread Atual:</span> <strong id="statSpread">---</strong></div>
+    </div>
+
+    <!-- VISUALIZAÇÃO GRÁFICA & TABELA DE MAIORES PAREDES -->
+    <div class="ba-dashboard-columns">
+      <!-- Painel Gráfico de Curva de Volume -->
+      <div class="ba-panel">
+        <div class="ba-panel-header">
+          <div class="ba-panel-title">
+            <i data-lucide="activity"></i>
+            <span>Curva de Densidade de Volume e Paredes Institucionais</span>
+          </div>
+          <span style="font-size: 12px; color: var(--text-secondary);" id="labelCanvasDepth">1000 níveis analisados</span>
+        </div>
+        <div class="ba-canvas-wrapper">
+          <canvas id="depthVisualCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Tabela de Maiores Anomalias (Z-Score >= 1.5σ) -->
+      <div class="ba-panel">
+        <div class="ba-panel-header">
+          <div class="ba-panel-title">
+            <i data-lucide="shield-alert"></i>
+            <span>Top Paredes Institucionais Detectadas no Livro (Z-Score &ge; 1.5&sigma;)</span>
+          </div>
+          <span style="font-size: 12px; color: var(--text-secondary);">Clique em 'Inspecionar' para carregar qualquer degrau</span>
+        </div>
+        <div class="ba-table-container">
+          <table class="ba-table">
+            <thead>
+              <tr>
+                <th>Preço ($)</th>
+                <th>Volume</th>
+                <th>Valor ($)</th>
+                <th>Z-Score</th>
+                <th>Risco Evaporação</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tblTopWallsBody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 18px;">Consultando livro de ofertas da Binance...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LOADER SPINNER -->
+  <div class="ba-loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="ba-spinner"></div>
+    <span style="font-weight: 600; color: #ffffff;">Consultando profundidade estatística na Binance...</span>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script>
+    // Inicialização da Página Standalone do Analisador de Blocos
+    let currentBlockData = null;
+    let autoRefreshTimer = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.lucide) lucide.createIcons();
+      initControls();
+      runBlockAnalysis();
+      startAutoRefresh();
+      startClock();
+    });
+
+    function startClock() {
+      const clockEl = document.getElementById("lastUpdatedClock");
+      setInterval(() => {
+        if (clockEl) clockEl.textContent = new Date().toLocaleTimeString() + " UTC";
+      }, 1000);
+    }
+
+    function initControls() {
+      const selSymbol = document.getElementById("selSymbol");
+      const inputPrice = document.getElementById("inputTargetPrice");
+      const selSide = document.getElementById("selSide");
+      const selLimit = document.getElementById("selDepthLimit");
+      const btnAnalyze = document.getElementById("btnAnalyze");
+      const btnFillCurrent = document.getElementById("btnFillCurrentPrice");
+      const chkAuto = document.getElementById("chkAutoRefresh");
+
+      btnAnalyze.addEventListener("click", () => runBlockAnalysis());
+
+      inputPrice.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") runBlockAnalysis();
+      });
+
+      selSymbol.addEventListener("change", () => {
+        const sym = selSymbol.value;
+        if (sym.includes("BTC")) inputPrice.value = "65000.0";
+        else if (sym.includes("ETH")) inputPrice.value = "2660.0";
+        else if (sym.includes("SOL")) inputPrice.value = "150.0";
+        else if (sym.includes("BNB")) inputPrice.value = "580.0";
+        runBlockAnalysis();
+      });
+
+      selSide.addEventListener("change", () => runBlockAnalysis());
+      selLimit.addEventListener("change", () => runBlockAnalysis());
+
+      btnFillCurrent.addEventListener("click", () => {
+        if (currentBlockData && currentBlockData.best_bid) {
+          const side = selSide.value;
+          const price = side === "asks" ? currentBlockData.best_ask : currentBlockData.best_bid;
+          inputPrice.value = price.toFixed(2);
+          runBlockAnalysis();
+        }
+      });
+
+      chkAuto.addEventListener("change", () => {
+        if (chkAuto.checked) startAutoRefresh();
+        else stopAutoRefresh();
+      });
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      autoRefreshTimer = setInterval(() => {
+        const chk = document.getElementById("chkAutoRefresh");
+        if (chk && chk.checked) {
+          runBlockAnalysis(true);
+        }
+      }, 5000);
+    }
+
+    function stopAutoRefresh() {
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+    }
+
+    async function runBlockAnalysis(isSilent = false) {
+      const selSymbol = document.getElementById("selSymbol");
+      const inputPrice = document.getElementById("inputTargetPrice");
+      const selSide = document.getElementById("selSide");
+      const selLimit = document.getElementById("selDepthLimit");
+      const loader = document.getElementById("loadingOverlay");
+
+      const symbol = selSymbol.value || "ETHUSDT";
+      const targetPrice = parseFloat(inputPrice.value);
+      const side = selSide.value || "auto";
+      const limit = parseInt(selLimit.value, 10) || 1000;
+
+      if (!isSilent && loader) loader.style.display = "flex";
+
+      try {
+        const params = new URLSearchParams({
+          symbol: symbol,
+          side: side,
+          limit: limit
+        });
+        if (!isNaN(targetPrice)) {
+          params.append("target_price", targetPrice);
+        }
+
+        const res = await fetch(`/api/orderbook/analyze-block?${params.toString()}`);
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        currentBlockData = data;
+        renderDashboard(data);
+      } catch (err) {
+        console.error("Falha ao analisar bloco:", err);
+        if (!isSilent) alert("Erro ao consultar livro da Binance: " + err.message);
+      } finally {
+        if (loader) loader.style.display = "none";
+      }
+    }
+
+    function renderDashboard(data) {
+      const baseAsset = data.symbol.replace("USDT", "");
+      const bloco = data.bloco;
+      const stats = data.estatisticas_livro || {};
+
+      // 1. Cards de Métricas
+      const valPrice = document.getElementById("valPrice");
+      const valDist = document.getElementById("valDist");
+      const valVolume = document.getElementById("valVolume");
+      const valUsd = document.getElementById("valUsd");
+      const valZScore = document.getElementById("valZScore");
+      const valTier = document.getElementById("valTier");
+      const valInstitutional = document.getElementById("valInstitutional");
+      const valSignificance = document.getElementById("valSignificance");
+      const valRisk = document.getElementById("valRisk");
+
+      if (bloco && bloco.encontrado) {
+        valPrice.textContent = `$${bloco.preco.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+        const sign = bloco.distancia_preco >= 0 ? "+" : "";
+        valDist.textContent = `Distância: ${sign}$${bloco.distancia_preco.toFixed(2)} do topo (${data.lado_analisado})`;
+
+        valVolume.textContent = `${bloco.volume_moeda.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${baseAsset}`;
+        valUsd.textContent = `$${bloco.valor_usd.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD`;
+
+        const z = bloco.desvios_acima_da_media;
+        const zPrefix = z >= 0 ? "+" : "";
+        valZScore.textContent = `${zPrefix}${z.toFixed(2)}σ`;
+        valTier.textContent = `Classificação: ${bloco.classificacao_tier || "Regular"}`;
+
+        if (z >= 3.0) {
+          valZScore.style.color = "#00d2ff"; // Ciano neon
+        } else if (z >= 2.0) {
+          valZScore.style.color = "#0ecb81"; // Verde
+        } else {
+          valZScore.style.color = "#f0b90b"; // Amarelo
+        }
+
+        if (bloco.presenca_institucional_inferida) {
+          valInstitutional.innerHTML = `<span style="color: #0ecb81;">SIM (Baleia / Bloco Detectado)</span>`;
+          valSignificance.textContent = z >= 3.0 ? "Anomalia volumétrica acima de 3.0 sigmas" : "Volume institucional acima da média";
+        } else {
+          valInstitutional.innerHTML = `<span style="color: #848e9c;">NÃO (Fluxo Regular de Varejo)</span>`;
+          valSignificance.textContent = "Volume dentro da distribuição esperada";
+        }
+
+        valRisk.textContent = bloco.risco_de_evaporacao;
+        if (bloco.risco_de_evaporacao.includes("ALTO")) {
+          valRisk.style.color = "#f6465d";
+        } else if (bloco.risco_de_evaporacao.includes("MÉDIO")) {
+          valRisk.style.color = "#f0b90b";
+        } else {
+          valRisk.style.color = "#0ecb81";
+        }
+      } else {
+        valPrice.textContent = `$${(data.target_price || 0).toFixed(2)}`;
+        valDist.textContent = bloco ? bloco.mensagem : "Não encontrado";
+        valVolume.textContent = "0.00";
+        valUsd.textContent = "$0.00 USD";
+        valZScore.textContent = "0.00σ";
+        valTier.textContent = "Classificação: Fora do livro";
+        valInstitutional.innerHTML = `<span style="color: #848e9c;">Não visível no topo</span>`;
+        valRisk.textContent = "INDEFINIDO";
+        valRisk.style.color = "#848e9c";
+      }
+
+      // 2. Banner de Estatísticas Globais
+      document.getElementById("statMean").textContent = `${stats.media_volume || 0} ${baseAsset}`;
+      document.getElementById("statStd").textContent = `${stats.desvio_padrao || 0} ${baseAsset}`;
+      document.getElementById("statMedian").textContent = `${stats.mediana_volume || 0} ${baseAsset}`;
+      document.getElementById("statMax").textContent = `${stats.volume_maximo || 0} ${baseAsset}`;
+      document.getElementById("statSpread").textContent = `$${data.spread || 0} (Bid: $${data.best_bid} | Ask: $${data.best_ask})`;
+
+      // 3. Tabela de Top Paredes
+      const tblBody = document.getElementById("tblTopWallsBody");
+      tblBody.innerHTML = "";
+      const walls = data.top_paredes_institucionais || [];
+
+      if (walls.length === 0) {
+        tblBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 18px;">Nenhuma anomalia volumétrica (&ge;1.5&sigma;) detectada no livro no momento.</td></tr>`;
+      } else {
+        walls.forEach(w => {
+          const tr = document.createElement("tr");
+          const isHighRisk = w.risco_evaporacao.includes("ALTO");
+          tr.innerHTML = `
+            <td><strong style="color: var(--binance-yellow);">$${w.preco.toFixed(2)}</strong></td>
+            <td>${w.volume.toFixed(2)} ${baseAsset}</td>
+            <td style="color: #00d2ff;">$${w.valor_usd.toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+            <td><span class="badge-sigma ${w.z_score >= 3.0 ? 'sigma-whale' : 'sigma-mod'}">+${w.z_score.toFixed(2)}σ</span></td>
+            <td><span class="badge-risk ${isHighRisk ? 'risk-high' : 'risk-med'}">${w.risco_evaporacao}</span></td>
+            <td>
+              <button type="button" class="btn-inspect" data-price="${w.preco}" title="Inspecionar este preço detalhadamente">
+                Inspecionar
+              </button>
+            </td>
+          `;
+
+          const btn = tr.querySelector(".btn-inspect");
+          if (btn) {
+            btn.addEventListener("click", () => {
+              const input = document.getElementById("inputTargetPrice");
+              if (input) input.value = w.preco.toFixed(2);
+              runBlockAnalysis();
+            });
+          }
+
+          tblBody.appendChild(tr);
+        });
+      }
+
+      // 4. Desenha Canvas de Curva de Volume
+      drawVisualDepthCanvas(data);
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function drawVisualDepthCanvas(data) {
+      const canvas = document.getElementById("depthVisualCanvas");
+      if (!canvas) return;
+
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const walls = data.top_paredes_institucionais || [];
+      const stats = data.estatisticas_livro || {};
+      const maxVol = stats.volume_maximo || 100;
+      const meanVol = stats.media_volume || 1;
+
+      // Grade de Fundo
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.lineWidth = 1;
+      for (let y = 40; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+
+      // Linha de Média (Amarelo Pontilhado)
+      const meanY = canvas.height - (meanVol / maxVol) * (canvas.height - 60) - 20;
+      ctx.strokeStyle = "rgba(240, 185, 11, 0.4)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, meanY);
+      ctx.lineTo(canvas.width, meanY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(240, 185, 11, 0.8)";
+      ctx.font = "10px 'JetBrains Mono', monospace";
+      ctx.fillText(`Média do Livro (${meanVol.toFixed(2)})`, 14, Math.max(16, meanY - 4));
+
+      // Barras de Paredes Detectadas
+      if (walls.length > 0) {
+        const barWidth = Math.min(80, (canvas.width - 60) / walls.length - 16);
+        walls.forEach((w, idx) => {
+          const x = 40 + idx * (barWidth + 24);
+          const barHeight = Math.max(10, (w.volume / maxVol) * (canvas.height - 70));
+          const y = canvas.height - barHeight - 25;
+
+          // Gradiente da barra
+          const grad = ctx.createLinearGradient(0, y, 0, canvas.height - 25);
+          if (w.z_score >= 3.0) {
+            grad.addColorStop(0, "#00d2ff");
+            grad.addColorStop(1, "rgba(0, 210, 255, 0.15)");
+          } else {
+            grad.addColorStop(0, "#f0b90b");
+            grad.addColorStop(1, "rgba(240, 185, 11, 0.15)");
+          }
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
+          ctx.fill();
+
+          // Preço e Z-Score
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "11px 'JetBrains Mono', monospace";
+          ctx.textAlign = "center";
+          ctx.fillText(`$${w.preco}`, x + barWidth / 2, y - 6);
+
+          ctx.fillStyle = w.z_score >= 3.0 ? "#00d2ff" : "#f0b90b";
+          ctx.font = "bold 10px 'JetBrains Mono', monospace";
+          ctx.fillText(`+${w.z_score.toFixed(1)}σ`, x + barWidth / 2, canvas.height - 8);
+        });
+      }
+    }
+  </script>
+</body>
+</html>

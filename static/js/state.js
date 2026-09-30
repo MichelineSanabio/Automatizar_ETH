@@ -6,20 +6,69 @@
 const CONFIG = {
   restBaseUrl: 'https://api.binance.com',
   restFallbackUrl: 'https://data-api.binance.vision',
-  wsBaseUrl: 'wss://stream.binance.com:9443/stream?streams=',
+  wsBaseUrl: 'wss://stream.binance.com:443/stream?streams=',
+  wsFallbackUrl: 'wss://data-stream.binance.vision/stream?streams=',
   defaultSymbol: 'ETHUSDT',
   defaultInterval: '15m',
   candleLimit: 500,
   defaultSpreadStep: 10,
 };
 
+// Market Tiers Centralizados (Varejo, Médio, Tubarão, Baleia, Mega Baleia) - Carregados de Definir_Baleias.json
+let MARKET_TIERS = {
+  ETHUSDT: {
+    retail: { maxQty: 1.0, maxUsd: 2500.0 },
+    medium: { minQty: 1.0, minUsd: 2500.0 },
+    shark: { minQty: 5.0, minUsd: 12000.0 },
+    whale: { minQty: 10.0, minUsd: 25000.0 },
+    mega_whale: { minQty: 40.0, minUsd: 90000.0 }
+  },
+  BTCUSDT: {
+    retail: { maxQty: 0.05, maxUsd: 3000.0 },
+    medium: { minQty: 0.05, minUsd: 3000.0 },
+    shark: { minQty: 0.25, minUsd: 15000.0 },
+    whale: { minQty: 0.50, minUsd: 30000.0 },
+    mega_whale: { minQty: 1.80, minUsd: 100000.0 }
+  }
+};
+
+async function loadMarketTiers() {
+  try {
+    const res = await fetch('/api/tiers?_t=' + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        MARKET_TIERS = data;
+        console.log('[Tiers] Configurações carregadas com sucesso de Definir_Baleias.json');
+      }
+    }
+  } catch (e) {
+    console.warn('[Tiers] Usando tiers padrão locais:', e);
+  }
+}
+
+// Pre-initialize runtime state from localStorage if available (prevents race conditions on reload)
+let savedLocalLayout = null;
+try {
+  const _localStr = localStorage.getItem('binance_terminal_layout');
+  if (_localStr) {
+    savedLocalLayout = JSON.parse(_localStr);
+  }
+} catch (e) {}
+
 // Global Runtime State
-let currentSymbol = CONFIG.defaultSymbol;
-let currentInterval = CONFIG.defaultInterval;
+let currentSymbol = (savedLocalLayout && savedLocalLayout.chart && savedLocalLayout.chart.symbol)
+  ? savedLocalLayout.chart.symbol.toUpperCase()
+  : CONFIG.defaultSymbol;
+let currentInterval = (savedLocalLayout && savedLocalLayout.chart && savedLocalLayout.chart.interval)
+  ? savedLocalLayout.chart.interval.toLowerCase()
+  : CONFIG.defaultInterval;
 let activeWs = null;
 let lastPrice = 0;
 let historicalCandles = [];
-let orderBookGrouping = CONFIG.defaultSpreadStep;
+let orderBookGrouping = (savedLocalLayout && savedLocalLayout.spreads && savedLocalLayout.spreads.orderBookGrouping)
+  ? savedLocalLayout.spreads.orderBookGrouping
+  : CONFIG.defaultSpreadStep;
 let lastRawDepth = null;
 
 // Lightweight Charts Series References
@@ -50,6 +99,7 @@ let showMacd = false;
 let userPriceMarkings = []; // [{ id, price, label, color, lineStyle, lineWidth }]
 let userChartPriceLines = new Map(); // id -> LightweightCharts PriceLine instance
 let isSettingsLoaded = false;
+let isRestoringSettings = true;
 
 // DOM Elements Cache
 const el = {};

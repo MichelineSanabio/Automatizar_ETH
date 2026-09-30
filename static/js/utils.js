@@ -2,15 +2,23 @@
  * Binance Market Terminal - Utility & Formatting Functions
  */
 
-// Helper to fetch Binance REST API with fallback URL
+// Helper to fetch Binance REST API with multi-tier fallback (direct -> data-api -> Flask local proxy)
 async function fetchBinance(endpoint) {
   try {
     const res = await fetch(`${CONFIG.restBaseUrl}${endpoint}`);
     if (res.ok) return res;
     throw new Error(`HTTP ${res.status}`);
   } catch (err) {
-    console.warn(`Tentando fallback para ${endpoint}...`, err);
-    return fetch(`${CONFIG.restFallbackUrl}${endpoint}`);
+    try {
+      console.warn(`Tentando fallback data-api para ${endpoint}...`, err);
+      const resFallback = await fetch(`${CONFIG.restFallbackUrl}${endpoint}`);
+      if (resFallback.ok) return resFallback;
+      throw new Error(`HTTP ${resFallback.status}`);
+    } catch (err2) {
+      console.warn(`Tentando proxy local do Flask para ${endpoint}...`, err2);
+      const cleanPath = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+      return fetch(`/api/binance/${cleanPath}`);
+    }
   }
 }
 

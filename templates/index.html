@@ -21,8 +21,13 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Flask Static CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- Terminal Modular CSS Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chart.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/panels.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/orders.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/accessibility.css') }}?v={{ version }}">
 </head>
 <body>
   <div class="terminal-container">
@@ -58,9 +63,9 @@
 
       <div class="header-right">
         <!-- Live Connection Status -->
-        <div class="connection-status" id="wsStatus">
+        <div class="connection-status" id="wsStatus" title="Binance WebSocket Real-time Stream">
           <span class="status-dot pulsing"></span>
-          <span class="status-text" id="wsStatusText">WebSocket Conectado</span>
+          <span class="status-text" id="wsStatusText">Conectado</span>
         </div>
 
         <!-- Persistent Layout Status Badge -->
@@ -137,6 +142,7 @@
                   <span class="comfort-scale-title">Escala Geral de Texto (Presbiopia):</span>
                   <div class="comfort-scale-buttons">
                     <button type="button" class="scale-btn active" data-scale="100">100% Padrão</button>
+                    <button type="button" class="scale-btn" data-scale="110">110% Leve</button>
                     <button type="button" class="scale-btn" data-scale="120">120% Conforto</button>
                     <button type="button" class="scale-btn" data-scale="140">140% TV Grande</button>
                   </div>
@@ -150,11 +156,12 @@
             </div>
           </div>
 
-          <button type="button" class="btn btn-secondary btn-header-orders" id="btnHeaderOrders" title="Painel de Minhas Ordens & Cálculo de Lucros (PnL)">
-            <i data-lucide="wallet"></i>
-            <span>Ordens & PnL</span>
-            <span class="orders-badge" id="ordersHeaderBadge">4</span>
-          </button>
+
+          <a href="/zscore-blocos" class="btn btn-secondary btn-header-block-analyzer" id="btnHeaderBlockAnalyzer" target="_blank" title="Abrir Analisador Estatístico de Blocos & Z-Score em Nova Aba">
+            <i data-lucide="calculator"></i>
+            <span>Z-Score Blocos</span>
+            <i data-lucide="external-link" style="width: 12px; height: 12px; opacity: 0.7;"></i>
+          </a>
 
           <a href="/liquidez" class="btn btn-secondary btn-liquidity-link" id="btnLiquidityMonitor" target="_blank" title="Abrir Monitor de Liquidez e Stops em Nova Aba">
             <i data-lucide="crosshair"></i>
@@ -228,98 +235,125 @@
           <div class="range-bar-fill" id="rangeBarFill" style="width: 50%;"></div>
         </div>
       </div>
+
+      <!-- Separador Vertical na Ticker Bar -->
+      <div class="ticker-vertical-divider"></div>
+
+      <!-- Marcações e Menu de Ordens no Espaço Superior (ao lado de Range 24h) -->
+      <div class="ticker-tools-wrapper" id="tickerToolsWrapper">
+        <!-- Marcações: + Linha e Linhas -->
+        <div class="ticker-tools-group">
+          <span class="ticker-tools-label">Marcações:</span>
+          <button type="button" class="btn-mark-tool" id="btnOpenAddMarking" title="Adicionar Linha de Preço (Suporte / Resistência / Alvo) no Gráfico">
+            <i data-lucide="plus-circle"></i>
+            <span>+ Linha</span>
+          </button>
+          <button type="button" class="btn-mark-tool" id="btnManageMarkings" title="Gerenciar Linhas e Suportes Salvos">
+            <i data-lucide="bookmark"></i>
+            <span>Linhas</span>
+            <span class="markings-counter-badge" id="markingsCountBadge" style="display: none;">0</span>
+          </button>
+        </div>
+
+        <div class="ticker-tools-divider"></div>
+
+        <!-- Menu de Ordens & PnL + Resumo Rápido -->
+        <div class="ticker-tools-group ticker-orders-group">
+          <button type="button" class="btn btn-secondary btn-header-orders" id="btnHeaderOrders" title="Painel de Minhas Ordens & Cálculo de Lucros (PnL)">
+            <i data-lucide="wallet"></i>
+            <span>Ordens & PnL</span>
+            <span class="orders-badge" id="ordersHeaderBadge">0</span>
+          </button>
+
+          <!-- Resumo Rápido de Posição / Ordens Pendentes -->
+          <div class="orders-quick-summary-pill" id="ordersQuickSummaryPill" style="display: none;" title="Clique para abrir detalhes da posição e ordens">
+            <span class="pill-label">Posição:</span>
+            <strong class="pill-eth font-mono" id="pillHoldingsEth">0.00 ETH</strong>
+            <span class="pill-sep">•</span>
+            <span class="pill-label">PM:</span>
+            <strong class="pill-pm font-mono" id="pillAvgPrice">$0.00</strong>
+            <span class="pill-sep">•</span>
+            <span class="pill-label">PnL:</span>
+            <strong class="pill-pnl font-mono green" id="pillPnlText">+$0.00 (+0.00%)</strong>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- MAIN WORKSPACE -->
     <main class="terminal-workspace">
       <!-- LEFT: CHART SECTION -->
       <section class="chart-section">
-        <!-- Chart Controls Toolbar -->
+        <!-- Chart Controls Toolbar (Organizada em 2 Linhas para Evitar Conflito com Side-Tabs) -->
         <div class="chart-toolbar">
-          <!-- View Switcher: Chart vs Livro Binance vs Expanded Tape Reading vs Data Análise -->
-          <div class="view-mode-tabs" id="viewModeTabs">
-            <button class="view-tab-btn active" data-view="chart" id="btnViewChart">
-              <i data-lucide="line-chart"></i> <span>Gráfico</span>
-            </button>
-            <button class="view-tab-btn" data-view="orderbook" id="btnViewOrderBook">
-              <i data-lucide="book-open"></i> <span>Livro de Ofertas (Binance)</span>
-            </button>
-            <button class="view-tab-btn" data-view="tape" id="btnViewTape">
-              <i data-lucide="zap"></i> <span>Tape Reading Expandido</span>
-            </button>
-            <button class="view-tab-btn" data-view="liquidity" id="btnViewLiquidity" title="Exibir Monitor de Liquidez e Stops no frame abaixo">
-              <i data-lucide="crosshair"></i> <span>Liquidez</span>
-            </button>
-            <button class="view-tab-btn" data-view="data-analysis" id="btnViewDataAnalysis" title="Exibir Data Análise e Volatilidade no frame abaixo">
-              <i data-lucide="pie-chart"></i> <span>Data Análise</span>
-            </button>
-            <button class="view-tab-btn btn-orders-tab" id="btnOpenOrdersTrackerNav" title="Painel de Minhas Ordens & Lucro (PnL)">
-              <i data-lucide="wallet"></i> <span>Minhas Ordens</span>
-              <span class="orders-badge" id="ordersNavBadge">4</span>
-            </button>
-          </div>
-
-          <div class="orders-quick-summary-pill" id="ordersQuickSummaryPill" title="Clique para abrir detalhes da posição e ordens">
-            <span class="pill-label">Posição:</span>
-            <strong class="pill-eth font-mono" id="pillHoldingsEth">1.6977 ETH</strong>
-            <span class="pill-sep">•</span>
-            <span class="pill-label">PM:</span>
-            <strong class="pill-pm font-mono" id="pillAvgPrice">$2,525.65</strong>
-            <span class="pill-sep">•</span>
-            <span class="pill-label">PnL:</span>
-            <strong class="pill-pnl font-mono green" id="pillPnlText">+$0.00 (+0.00%)</strong>
-          </div>
-
-          <div class="toolbar-separator"></div>
-
-          <!-- Chart Interval Controls (visible in chart mode) -->
-          <div class="chart-controls-group" id="chartControlsGroup" style="display: inline-flex; align-items: center; gap: 10px;">
-            <div class="toolbar-group">
-              <span class="toolbar-label">Intervalo:</span>
-              <div class="interval-selector" id="intervalSelector">
-                <button class="interval-btn" data-interval="1m" id="int-1m">1m</button>
-                <button class="interval-btn" data-interval="5m" id="int-5m">5m</button>
-                <button class="interval-btn active" data-interval="15m" id="int-15m">15m</button>
-                <button class="interval-btn" data-interval="1h" id="int-1h">1h</button>
-                <button class="interval-btn" data-interval="4h" id="int-4h">4h</button>
-                <button class="interval-btn" data-interval="1d" id="int-1d">1D</button>
-                <button class="interval-btn" data-interval="1w" id="int-1w">1S</button>
-              </div>
+          <!-- Linha Superior: Visualizações & Intervalos do Gráfico -->
+          <div class="chart-toolbar-row chart-toolbar-row-top">
+            <!-- View Switcher: Chart vs Livro Binance vs Expanded Tape Reading vs Data Análise -->
+            <div class="view-mode-tabs" id="viewModeTabs">
+              <button class="view-tab-btn active" data-view="chart" id="btnViewChart">
+                <i data-lucide="line-chart"></i> <span>Gráfico</span>
+              </button>
+              <button class="view-tab-btn" data-view="orderbook" id="btnViewOrderBook">
+                <i data-lucide="book-open"></i> <span>Livro de Ofertas (Binance)</span>
+              </button>
+              <button class="view-tab-btn" data-view="tape" id="btnViewTape">
+                <i data-lucide="zap"></i> <span>Tape Reading Expandido</span>
+              </button>
+              <button class="view-tab-btn" data-view="liquidity" id="btnViewLiquidity" title="Exibir Monitor de Liquidez e Stops no frame abaixo">
+                <i data-lucide="crosshair"></i> <span>Liquidez</span>
+              </button>
+              <button class="view-tab-btn" data-view="data-analysis" id="btnViewDataAnalysis" title="Exibir Data Análise e Volatilidade no frame abaixo">
+                <i data-lucide="pie-chart"></i> <span>Data Análise</span>
+              </button>
             </div>
 
             <div class="toolbar-separator"></div>
 
-            <div class="toolbar-group">
-              <span class="toolbar-label">Indicadores:</span>
+            <!-- Chart Interval Controls (visível no modo gráfico) -->
+            <div class="chart-controls-group" id="chartControlsGroup">
+              <div class="toolbar-group">
+                <span class="toolbar-label">Intervalo:</span>
+                <div class="interval-selector" id="intervalSelector">
+                  <button class="interval-btn" data-interval="1m" id="int-1m">1m</button>
+                  <button class="interval-btn" data-interval="5m" id="int-5m">5m</button>
+                  <button class="interval-btn active" data-interval="15m" id="int-15m">15m</button>
+                  <button class="interval-btn" data-interval="1h" id="int-1h">1h</button>
+                  <button class="interval-btn" data-interval="4h" id="int-4h">4h</button>
+                  <button class="interval-btn" data-interval="1d" id="int-1d">1D</button>
+                  <button class="interval-btn" data-interval="1w" id="int-1w">1S</button>
+                </div>
+                <script>
+                  (function() {
+                    try {
+                      var raw = localStorage.getItem('binance_terminal_layout');
+                      if (raw) {
+                        var p = JSON.parse(raw);
+                        if (p && p.chart && p.chart.interval) {
+                          var target = (p.chart.interval + '').toLowerCase();
+                          var sel = document.getElementById('intervalSelector');
+                          if (sel) {
+                            sel.querySelectorAll('.interval-btn').forEach(function(b) {
+                              b.classList.toggle('active', (b.dataset.interval || '').toLowerCase() === target);
+                            });
+                          }
+                        }
+                      }
+                    } catch(e) {}
+                  })();
+                </script>
+              </div>
+            </div>
+          </div>
+
+          <!-- Linha debaixo: Indicadores Técnicos -->
+          <div class="chart-toolbar-row chart-toolbar-row-bottom" id="chartToolbarRowBottom">
+            <div class="toolbar-group indicators-toolbar-group">
+              <span class="toolbar-label"><i data-lucide="trending-up" style="width: 13px; height: 13px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> Indicadores:</span>
               <button class="toggle-pill" id="toggleEma20" data-indicator="ema20">EMA 20</button>
               <button class="toggle-pill" id="toggleEma50" data-indicator="ema50">EMA 50</button>
               <button class="toggle-pill" id="toggleRsi" data-indicator="rsi">RSI (14)</button>
               <button class="toggle-pill" id="toggleBands" data-indicator="bands">Bollinger</button>
               <button class="toggle-pill" id="toggleMacd" data-indicator="macd">MACD (12, 26, 9)</button>
-            </div>
-
-            <div class="toolbar-separator"></div>
-
-            <div class="toolbar-group">
-              <span class="toolbar-label">Marcações:</span>
-              <button class="btn-mark-tool" id="btnOpenAddMarking" title="Adicionar Linha de Preço (Suporte / Resistência / Alvo) no Gráfico">
-                <i data-lucide="plus-circle"></i>
-                <span>+ Linha</span>
-              </button>
-              <button class="btn-mark-tool" id="btnManageMarkings" title="Gerenciar Linhas e Suportes Salvos">
-                <i data-lucide="bookmark"></i>
-                <span>Linhas</span>
-                <span class="markings-counter-badge" id="markingsCountBadge" style="display: none;">0</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="toolbar-group legend-toolbar-group" style="margin-left: auto;">
-            <div class="chart-legend" id="chartLegend">
-              <span class="legend-item ema20-legend" id="legendEma20" title="Clique para ligar/desligar EMA 20">EMA 20: <span id="valEma20">---</span></span>
-              <span class="legend-item ema50-legend" id="legendEma50" title="Clique para ligar/desligar EMA 50">EMA 50: <span id="valEma50">---</span></span>
-              <span class="legend-item rsi-legend" id="legendRsi" style="display:none;" title="Clique para alternar RSI">RSI: <span id="valRsi">---</span></span>
-              <span class="legend-item macd-legend" id="legendMacd" style="display:none;">MACD: <span id="valMacd">---</span> | Sinal: <span id="valMacdSignal">---</span> | Hist: <span id="valMacdHist">---</span></span>
             </div>
           </div>
         </div>
@@ -335,6 +369,22 @@
               <span class="ohlc-metric">Mín: <strong class="red" id="ohlcValLow">---</strong></span>
               <span class="ohlc-metric">Fech: <strong id="ohlcValClose">---</strong></span>
               <span class="ohlc-metric ohlc-time-metric"><i data-lucide="clock" style="width: 12px; height: 12px; display: inline-block;"></i> <span id="ohlcValTime">--:--:--</span></span>
+            </div>
+
+            <!-- Floating TradingView Zoom & Navigation Controls (Binance Style) -->
+            <div class="chart-tv-floating-controls" id="chartTvFloatingControls">
+              <button type="button" class="tv-control-btn" id="btnZoomInCandles" title="Aumentar Tamanho dos Candles (Zoom In) [+]">
+                <i data-lucide="plus"></i>
+              </button>
+              <button type="button" class="tv-control-btn" id="btnZoomOutCandles" title="Diminuir Tamanho dos Candles (Zoom Out) [-]">
+                <i data-lucide="minus"></i>
+              </button>
+              <button type="button" class="tv-control-btn" id="btnScrollRealtime" title="Rolar para a Vela em Tempo Real [End]">
+                <i data-lucide="chevrons-right"></i>
+              </button>
+              <button type="button" class="tv-control-btn tv-btn-auto" id="btnResetChartZoom" title="Restaurar Escala Automática & Centralizar (Auto)">
+                <span>Auto</span>
+              </button>
             </div>
 
             <div class="chart-loading-overlay" id="chartLoader">
@@ -711,6 +761,9 @@
           <div class="ob-sidebar-actions">
             <button class="ob-expand-btn" id="btnExpandOrderBook" title="Abrir Order Book com ordens lado a lado na tela principal">
               <i data-lucide="maximize-2"></i> <span>Abrir Aba Lado a Lado</span>
+            </button>
+            <button class="ob-expand-btn btn-analyze-block" id="btnOpenBlockAnalyzer" title="Analisador Estatístico de Blocos de Suporte/Resistência (Z-Score & Spoofing)">
+              <i data-lucide="calculator"></i> <span>Análise de Bloco (Z-Score)</span>
             </button>
           </div>
 
@@ -1244,6 +1297,145 @@
         </div>
       </div>
     </div>
+  <!-- MODAL: ANALISADOR ESTATÍSTICO DE BLOCOS E PAREDES (Z-SCORE & RISCO DE SPOOFING) -->
+  <div class="modal-backdrop" id="modalBlockAnalyzerBackdrop" style="display: none;">
+    <div class="modal-dialog block-analyzer-modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="calculator"></i>
+          <span>Analisador Estatístico de Blocos & Parede Institucional (Z-Score)</span>
+        </div>
+        <button class="modal-close" id="btnCloseBlockAnalyzerModal" title="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Explicação Introdutória Rápida -->
+        <div class="block-analyzer-intro">
+          <span>Avalie a densidade estatística de ordens no Order Book da Binance. Níveis com <strong>Z-Score &gt; 3.0σ</strong> indicam anomalias institucionais (baleias) com avaliação do risco de cancelamento / evaporação súbita (spoofing).</span>
+        </div>
+
+        <!-- Formulário de Consulta -->
+        <div class="block-form-card">
+          <div class="block-form-grid">
+            <div class="form-group">
+              <label class="form-label" for="blockSymbolSelect">Par de Moeda</label>
+              <select id="blockSymbolSelect" class="form-control font-mono">
+                <option value="ETHUSDT" selected>ETH / USDT</option>
+                <option value="BTCUSDT">BTC / USDT</option>
+                <option value="SOLUSDT">SOL / USDT</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blockTargetPriceInput">Preço Alvo do Degrau ($)</label>
+              <div class="input-with-action">
+                <input type="number" id="blockTargetPriceInput" class="form-control font-mono" step="any" placeholder="Ex: 2660.0" value="2660.0" />
+                <button type="button" class="btn-sub-action" id="btnUseCurrentPrice" title="Preencher com cotação atual">Atual</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blockSideSelect">Lado do Livro</label>
+              <select id="blockSideSelect" class="form-control font-mono">
+                <option value="auto" selected>Automático (Detectar)</option>
+                <option value="bids">Suporte (Bids / Compras)</option>
+                <option value="asks">Resistência (Asks / Vendas)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="blockDepthLimit">Profundidade</label>
+              <select id="blockDepthLimit" class="form-control font-mono">
+                <option value="100">100 níveis</option>
+                <option value="500">500 níveis</option>
+                <option value="1000" selected>1000 níveis (Recomendado)</option>
+              </select>
+            </div>
+
+            <div class="form-group btn-col">
+              <button type="button" class="btn-calc-block" id="btnRunBlockAnalysis">
+                <i data-lucide="search"></i>
+                <span>Analisar Degrau</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loader -->
+        <div class="block-analyzer-loading" id="blockAnalyzerLoader" style="display: none;">
+          <div class="spinner"></div>
+          <span>Consultando profundidade estatística na Binance...</span>
+        </div>
+
+        <!-- Painel de Resultados do Degrau Consultado -->
+        <div class="block-result-container" id="blockResultContainer" style="display: none;">
+          <div class="block-metric-cards">
+            <div class="block-card">
+              <span class="card-label">Preço Analisado</span>
+              <strong class="card-value font-mono yellow" id="resBlockPrice">$0.00</strong>
+              <small class="card-sub" id="resBlockDist">Distância: ---</small>
+            </div>
+
+            <div class="block-card">
+              <span class="card-label">Volume do Degrau</span>
+              <strong class="card-value font-mono" id="resBlockVolume">0.00</strong>
+              <small class="card-sub" id="resBlockUsd">$0.00 USD</small>
+            </div>
+
+            <div class="block-card highlight-zscore">
+              <span class="card-label">Z-Score (Desvios)</span>
+              <strong class="card-value font-mono" id="resBlockZScore">+0.00σ</strong>
+              <small class="card-sub" id="resBlockTier">Classificação</small>
+            </div>
+
+            <div class="block-card">
+              <span class="card-label">Presença Institucional</span>
+              <strong class="card-value font-mono" id="resBlockInstitutional">---</strong>
+              <small class="card-sub" id="resBlockSignif">Inferência estatística</small>
+            </div>
+
+            <div class="block-card highlight-risk">
+              <span class="card-label">Risco de Evaporação (Spoofing)</span>
+              <strong class="card-value font-mono" id="resBlockRisk">---</strong>
+              <small class="card-sub">Probabilidade de cancelamento</small>
+            </div>
+          </div>
+
+          <!-- Métricas Globais do Livro (Média, Desvio Padrão) -->
+          <div class="book-distribution-summary" id="bookDistributionSummary">
+            <span>📊 <strong>Média por nível:</strong> <span id="distMeanVol" class="font-mono">---</span></span>
+            <span>📈 <strong>Desvio Padrão (σ):</strong> <span id="distStdDev" class="font-mono">---</span></span>
+            <span>🎯 <strong>Níveis no Livro:</strong> <span id="distTotalLevels" class="font-mono">1000</span></span>
+          </div>
+
+          <!-- Top Paredes / Anomalias Institucionais Detectadas no Momento -->
+          <div class="top-walls-section">
+            <div class="top-walls-title">
+              <i data-lucide="shield-alert"></i>
+              <span>Maiores Paredes Institucionais Detectadas no Livro (Z-Score &ge; 2.5&sigma;)</span>
+            </div>
+            <div class="top-walls-table-wrap">
+              <table class="top-walls-table font-mono">
+                <thead>
+                  <tr>
+                    <th>Preço ($)</th>
+                    <th>Volume</th>
+                    <th>Valor ($)</th>
+                    <th>Z-Score</th>
+                    <th>Risco Evaporação</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="topWallsTableBody">
+                  <!-- Linhas dinâmicas -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <!-- Modular Frontend Architecture with Cache-Busting -->
@@ -1258,6 +1450,10 @@
   <script src="{{ url_for('static', filename='js/websocket.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/orders.js') }}?v={{ version }}"></script>
+  <script src="{{ url_for('static', filename='js/block_analyzer.js') }}?v={{ version }}"></script>
+  <script src="{{ url_for('static', filename='js/ticker.js') }}?v={{ version }}"></script>
+  <script src="{{ url_for('static', filename='js/loader.js') }}?v={{ version }}"></script>
+  <script src="{{ url_for('static', filename='js/events.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
   <script>
     // Initialize Lucide Icons

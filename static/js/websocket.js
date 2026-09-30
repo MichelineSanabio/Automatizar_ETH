@@ -3,24 +3,73 @@
  */
 
 // Connect to Binance Combined WebSocket Stream
-function connectWebSocket(symbol, interval) {
-  if (activeWs) {
-    activeWs.close();
+let wsReconnectTimer = null;
+let currentWsEndpointIndex = 0;
+
+function getWsEndpoints() {
+  return [
+    CONFIG.wsBaseUrl || 'wss://stream.binance.com:443/stream?streams=',
+    CONFIG.wsFallbackUrl || 'wss://data-stream.binance.vision/stream?streams=',
+    'wss://stream.binance.com:9443/stream?streams='
+  ];
+}
+
+// Safely disconnect active WebSocket without triggering reconnect loops
+function disconnectWebSocket() {
+  if (wsReconnectTimer) {
+    clearTimeout(wsReconnectTimer);
+    wsReconnectTimer = null;
   }
+  if (activeWs) {
+    // Unbind listeners before closing so it doesn't trigger onclose reconnect cascades
+    activeWs.onopen = null;
+    activeWs.onmessage = null;
+    activeWs.onerror = null;
+    activeWs.onclose = null;
+    try {
+      if (activeWs.readyState === WebSocket.OPEN || activeWs.readyState === WebSocket.CONNECTING) {
+        activeWs.close();
+      }
+    } catch (e) {
+      // Ignore
+    }
+    activeWs = null;
+  }
+}
+
+function connectWebSocket(symbol, interval) {
+  // Always clean up existing socket and timers cleanly
+  disconnectWebSocket();
 
   const s = symbol.toLowerCase();
   // Combined streams: kline, trade, depth, and 24h ticker
   const streams = `${s}@kline_${interval}/${s}@trade/${s}@depth20@100ms/${s}@ticker`;
-  const wsUrl = `${CONFIG.wsBaseUrl}${streams}`;
+  
+  const endpoints = getWsEndpoints();
+  const baseUrl = endpoints[currentWsEndpointIndex % endpoints.length];
+  const wsUrl = `${baseUrl}${streams}`;
 
   setWsStatus('Conectando...', 'connecting');
-  activeWs = new WebSocket(wsUrl);
+  
+  let wsInstance = null;
+  try {
+    wsInstance = new WebSocket(wsUrl);
+  } catch (err) {
+    console.error('[WebSocket] Falha ao instanciar conexão:', err);
+    scheduleWsReconnect(symbol, interval);
+    return;
+  }
 
-  activeWs.onopen = () => {
-    setWsStatus('WebSocket Conectado', 'connected');
+  activeWs = wsInstance;
+
+  wsInstance.onopen = () => {
+    if (activeWs !== wsInstance) return;
+    setWsStatus('Conectado', 'connected');
+    console.log(`[WebSocket] Conectado com sucesso (${baseUrl})`);
   };
 
-  activeWs.onmessage = (event) => {
+  wsInstance.onmessage = (event) => {
+    if (activeWs !== wsInstance) return;
     try {
       const msg = JSON.parse(event.data);
       const stream = msg.stream;
@@ -38,24 +87,37 @@ function connectWebSocket(symbol, interval) {
         renderTicker24h(data);
       }
     } catch (err) {
-      console.error('WS parse error:', err);
+      console.error('[WebSocket] Erro ao processar mensagem:', err);
     }
   };
 
-  activeWs.onerror = (err) => {
-    console.warn('WS error:', err);
+  wsInstance.onerror = (err) => {
+    if (activeWs !== wsInstance) return;
+    console.warn('[WebSocket] Alerta de conexão:', err);
     setWsStatus('Erro de Conexão', 'error');
   };
 
-  activeWs.onclose = () => {
-    setWsStatus('Desconectado (Reconectando...)', 'disconnected');
-    // Auto-reconnect after 3 seconds
-    setTimeout(() => {
-      if (currentSymbol === symbol) {
-        connectWebSocket(symbol, interval);
-      }
-    }, 3000);
+  wsInstance.onclose = (event) => {
+    if (activeWs !== wsInstance) return;
+    console.warn(`[WebSocket] Desconectado (código ${event.code}). Tentando reconexão limpa...`);
+    setWsStatus('Reconectando...', 'disconnected');
+    
+    // Rotaciona para o endpoint alternativo caso o primário falhe
+    currentWsEndpointIndex = (currentWsEndpointIndex + 1) % endpoints.length;
+    scheduleWsReconnect(symbol, interval);
   };
+}
+
+function scheduleWsReconnect(symbol, interval) {
+  if (wsReconnectTimer) {
+    clearTimeout(wsReconnectTimer);
+  }
+  wsReconnectTimer = setTimeout(() => {
+    wsReconnectTimer = null;
+    if (currentSymbol === symbol) {
+      connectWebSocket(symbol, interval);
+    }
+  }, 3500);
 }
 
 // Handle Real-time Candlestick Tick
@@ -125,15 +187,19 @@ function handleRealtimeTrade(trade) {
   const time = new Date(trade.T).toLocaleTimeString();
   const isBuyerMaker = trade.m; // true = sell taker, false = buy taker
   const tradeType = isBuyerMaker ? 'sell' : 'buy';
-  const isWhaleTrade = (currentSymbol.startsWith('ETH') && qty >= 10.0) ||
-                       (currentSymbol.startsWith('BTC') && qty >= 0.5) ||
-                       (qty * price >= 25000.0);
+
+  const sym = currentSymbol ? currentSymbol.toUpperCase() : 'ETHUSDT';
+  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && (MARKET_TIERS[sym] || MARKET_TIERS['ETHUSDT'])) || {};
+  const whaleCfg = tierConfig.whale || { minQty: 10.0, minUsd: 25000.0 };
+  const megaCfg = tierConfig.mega_whale || { minQty: 40.0, minUsd: 90000.0 };
+
+  const isWhaleTrade = qty >= (whaleCfg.minQty || 10.0) || (qty * price >= (whaleCfg.minUsd || 25000.0));
+  const isMega = qty >= (megaCfg.minQty || 40.0) || (qty * price >= (megaCfg.minUsd || 90000.0));
 
   // If Whale Trade, record in Whale Radar Feed & plot marker on chart
   if (isWhaleTrade) {
     recordWhaleOrder(tradeType, price, qty, time);
     if (typeof addWhaleMarkerToChart === 'function') {
-      const isMega = (qty * price >= 90000.0) || (currentSymbol.startsWith('ETH') && qty >= 40.0);
       const timeSec = Math.floor((trade.T || Date.now()) / 1000);
       addWhaleMarkerToChart(timeSec, price, qty, tradeType === 'buy', isMega);
     }

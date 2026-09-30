@@ -1,23 +1,23 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-30T01:44:01Z",
+  "lastUpdated": "2026-09-30T03:52:05Z",
   "chart": {
     "symbol": "ETHUSDT",
-    "interval": "15m",
+    "interval": "1h",
     "isVolumeSeparated": true,
     "volumeHeight": 135
   },
   "spreads": {
-    "orderBookGrouping": 0.01,
+    "orderBookGrouping": 10,
     "obProDepthRows": 25,
     "binanceActiveSubtab": "livro"
   },
   "indicators": {
     "showEma20": false,
     "showEma50": false,
-    "showRsi": true,
+    "showRsi": false,
     "showBands": false,
-    "showMacd": true
+    "showMacd": false
   },
   "views": {
     "activeMainView": "chart",
@@ -41,56 +41,52 @@
       "lineStyle": 0,
       "lineWidth": 2,
       "price": 2750
-    },
-    {
-      "color": "#0ecb81",
-      "id": "mark_test_2",
-      "label": "Suporte Comprador",
-      "lineStyle": 0,
-      "lineWidth": 2,
-      "price": 2620
     }
   ],
   "orders": [
     {
-      "id": "ord_buy_1",
-      "side": "BUY",
       "amount": 0.2662,
-      "price": 2530.0,
-      "total": 673.486,
       "date": "2026-09-29 22:12",
-      "status": "FILLED",
-      "notes": "Ordem de Compra (0,2662 ETH @ $2530)"
+      "id": "ord_buy_1",
+      "notes": "Ordem de Compra Limit (0,2662 ETH @ $2530)",
+      "price": 2530,
+      "side": "BUY",
+      "status": "PENDING",
+      "total": 673.486
     },
     {
-      "id": "ord_buy_2",
-      "side": "BUY",
       "amount": 0.1557,
-      "price": 2585.0,
-      "total": 402.4845,
       "date": "2026-09-29 22:12",
-      "status": "FILLED",
-      "notes": "Ordem de Compra (0,1557 ETH @ $2585)"
+      "id": "ord_buy_2",
+      "notes": "Ordem de Compra Limit (0,1557 ETH @ $2585)",
+      "price": 2585,
+      "side": "BUY",
+      "status": "PENDING",
+      "total": 402.4845
     },
     {
-      "id": "ord_buy_3",
-      "side": "BUY",
       "amount": 0.3188,
-      "price": 2480.0,
-      "total": 790.624,
       "date": "2026-09-29 22:12",
-      "status": "FILLED",
-      "notes": "Ordem de Compra (0,3188 ETH @ $2480)"
+      "id": "ord_buy_3",
+      "notes": "Ordem de Compra Limit (0,3188 ETH @ $2480)",
+      "price": 2480,
+      "side": "BUY",
+      "status": "PENDING",
+      "total": 790.624
     },
     {
-      "id": "ord_buy_4",
-      "side": "BUY",
       "amount": 0.957,
-      "price": 2530.0,
-      "total": 2421.21,
       "date": "2026-09-29 22:12",
-      "status": "FILLED",
-      "notes": "Ordem de Compra (0,9570 ETH @ $2530)"
+      "id": "ord_buy_4",
+      "notes": "Ordem de Compra Limit (0,9570 ETH @ $2530)",
+      "price": 2530,
+      "side": "BUY",
+      "status": "PENDING",
+      "total": 2421.21
     }
-  ]
+  ],
+  "ordersOptions": {
+    "showOrdersOnChart": true,
+    "showBreakevenOnChart": true
+  }
 }

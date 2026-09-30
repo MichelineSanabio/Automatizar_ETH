@@ -1,0 +1,2342 @@
+/* ==========================================================================
+   3. PANELS: ORDER BOOK, TAPE READING, TRADES, WHALES & METRICS
+   ========================================================================== */
+/* 4. RIGHT SIDE PANEL */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.side-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.side-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 8px 2px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: var(--transition);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.side-tab:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.side-tab.active {
+  color: var(--binance-yellow);
+  border-bottom-color: var(--binance-yellow);
+  background: rgba(240, 185, 11, 0.06);
+}
+
+.side-tab i {
+  width: 14px;
+  height: 14px;
+}
+
+.tab-pane {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tab-pane.active {
+  display: flex;
+}
+
+/* ORDER BOOK */
+.orderbook-header {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  text-align: right;
+}
+
+.orderbook-header span:first-child {
+  text-align: left;
+}
+
+.orderbook-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+  justify-content: flex-end;
+}
+
+.bids-list {
+  justify-content: flex-start;
+}
+
+.ob-whale-radar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: rgba(240, 185, 11, 0.06);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 11px;
+  gap: 8px;
+}
+
+.ob-radar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-tick-pills {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ob-tick-btn {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.ob-tick-btn:hover {
+  color: #fff;
+  border-color: var(--border-light);
+}
+
+.ob-tick-btn.active {
+  background: var(--bg-card-subtle);
+  color: var(--binance-yellow);
+  border-color: var(--binance-yellow);
+  font-weight: 700;
+}
+
+.ob-whale-radar-title {
+  color: var(--binance-yellow);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ob-whale-radar-title i {
+  width: 12px;
+  height: 12px;
+}
+
+.ob-whale-radar-status {
+  font-size: 10.5px;
+  color: #fff;
+}
+
+.ob-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  padding: 2.5px 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  position: relative;
+  cursor: pointer;
+  text-align: right;
+  line-height: 1.2;
+  transition: background-color 0.15s ease;
+}
+
+.ob-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Whale Wall in Order Book */
+.ob-row.whale-wall {
+  background: rgba(240, 185, 11, 0.09) !important;
+  border-left: 3px solid var(--binance-yellow) !important;
+}
+
+.ob-row.mega-whale-wall {
+  background: rgba(240, 185, 11, 0.18) !important;
+  border-left: 4px solid #ffd700 !important;
+  animation: whalePulse 2s infinite ease-in-out;
+}
+
+.ob-whale-badge {
+  font-size: 9px;
+  background: var(--binance-yellow);
+  color: #000;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 800;
+  margin-left: 4px;
+  letter-spacing: -0.2px;
+  vertical-align: middle;
+}
+
+.ob-row.mega-whale-wall .ob-whale-badge {
+  background: #ffd700;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.8);
+}
+
+.ob-row span:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+.ob-depth-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+.asks-list .ob-row span:first-child {
+  color: var(--red);
+}
+
+.asks-list .ob-depth-bar {
+  background: var(--red-depth);
+}
+
+.bids-list .ob-row span:first-child {
+  color: var(--green);
+}
+
+.bids-list .ob-depth-bar {
+  background: var(--green-depth);
+}
+
+.orderbook-spread {
+  padding: 5px 10px;
+  background: var(--bg-card-subtle);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.spread-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spread-price {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.spread-indicator {
+  font-size: 12px;
+}
+
+.spread-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.spread-label {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.spread-control-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.spread-step-select {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--binance-yellow);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition);
+}
+
+.spread-step-select:hover,
+.spread-step-select:focus {
+  border-color: var(--binance-yellow);
+  background: var(--bg-card);
+}
+
+.spread-custom-input {
+  width: 55px;
+  background: var(--bg-main);
+  border: 1px solid var(--binance-yellow);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 4px;
+  outline: none;
+  text-align: right;
+  box-shadow: 0 0 6px rgba(240, 185, 11, 0.3);
+}
+
+.spread-value-text {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.spread-value-text:hover {
+  color: var(--binance-yellow);
+  text-decoration: underline dotted;
+}
+
+.depth-ratio-bar {
+  display: flex;
+  height: 22px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 22px;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.ratio-bids {
+  background: var(--green-glow);
+  color: var(--green);
+  transition: width 0.2s;
+  overflow: hidden;
+}
+
+.ratio-asks {
+  background: var(--red-glow);
+  color: var(--red);
+  transition: width 0.2s;
+  overflow: hidden;
+}
+
+/* LIVE TRADES */
+.trades-header {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  text-align: right;
+}
+
+.trades-header span:first-child {
+  text-align: left;
+}
+
+.trades-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.trade-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  padding: 3px 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  text-align: right;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.trade-row span:first-child {
+  text-align: left;
+  font-weight: 600;
+}
+
+.trade-row.buy span:first-child { color: var(--green); }
+.trade-row.sell span:first-child { color: var(--red); }
+.trade-time { color: var(--text-muted); font-size: 11px; }
+
+/* TAB 3: ANALYTICS & CODE */
+#paneAnalytics {
+  padding: 12px;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.analytics-card {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.analytics-card h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--binance-yellow);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+}
+
+.card-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.code-badge {
+  background: var(--bg-card);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border-left: 3px solid var(--binance-yellow);
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.endpoint-list {
+  list-style: none;
+  font-size: 11.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.endpoint-list code {
+  color: #00d2ff;
+  font-family: var(--font-mono);
+}
+
+
+/* ============================================================
+   5. WHALE RADAR & ETHERSCAN TOP 50 STYLING
+   ============================================================ */
+
+/* Whale Filter Bar in Trades Pane */
+.trades-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: rgba(240, 185, 11, 0.04);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 11px;
+}
+
+.whale-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--binance-yellow);
+  font-weight: 600;
+}
+
+.whale-count-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: var(--bg-main);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.trade-row.whale-trade {
+  background: rgba(240, 185, 11, 0.08) !important;
+  border-left: 3px solid var(--binance-yellow) !important;
+  font-weight: 700;
+}
+
+.whale-tag-inline {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--binance-yellow);
+  color: #000;
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+/* WHALE TAB SUB-NAVIGATION */
+.whale-subnav {
+  display: flex;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+  padding: 4px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.whale-subbtn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+.whale-subbtn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.whale-subbtn.active {
+  background: var(--bg-card);
+  color: var(--binance-yellow);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.whale-subcontent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ETHERSCAN RATE LIMIT & PROTECTION CARD */
+.etherscan-status-card {
+  margin: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, rgba(22, 27, 38, 0.9) 0%, rgba(16, 20, 29, 0.9) 100%);
+  border: 1px solid rgba(14, 203, 129, 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.status-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.status-card-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-card-title i {
+  width: 14px;
+  height: 14px;
+}
+
+.btn-refresh-whales {
+  background: rgba(14, 203, 129, 0.12);
+  border: 1px solid rgba(14, 203, 129, 0.3);
+  color: var(--green);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: var(--transition);
+}
+
+.btn-refresh-whales:hover {
+  background: rgba(14, 203, 129, 0.25);
+  color: #fff;
+}
+
+.status-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  font-size: 10.5px;
+}
+
+.metric-pill {
+  display: flex;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.metric-pill span {
+  color: var(--text-muted);
+}
+
+/* FILTER & SEARCH CONTROLS */
+.whale-controls {
+  padding: 0 10px 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.whale-search-box {
+  width: 100%;
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  outline: none;
+  transition: var(--transition);
+}
+
+.whale-search-box:focus {
+  border-color: var(--binance-yellow);
+  box-shadow: 0 0 8px var(--binance-yellow-glow);
+}
+
+.whale-category-filters {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.cat-pill {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.cat-pill:hover {
+  color: #fff;
+  border-color: var(--border-light);
+}
+
+.cat-pill.active {
+  background: var(--binance-yellow);
+  color: #0b0e14;
+  border-color: var(--binance-yellow);
+  font-weight: 700;
+}
+
+/* WHALE CARDS LIST */
+.whales-cards-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.whales-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.whale-card {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: var(--transition);
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0 !important;
+  min-height: 80px;
+}
+
+.whale-card:hover {
+  border-color: rgba(240, 185, 11, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.whale-card.rank-1 {
+  border-color: rgba(240, 185, 11, 0.5);
+  background: linear-gradient(180deg, rgba(240, 185, 11, 0.05) 0%, var(--bg-main) 100%);
+}
+
+.whale-card.rank-2 {
+  border-color: rgba(192, 192, 192, 0.4);
+}
+
+.whale-card.rank-3 {
+  border-color: rgba(205, 127, 50, 0.4);
+}
+
+.whale-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.whale-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 75%;
+}
+
+.whale-rank-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.rank-1 .whale-rank-badge { background: #f0b90b; color: #000; }
+.rank-2 .whale-rank-badge { background: #c0c0c0; color: #000; }
+.rank-3 .whale-rank-badge { background: #cd7f32; color: #fff; }
+
+.whale-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.whale-category-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.cat-exchange { background: rgba(56, 97, 251, 0.15); color: #3861fb; }
+.cat-staking { background: rgba(14, 203, 129, 0.15); color: var(--green); }
+.cat-defi { background: rgba(153, 69, 255, 0.15); color: #9945ff; }
+.cat-bridge { background: rgba(240, 185, 11, 0.15); color: var(--binance-yellow); }
+.cat-whale { background: rgba(255, 128, 0, 0.15); color: #ff8000; }
+.cat-foundation { background: rgba(0, 210, 255, 0.15); color: #00d2ff; }
+
+.whale-card-body {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.whale-balance-eth {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.whale-balance-usd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.whale-supply-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.whale-supply-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-hover);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.whale-supply-fill {
+  height: 100%;
+  background: var(--binance-yellow);
+  border-radius: 2px;
+}
+
+.whale-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 10.5px;
+}
+
+.whale-address-link {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.whale-address-link:hover {
+  color: #00d2ff;
+  text-decoration: underline;
+}
+
+.whale-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 10px;
+  transition: color 0.15s;
+}
+
+.whale-copy-btn:hover {
+  color: #fff;
+  background: var(--bg-hover);
+}
+
+/* REAL-TIME WHALE ORDERS SUBVIEW */
+.whale-orders-banner {
+  padding: 10px;
+  background: var(--bg-card-subtle);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.banner-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.banner-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.whale-orders-header {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.whale-orders-header span:first-child {
+  text-align: left;
+}
+
+.whale-orders-feed {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.whale-order-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr;
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  text-align: right;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.whale-order-row.buy {
+  background: rgba(14, 203, 129, 0.05);
+}
+
+.whale-order-row.sell {
+  background: rgba(246, 70, 93, 0.05);
+}
+
+.whale-order-row span:first-child {
+  text-align: left;
+  font-weight: 700;
+}
+
+.whale-order-row.buy span:first-child { color: var(--green); }
+.whale-order-row.sell span:first-child { color: var(--red); }
+
+.whale-empty-state {
+  padding: 30px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+
+/* ==========================================================================
+   EXPANDED TAPE READING / TIME & SALES PRO VIEW
+   ========================================================================== */
+
+/* Main Subviews (Chart vs Tape Reading) */
+.main-subview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+.main-subview:not(.active) {
+  display: none !important;
+}
+
+/* View Mode Tabs in Chart Toolbar */
+.view-mode-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--bg-main);
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  gap: 3px;
+}
+
+.view-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+
+.view-tab-btn i {
+  width: 13px;
+  height: 13px;
+}
+
+.view-tab-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+
+.view-tab-btn.active {
+  background: var(--bg-card-subtle);
+  color: var(--binance-yellow);
+  border: 1px solid rgba(240, 185, 11, 0.3);
+  box-shadow: 0 0 10px rgba(240, 185, 11, 0.15);
+}
+
+/* Tape Reading Container */
+#tapeReadingMainView {
+  background: var(--bg-main);
+  position: relative;
+}
+
+/* 1. Top Order Flow & Aggression Metrics Dashboard */
+.tape-metrics-dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.3fr 0.9fr 1.1fr;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.tape-metric-box {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.tape-metric-box:hover {
+  border-color: var(--border-light);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.tape-metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  display: block;
+}
+
+.tape-metric-val {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tape-metric-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-mono);
+}
+
+.tape-metric-box.delta-box {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+/* Aggression Power Gauge Bar */
+.aggression-bar-wrapper {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  width: 100%;
+  margin-top: 6px;
+  background: var(--bg-hover);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.aggression-fill-buy {
+  background: linear-gradient(90deg, #0ecb81, #12f59c);
+  height: 100%;
+  transition: width 0.25s ease;
+  font-size: 8px;
+  color: #000;
+  font-weight: 800;
+  text-align: center;
+  line-height: 8px;
+  overflow: hidden;
+}
+
+.aggression-fill-sell {
+  background: linear-gradient(90deg, #ff4d60, #f6465d);
+  height: 100%;
+  transition: width 0.25s ease;
+  font-size: 8px;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  line-height: 8px;
+  overflow: hidden;
+}
+
+.tape-record-item {
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* 2. Controls & Filter Toolbar */
+.tape-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--bg-card-subtle);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tape-toolbar-left,
+.tape-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tape-btn {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: var(--transition);
+}
+
+.tape-btn i {
+  width: 13px;
+  height: 13px;
+}
+
+.tape-btn:hover {
+  color: #fff;
+  background: var(--bg-hover);
+  border-color: var(--border-light);
+}
+
+.tape-pause-btn.paused {
+  background: rgba(246, 70, 93, 0.15);
+  border-color: var(--red);
+  color: #ff6b7d;
+  box-shadow: 0 0 8px rgba(246, 70, 93, 0.3);
+}
+
+.tape-filter-pills {
+  display: flex;
+  gap: 4px;
+}
+
+.tape-pill {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tape-pill:hover {
+  color: #fff;
+  border-color: var(--border-light);
+}
+
+.tape-pill.active {
+  background: var(--bg-card-subtle);
+  color: var(--binance-yellow);
+  border-color: var(--binance-yellow);
+  font-weight: 700;
+}
+
+.tape-pill.green.active {
+  background: rgba(14, 203, 129, 0.15);
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.tape-pill.red.active {
+  background: rgba(246, 70, 93, 0.15);
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* 3. Expanded Time & Sales Table Header */
+.tape-table-header {
+  display: grid;
+  grid-template-columns: 130px 140px 130px 120px 140px 150px 1fr;
+  padding: 8px 14px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tape-table-header span:first-child { text-align: left; }
+.tape-table-header span:nth-child(2) { text-align: left; }
+.tape-table-header span:nth-child(6) { text-align: center; }
+
+/* 4. Expanded Time & Sales Scrolling Feed */
+.tape-table-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-main);
+}
+
+.tape-row {
+  display: grid;
+  grid-template-columns: 130px 140px 130px 120px 140px 150px 1fr;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+  text-align: right;
+  align-items: center;
+  transition: background-color 0.12s ease;
+  animation: fadeIn 0.18s ease-out;
+}
+
+.tape-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tape-row span:first-child {
+  text-align: left;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.tape-row span:nth-child(2) {
+  text-align: left;
+  font-weight: 700;
+  font-size: 11.5px;
+}
+
+.tape-row span:nth-child(3) {
+  font-weight: 700;
+}
+
+.tape-row span:nth-child(4) {
+  font-weight: 600;
+  color: #fff;
+}
+
+.tape-row span:nth-child(5) {
+  color: var(--text-main);
+}
+
+.tape-row span:nth-child(6) {
+  text-align: center;
+}
+
+.tape-row span:last-child {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+/* Buy & Sell Theme */
+.tape-row.buy {
+  background: rgba(14, 203, 129, 0.02);
+}
+.tape-row.buy span:nth-child(3) {
+  color: var(--green);
+}
+
+.tape-row.sell {
+  background: rgba(246, 70, 93, 0.02);
+}
+.tape-row.sell span:nth-child(3) {
+  color: var(--red);
+}
+
+/* Whale Highlight on Row */
+.tape-row.whale-row {
+  background: rgba(240, 185, 11, 0.09) !important;
+  border-left: 3px solid var(--binance-yellow);
+}
+
+.tape-row.mega-whale-row {
+  background: rgba(255, 215, 0, 0.16) !important;
+  border-left: 4px solid #ffd700;
+  box-shadow: inset 0 0 10px rgba(240, 185, 11, 0.12);
+  animation: whalePulse 2s infinite ease-in-out;
+}
+
+/* Aggression Tags */
+.tape-tag-buy {
+  color: var(--green);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tape-tag-sell {
+  color: var(--red);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Size Tier Badges */
+.tier-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.tier-badge.retail {
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+}
+
+.tier-badge.medium {
+  background: rgba(56, 97, 251, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.tier-badge.shark {
+  background: rgba(6, 182, 212, 0.2);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.4);
+}
+
+.tier-badge.whale {
+  background: var(--binance-yellow);
+  color: #000;
+  box-shadow: 0 0 8px rgba(240, 185, 11, 0.6);
+}
+
+.tier-badge.mega-whale {
+  background: #ffd700;
+  color: #000;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.9);
+}
+
+.tape-empty-msg {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+
+/* ==========================================================================
+   METRICS & API DEDICATED PANELS
+   ========================================================================== */
+
+.metrics-panel-scroll,
+.api-panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.card-header-flex h4 {
+  margin: 0;
+}
+
+/* RSI Visual Gauge Bar */
+.rsi-gauge-bar {
+  height: 7px;
+  border-radius: 4px;
+  display: flex;
+  width: 100%;
+  position: relative;
+  margin: 10px 0 5px;
+  background: var(--bg-hover);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rsi-zone-oversold {
+  width: 30%;
+  background: var(--green);
+  opacity: 0.7;
+  border-radius: 4px 0 0 4px;
+}
+
+.rsi-zone-neutral {
+  width: 40%;
+  background: #475569;
+  opacity: 0.5;
+}
+
+.rsi-zone-overbought {
+  width: 30%;
+  background: var(--red);
+  opacity: 0.7;
+  border-radius: 0 4px 4px 0;
+}
+
+.rsi-needle {
+  position: absolute;
+  top: -4px;
+  width: 5px;
+  height: 15px;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+  transform: translateX(-50%);
+  transition: left 0.3s ease;
+}
+
+.rsi-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* API Tab Specifics */
+.api-tab-card {
+  margin: 0;
+}
+
+.api-plan-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+
+.api-plan-tag {
+  color: var(--text-secondary);
+}
+
+.api-quota-progress {
+  margin-top: 6px;
+}
+
+.quota-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.quota-bar-track {
+  height: 6px;
+  background: var(--bg-hover);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.quota-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--binance-yellow));
+  transition: width 0.3s ease;
+}
+
+.http-badge {
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 6px;
+  font-family: var(--font-mono);
+}
+
+.http-badge.get {
+  background: rgba(14, 203, 129, 0.2);
+  color: var(--green);
+  border: 1px solid rgba(14, 203, 129, 0.35);
+}
+
+
+/* ==========================================================================
+   ORDER BOOK LADO A LADO (EXPANDED SIDE-BY-SIDE PRO VIEW)
+   ========================================================================== */
+#orderBookMainView {
+  background: var(--bg-main);
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Sidebar Expand Button */
+.ob-sidebar-actions {
+  padding: 6px 10px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ob-expand-btn {
+  width: 100%;
+  background: rgba(240, 185, 11, 0.1);
+  border: 1px solid rgba(240, 185, 11, 0.35);
+  color: var(--binance-yellow);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.ob-expand-btn:hover {
+  background: rgba(240, 185, 11, 0.2);
+  border-color: var(--binance-yellow);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ob-expand-btn i,
+.ob-expand-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ==========================================================================
+   BINANCE APP FORMAT ORDER BOOK (LIVRO)
+   ========================================================================== */
+.binance-app-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: stretch;
+  align-items: stretch;
+  background: var(--bg-main);
+  overflow: hidden;
+  padding: 8px 12px;
+  height: 100%;
+  width: 100%;
+}
+
+.binance-app-container {
+  width: 100%;
+  max-width: 100%;
+  background: #181a20;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  height: 100%;
+}
+
+/* 1. Ticker Top Bar */
+.binance-ticker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 8px 16px;
+  background: #181a20;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.binance-ticker-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.binance-symbol-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.binance-symbol-text {
+  font-size: 16px;
+  font-weight: 800;
+  color: #eaecef;
+  letter-spacing: 0.3px;
+}
+
+.binance-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+
+.binance-price-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.binance-current-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0ecb81;
+}
+
+.binance-price-change {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0ecb81;
+}
+
+.binance-price-change.red {
+  color: #f6465d;
+}
+
+/* Subpills (Livro, Profundidade, Trades) */
+.binance-nav-pills {
+  display: inline-flex;
+  align-items: center;
+  background: #0b0e14;
+  padding: 3px;
+  border-radius: 6px;
+  gap: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.binance-pill {
+  background: transparent;
+  border: none;
+  color: #848e9c;
+  font-family: var(--font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.binance-pill:hover {
+  color: #fff;
+}
+
+.binance-pill.active {
+  background: #2b313a;
+  color: #eaecef;
+  font-weight: 700;
+}
+
+/* Binance Subview Content Containers */
+.binance-subview-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* 2. Ratio Bar */
+.binance-ratio-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 20px 6px 20px;
+  background: #181a20;
+}
+
+.binance-ratio-num {
+  font-size: 11.5px;
+  font-weight: 700;
+  min-width: 50px;
+}
+
+.binance-ratio-num.green {
+  color: #0ecb81;
+  text-align: left;
+}
+
+.binance-ratio-num.red {
+  color: #f6465d;
+  text-align: right;
+}
+
+.binance-ratio-bar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  background: #2b313a;
+}
+
+.binance-ratio-fill.green {
+  background: #0ecb81;
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.binance-ratio-divider {
+  width: 2px;
+  background: #181a20;
+  height: 100%;
+}
+
+.binance-ratio-fill.red {
+  background: #f6465d;
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+/* 3. Symmetrical 4-Columns Header */
+.binance-columns-header {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background: #1e2329;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11.5px;
+  color: #848e9c;
+  font-weight: 600;
+  user-select: none;
+}
+
+.binance-header-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 100%;
+}
+
+.binance-header-half.bid-half-header {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.header-step-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.binance-step-box {
+  position: relative;
+}
+
+.binance-step-select {
+  background: #2b313a;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #eaecef;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.binance-step-select:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* 4. Order Book Table Body & Rows */
+.binance-ladder-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+}
+
+.binance-ladder-row {
+  display: flex;
+  height: 25px;
+  align-items: center;
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  transition: background-color 0.1s ease;
+  user-select: none;
+}
+
+.binance-ladder-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.binance-cell-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  position: relative;
+  padding: 0 20px;
+}
+
+.binance-cell-half.bid-half {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.binance-depth-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: width 0.15s ease;
+}
+
+.binance-depth-bg.bid-bg {
+  right: 0;
+  background: rgba(14, 203, 129, 0.15);
+}
+
+.binance-depth-bg.ask-bg {
+  left: 0;
+  background: rgba(246, 70, 93, 0.15);
+}
+
+.binance-val-qty,
+.binance-val-price {
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.binance-val-qty {
+  color: #848e9c;
+  font-size: 11.5px;
+  min-width: 75px;
+}
+
+.bid-half .binance-val-qty {
+  text-align: left;
+}
+
+.bid-half .binance-val-price {
+  text-align: right;
+}
+
+.ask-half .binance-val-price {
+  text-align: left;
+}
+
+.ask-half .binance-val-qty {
+  text-align: right;
+}
+
+.binance-val-price.bid-price {
+  color: #0ecb81;
+  font-weight: 700;
+  min-width: 80px;
+}
+
+.binance-val-price.ask-price {
+  color: #f6465d;
+  font-weight: 700;
+  min-width: 80px;
+}
+
+.whale-arrow {
+  color: #f0b90b;
+  font-size: 9px;
+  margin-right: 4px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 5. Subtab 2: Depth Chart (Profundidade) */
+.binance-depth-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 16px;
+  background: #181a20;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.depth-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.depth-stat-label {
+  color: #848e9c;
+}
+
+.depth-stat-val {
+  font-weight: 700;
+  color: #eaecef;
+}
+
+.depth-stat-val.green {
+  color: #0ecb81;
+}
+
+.depth-stat-val.red {
+  color: #f6465d;
+}
+
+.binance-depth-canvas-wrapper {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  min-height: 380px;
+  overflow: hidden;
+  background: #121418;
+}
+
+#binanceDepthCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.binance-depth-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(24, 26, 32, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  color: #eaecef;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  transform: translate(-50%, -110%);
+  white-space: nowrap;
+}
+
+/* 6. Subtab 3: Live Trades Table */
+.binance-trades-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+  background: #181a20;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.trades-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #848e9c;
+}
+
+.trades-stat-pill strong {
+  font-weight: 700;
+}
+
+.trades-stat-pill strong.gold {
+  color: #f0b90b;
+}
+
+.binance-trades-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
+  background: #1e2329;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11.5px;
+  color: #848e9c;
+  font-weight: 600;
+  user-select: none;
+}
+
+.trades-th {
+  flex: 1;
+}
+.trades-th.col-time { flex: 0.8; }
+.trades-th.col-price { flex: 1; text-align: right; }
+.trades-th.col-qty { flex: 1; text-align: right; }
+.trades-th.col-total { flex: 1.1; text-align: right; }
+.trades-th.col-side { flex: 0.8; text-align: center; }
+
+.binance-trades-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.binance-trade-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.15s ease;
+}
+
+.binance-trade-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.t-col {
+  flex: 1;
+}
+.t-col.col-time { flex: 0.8; color: #848e9c; font-size: 11px; }
+.t-col.col-price { flex: 1; text-align: right; font-weight: 700; }
+.t-col.col-price.buy { color: #0ecb81; }
+.t-col.col-price.sell { color: #f6465d; }
+.t-col.col-qty { flex: 1; text-align: right; color: #eaecef; }
+.t-col.col-total { flex: 1.1; text-align: right; color: #848e9c; }
+.t-col.col-side { flex: 0.8; text-align: center; }
+
+.trade-side-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.trade-side-pill.buy {
+  background: rgba(14, 203, 129, 0.15);
+  color: #0ecb81;
+}
+
+.trade-side-pill.sell {
+  background: rgba(246, 70, 93, 0.15);
+  color: #f6465d;
+}
+
+
+/* ==========================================================================
+   HIGH-CONTRAST WHALE BADGES & BUY VISIBILITY ENHANCEMENTS
+   ========================================================================== */
+
+/* Fix: Buy whale icon/badge was hard to read in faint green.
+   Now rendered in ultra-sharp, high-contrast Binance Golden Amber! */
+.whale-side-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.whale-side-badge.buy {
+  background: #f0b90b !important;
+  color: #0b0e14 !important;
+  border: 1px solid #ffd700;
+  box-shadow: 0 0 8px rgba(240, 185, 11, 0.5);
+}
+
+.whale-side-badge.buy .whale-side-icon {
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+}
+
+.whale-side-badge.sell {
+  background: rgba(246, 70, 93, 0.2) !important;
+  color: #f6465d !important;
+  border: 1px solid rgba(246, 70, 93, 0.5);
+  box-shadow: 0 0 6px rgba(246, 70, 93, 0.3);
+}
+
+.whale-order-row.buy {
+  background: rgba(240, 185, 11, 0.05) !important;
+  border-left: 3px solid #f0b90b !important;
+}
+
+.whale-order-row.buy span:first-child {
+  color: #fff !important;
+}
+
+/* High contrast Order Book sidebar badges */
+.ob-whale-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.ob-whale-badge.bid {
+  background: #f0b90b !important;
+  color: #0b0e14 !important;
+  border: 1px solid #ffd700;
+  box-shadow: 0 0 6px rgba(240, 185, 11, 0.6);
+}
+
+.ob-whale-badge.ask {
+  background: rgba(246, 70, 93, 0.2) !important;
+  color: #f6465d !important;
+  border: 1px solid rgba(246, 70, 93, 0.4);
+}
+
+/* Dedicated Binance Ladder Whale Badge Pill */
+.whale-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  margin-right: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.whale-badge-pill:hover {
+  transform: scale(1.05);
+}
+
+.whale-badge-pill.bid {
+  background: #f0b90b;
+  color: #0b0e14;
+  border: 1px solid #ffd700;
+  box-shadow: 0 0 8px rgba(240, 185, 11, 0.5);
+}
+
+.whale-badge-pill.ask {
+  background: rgba(246, 70, 93, 0.22);
+  color: #f6465d;
+  border: 1px solid rgba(246, 70, 93, 0.5);
+  box-shadow: 0 0 6px rgba(246, 70, 93, 0.3);
+}
+
+.binance-ladder-row.has-bid-whale {
+  background: rgba(240, 185, 11, 0.06);
+  border-left: 2px solid #f0b90b;
+}
+
+.binance-ladder-row.has-ask-whale {
+  background: rgba(246, 70, 93, 0.06);
+  border-right: 2px solid #f6465d;
+}
+
+/* ==========================================================================
+   BINANCE VIEW WHALE RADAR BANNER
+   ========================================================================== */
+.binance-whale-radar-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 18px;
+  background: linear-gradient(90deg, #181c24 0%, #1c2230 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.whale-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.whale-radar-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f0b90b;
+  box-shadow: 0 0 8px #f0b90b;
+  animation: radarBlink 1.6s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+@keyframes radarBlink {
+  0% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 4px #f0b90b; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px #f0b90b; }
+  100% { transform: scale(0.9); opacity: 0.6; box-shadow: 0 0 4px #f0b90b; }
+}
+
+.whale-banner-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.whale-icon-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f0b90b;
+  letter-spacing: 0.3px;
+}
+
+.whale-banner-subtitle {
+  font-size: 10.5px;
+  color: var(--text-muted);
+}
+
+.whale-banner-stats {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.whale-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.whale-stat-item.bid strong {
+  color: #0ecb81;
+}
+
+.whale-stat-item.ask strong {
+  color: #f6465d;
+}
+
+.stat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.stat-dot.green { background: #0ecb81; box-shadow: 0 0 5px #0ecb81; }
+.stat-dot.red { background: #f6465d; box-shadow: 0 0 5px #f6465d; }
+
+.whale-info-btn-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(240, 185, 11, 0.12);
+  border: 1px solid rgba(240, 185, 11, 0.3);
+  color: #f0b90b;
+  padding: 4px 9px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.whale-info-btn-inline:hover {
+  background: rgba(240, 185, 11, 0.25);
+  color: #fff;
+  border-color: #f0b90b;
+}
+
+.whale-info-btn-inline i,
+.whale-info-btn-inline svg {
+  width: 12px;
+  height: 12px;
+}
+
+
+/* ==========================================================================
+   SUBVIEWS EMBUTIDAS (LIQUIDEZ & DATA ANALISE NO FRAME PRINCIPAL)
+   ========================================================================== */
+/* ==========================================================================
+   SUBVIEWS EMBUTIDAS (LIQUIDEZ & DATA ANÁLISE NO FRAME PRINCIPAL)
+   ========================================================================== */
+.embedded-subview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: var(--bg-main);
+  flex: 1;
+}
+
+#liquidityMainView,
+#dataAnalysisMainView {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+  background-color: var(--bg-main);
+}
+

@@ -63,7 +63,7 @@ function setOrderBookGrouping(step, syncInputs = true) {
     renderOrderBook(lastRawDepth);
   }
 
-  if (typeof isRestoringSettings === 'undefined' || !isRestoringSettings) {
+  if (!isRestoringSettings && isSettingsLoaded) {
     if (typeof saveLayoutImmediate === 'function') {
       saveLayoutImmediate();
     }
@@ -396,15 +396,17 @@ function renderOrderBook(depth) {
   const bidsGrouped = aggregateBookLevels(rawBids, orderBookGrouping, false, rawMinAsk);
 
   // Thresholds for whale orders in order book
-  // Whale & Mega Whale markers ONLY appear when book is at micro-tick 0.01 (exact raw orders, no multi-dollar accumulation)
   const isMicroTick = orderBookGrouping <= 0.0101;
 
-  const isEth = currentSymbol.startsWith('ETH');
-  const isBtc = currentSymbol.startsWith('BTC');
-  const whaleQtyThreshold = isEth ? 15.0 : isBtc ? 0.70 : 40.0;
-  const megaWhaleThreshold = isEth ? 40.0 : isBtc ? 1.80 : 120.0;
-  const whaleUsdThreshold = 35000.0;
-  const megaWhaleUsd = 90000.0;
+  const sym = currentSymbol ? currentSymbol.toUpperCase() : 'ETHUSDT';
+  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && (MARKET_TIERS[sym] || MARKET_TIERS['ETHUSDT'])) || {};
+  const whaleCfg = tierConfig.whale || { minQty: 10.0, minUsd: 25000.0 };
+  const megaCfg = tierConfig.mega_whale || { minQty: 40.0, minUsd: 90000.0 };
+
+  const whaleQtyThreshold = whaleCfg.minQty || 10.0;
+  const megaWhaleThreshold = megaCfg.minQty || 40.0;
+  const whaleUsdThreshold = whaleCfg.minUsd || 25000.0;
+  const megaWhaleUsd = megaCfg.minUsd || 90000.0;
 
   let askWhaleWalls = [];
   let bidWhaleWalls = [];
@@ -822,7 +824,7 @@ function setBinanceSubtab(subtab) {
     renderBinanceTradesTab();
   }
 
-  if (typeof isRestoringSettings === 'undefined' || !isRestoringSettings) {
+  if (!isRestoringSettings && isSettingsLoaded) {
     if (typeof saveLayoutImmediate === 'function') {
       saveLayoutImmediate();
     }

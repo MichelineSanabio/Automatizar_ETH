@@ -93,12 +93,17 @@ const AccessibilityManager = {
     }
 
     // 2. Escala de Fonte
-    body.classList.remove('scale-120', 'scale-140');
-    if (this.settings.scaleLevel === '120') {
+    body.classList.remove('scale-110', 'scale-120', 'scale-140');
+    if (this.settings.scaleLevel === '110') {
+      body.classList.add('scale-110');
+    } else if (this.settings.scaleLevel === '120') {
       body.classList.add('scale-120');
     } else if (this.settings.scaleLevel === '140') {
       body.classList.add('scale-140');
     }
+    setTimeout(() => {
+      if (typeof resizeAllCharts === 'function') resizeAllCharts();
+    }, 50);
 
     // 3. Alto Contraste
     if (this.settings.highContrast) {

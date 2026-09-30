@@ -43,16 +43,48 @@ function initChart() {
       },
     },
     rightPriceScale: {
+      autoScale: true,
+      mode: LightweightCharts.PriceScaleMode.Normal,
       borderColor: 'rgba(255, 255, 255, 0.08)',
       scaleMargins: {
         top: 0.08,
         bottom: 0.08,
       },
+      alignLabels: true,
+      borderVisible: true,
     },
     timeScale: {
       borderColor: 'rgba(255, 255, 255, 0.08)',
       timeVisible: true,
       secondsVisible: false,
+      rightOffset: 12,
+      barSpacing: 9,
+      minBarSpacing: 1.0,
+      shiftVisibleRangeOnNewBar: true,
+      fixLeftEdge: false,
+      fixRightEdge: false,
+    },
+    handleScroll: {
+      mouseWheel: true,
+      pressedMouseMove: true,
+      horzTouchDrag: true,
+      vertTouchDrag: true,
+    },
+    handleScale: {
+      axisPressedMouseMove: {
+        time: true,
+        price: true,
+      },
+      axisDoubleClickReset: {
+        time: true,
+        price: true,
+      },
+      mouseWheel: true,
+      pinch: true,
+    },
+    kineticScroll: {
+      touch: true,
+      mouse: true,
     },
   });
 
@@ -149,6 +181,32 @@ function initChart() {
         borderColor: 'rgba(255, 255, 255, 0.08)',
         timeVisible: true,
         secondsVisible: false,
+        rightOffset: 12,
+        barSpacing: 9,
+        minBarSpacing: 1.0,
+        shiftVisibleRangeOnNewBar: true,
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: {
+          time: true,
+          price: true,
+        },
+        axisDoubleClickReset: {
+          time: true,
+          price: true,
+        },
+        mouseWheel: true,
+        pinch: true,
+      },
+      kineticScroll: {
+        touch: true,
+        mouse: true,
       },
     });
 
@@ -248,6 +306,11 @@ function initChart() {
       console.warn('Erro ao traçar linha interativa no clique:', e);
     }
   });
+
+  // 7. Inicializar Controles Flutuantes de Zoom e Navegação (Estilo TradingView / Binance)
+  if (typeof initChartNavigationControls === 'function') {
+    initChartNavigationControls();
+  }
 }
 
 // Resizes all active chart containers to match their DOM dimensions
@@ -471,6 +534,10 @@ function processAndRenderCandles(rawKlines) {
   if (typeof renderOrderLinesOnChart === 'function') {
     renderOrderLinesOnChart();
   }
+  if (typeof updatePositionPnLUI === 'function' && historicalCandles.length > 0) {
+    const latestCandle = historicalCandles[historicalCandles.length - 1];
+    updatePositionPnLUI(latestCandle.close);
+  }
 
   // Update Footer Stats & Floating OHLC HUD with latest candle
   if (historicalCandles.length > 0) {
@@ -510,9 +577,24 @@ function processAndRenderCandles(rawKlines) {
     }
   }
 
-  // Fit Content
-  if (tvChart) tvChart.timeScale().fitContent();
-  if (volumeChart && isVolumeSeparated) volumeChart.timeScale().fitContent();
+  // Inicializar espaçamento e enquadramento visual agradável (sem achatar 500 candles em fitContent)
+  if (!window.isInitialChartLoaded) {
+    if (tvChart) {
+      tvChart.timeScale().applyOptions({
+        rightOffset: 12,
+        barSpacing: 9,
+      });
+      safeScrollToRealtime(tvChart);
+    }
+    if (volumeChart && isVolumeSeparated) {
+      volumeChart.timeScale().applyOptions({
+        rightOffset: 12,
+        barSpacing: 9,
+      });
+      safeScrollToRealtime(volumeChart);
+    }
+    window.isInitialChartLoaded = true;
+  }
 }
 
 // Compute Technical Indicators Data on Chart
@@ -844,14 +926,18 @@ function renderAllUserPriceLines() {
   });
   userChartPriceLines.clear();
 
+  const solidStyle = (typeof LightweightCharts !== 'undefined' && LightweightCharts.LineStyle && LightweightCharts.LineStyle.Solid !== undefined)
+    ? LightweightCharts.LineStyle.Solid : 0;
+
   // Create price lines for all saved user markings
   userPriceMarkings.forEach(mark => {
     try {
+      const lineStyleVal = mark.lineStyle !== undefined ? parseInt(mark.lineStyle, 10) : solidStyle;
       const line = candleSeries.createPriceLine({
         price: parseFloat(mark.price),
         color: mark.color || '#f0b90b',
         lineWidth: mark.lineWidth || 2,
-        lineStyle: mark.lineStyle !== undefined ? parseInt(mark.lineStyle, 10) : LightweightCharts.LineStyle.Solid,
+        lineStyle: lineStyleVal,
         axisLabelVisible: true,
         title: mark.label || `Nível $${formatPrice(mark.price)}`,
       });
@@ -987,6 +1073,127 @@ function showDrawingToast(msg) {
   window.drawingToastTimer = setTimeout(() => {
     toast.classList.remove('visible');
   }, 3200);
+}
+
+// ==========================================
+// CONTROLES DE ZOOM E NAVEGAÇÃO TRADINGVIEW
+// ==========================================
+
+window.isInitialChartLoaded = false;
+
+function zoomInCandles(factor = 1.25) {
+  if (!tvChart) return;
+  const currentSpacing = tvChart.timeScale().options().barSpacing || 9;
+  const newSpacing = Math.min(65, currentSpacing * factor);
+  tvChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  if (volumeChart && isVolumeSeparated) {
+    volumeChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+}
+
+function zoomOutCandles(factor = 1.25) {
+  if (!tvChart) return;
+  const currentSpacing = tvChart.timeScale().options().barSpacing || 9;
+  const newSpacing = Math.max(1.2, currentSpacing / factor);
+  tvChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  if (volumeChart && isVolumeSeparated) {
+    volumeChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+}
+
+// Função helper segura para rolar para a vela mais recente compatível com todas as versões da Lightweight Charts
+function safeScrollToRealtime(chartInstance) {
+  if (!chartInstance) return;
+  try {
+    const ts = chartInstance.timeScale();
+    if (typeof ts.scrollToRealTime === 'function') {
+      ts.scrollToRealTime();
+    } else if (typeof ts.scrollToPosition === 'function') {
+      ts.scrollToPosition(0, false);
+    } else if (typeof ts.scrollToRealtime === 'function') {
+      ts.scrollToRealtime();
+    } else if (typeof ts.resetTimeScale === 'function') {
+      ts.resetTimeScale();
+    }
+  } catch (e) {
+    console.warn('[Chart] Falha ao rolar para o candle em tempo real:', e);
+  }
+}
+
+function resetChartZoom() {
+  if (!tvChart) return;
+  // Restaura escala de preços automática
+  tvChart.priceScale('right').applyOptions({ autoScale: true });
+  tvChart.timeScale().applyOptions({
+    rightOffset: 12,
+    barSpacing: 9,
+  });
+  safeScrollToRealtime(tvChart);
+
+  if (volumeChart && isVolumeSeparated) {
+    volumeChart.priceScale('right').applyOptions({ autoScale: true });
+    volumeChart.timeScale().applyOptions({
+      rightOffset: 12,
+      barSpacing: 9,
+    });
+    safeScrollToRealtime(volumeChart);
+  }
+  showDrawingToast('Escala automática & velas centralizadas!');
+}
+
+function scrollChartToRealtime() {
+  if (!tvChart) return;
+  safeScrollToRealtime(tvChart);
+  if (volumeChart && isVolumeSeparated) {
+    safeScrollToRealtime(volumeChart);
+  }
+}
+
+function initChartNavigationControls() {
+  const btnIn = document.getElementById('btnZoomInCandles');
+  const btnOut = document.getElementById('btnZoomOutCandles');
+  const btnRealtime = document.getElementById('btnScrollRealtime');
+  const btnAuto = document.getElementById('btnResetChartZoom');
+
+  if (btnIn) {
+    btnIn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      zoomInCandles();
+    });
+  }
+  if (btnOut) {
+    btnOut.addEventListener('click', (e) => {
+      e.stopPropagation();
+      zoomOutCandles();
+    });
+  }
+  if (btnRealtime) {
+    btnRealtime.addEventListener('click', (e) => {
+      e.stopPropagation();
+      scrollChartToRealtime();
+    });
+  }
+  if (btnAuto) {
+    btnAuto.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetChartZoom();
+    });
+  }
+
+  // Atalhos de teclado para aumentar/diminuir candles e navegar
+  window.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+
+    if (e.key === '+' || e.key === '=') {
+      zoomInCandles();
+    } else if (e.key === '-' || e.key === '_') {
+      zoomOutCandles();
+    } else if (e.key === 'Home') {
+      if (tvChart) tvChart.timeScale().scrollToPosition(-1000, true);
+    } else if (e.key === 'End') {
+      scrollChartToRealtime();
+    }
+  });
 }
 
 

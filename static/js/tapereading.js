@@ -65,6 +65,10 @@ function setMainView(view) {
   if (el.chartControlsGroup) {
     el.chartControlsGroup.style.display = view === 'chart' ? 'inline-flex' : 'none';
   }
+  const indRow = document.getElementById('chartToolbarRowBottom');
+  if (indRow) {
+    indRow.style.display = view === 'chart' ? 'flex' : 'none';
+  }
   if (el.chartLegend) {
     el.chartLegend.style.display = view === 'chart' ? 'inline-flex' : 'none';
   }
@@ -97,27 +101,50 @@ function setMainView(view) {
   }
 }
 
-// Classify Order Size Tier
+// Classify Order Size Tier via centralized market_tiers.json
 function getTradeTier(qty, price, symbol) {
-  const isEth = symbol.startsWith('ETH');
+  const sym = symbol ? symbol.toUpperCase() : 'ETHUSDT';
+  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && (MARKET_TIERS[sym] || MARKET_TIERS['ETHUSDT'])) || {};
+  const megaCfg = tierConfig.mega_whale || { minQty: 40.0, minUsd: 90000.0 };
+  const whaleCfg = tierConfig.whale || { minQty: 10.0, minUsd: 25000.0 };
+  const sharkCfg = tierConfig.shark || { minQty: 5.0, minUsd: 12000.0 };
+  const medCfg = tierConfig.medium || { minQty: 1.0, minUsd: 2500.0 };
+
   const usdValue = qty * price;
 
-  if ((isEth && qty >= 10.0) || (!isEth && qty >= 0.5) || usdValue >= 25000.0) {
-    const isMega = usdValue >= 100000.0 || (isEth && qty >= 50.0);
+  // 1. Mega Baleia
+  if (qty >= (megaCfg.minQty || 40.0) || usdValue >= (megaCfg.minUsd || 90000.0)) {
     return {
       id: 'whale',
-      label: isMega ? '🐋 MEGA BALEIA' : '🐋 BALEIA',
-      cssClass: isMega ? 'mega-whale' : 'whale',
+      label: '🐳 MEGA BALEIA',
+      cssClass: 'mega-whale',
       isWhale: true,
-      isMegaWhale: isMega,
+      isMegaWhale: true,
     };
   }
-  if ((isEth && qty >= 5.0) || (!isEth && qty >= 0.25) || usdValue >= 12000.0) {
+
+  // 2. Baleia
+  if (qty >= (whaleCfg.minQty || 10.0) || usdValue >= (whaleCfg.minUsd || 25000.0)) {
+    return {
+      id: 'whale',
+      label: '🐋 BALEIA',
+      cssClass: 'whale',
+      isWhale: true,
+      isMegaWhale: false,
+    };
+  }
+
+  // 3. Tubarão
+  if (qty >= (sharkCfg.minQty || 5.0) || usdValue >= (sharkCfg.minUsd || 12000.0)) {
     return { id: 'shark', label: '🐬 TUBARÃO', cssClass: 'shark', isWhale: false, isMegaWhale: false };
   }
-  if ((isEth && qty >= 1.0) || (!isEth && qty >= 0.05) || usdValue >= 2500.0) {
+
+  // 4. Médio
+  if (qty >= (medCfg.minQty || 1.0) || usdValue >= (medCfg.minUsd || 2500.0)) {
     return { id: 'medium', label: '🐟 MÉDIO', cssClass: 'medium', isWhale: false, isMegaWhale: false };
   }
+
+  // 5. Varejo
   return { id: 'retail', label: '🦐 VAREJO', cssClass: 'retail', isWhale: false, isMegaWhale: false };
 }
 
