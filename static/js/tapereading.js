@@ -92,7 +92,9 @@ function setMainView(view) {
     }
   }
 
-  if (window.lucide) {
+  if (window.refreshIcons) {
+    refreshIcons();
+  } else if (window.lucide) {
     try { lucide.createIcons(); } catch (e) {}
   }
 
@@ -180,12 +182,17 @@ function processTapeReadingTrade(trade) {
     }
   }
 
-  // 2. Speed calculation (rolling window of 3 seconds)
+  // 2. Speed calculation (rolling window of 3 seconds otimizada)
   const now = Date.now();
   tapeState.timestamps.push(now);
   const cutoff = now - 3000;
-  while (tapeState.timestamps.length > 0 && tapeState.timestamps[0] < cutoff) {
-    tapeState.timestamps.shift();
+  if (tapeState.timestamps.length > 0 && tapeState.timestamps[0] < cutoff) {
+    const firstValidIdx = tapeState.timestamps.findIndex(t => t >= cutoff);
+    if (firstValidIdx === -1) {
+      tapeState.timestamps = [now];
+    } else if (firstValidIdx > 0) {
+      tapeState.timestamps.splice(0, firstValidIdx);
+    }
   }
   const currentSpeed = (tapeState.timestamps.length / 3).toFixed(1);
 
@@ -348,12 +355,14 @@ function togglePauseTape() {
   if (tapeState.paused) {
     if (el.btnPauseTape) {
       el.btnPauseTape.innerHTML = `<i data-lucide="play"></i> <span id="txtPauseTape">Retomar Fluxo</span>`;
-      if (window.lucide) lucide.createIcons();
+      if (window.refreshIcons) refreshIcons();
+      else if (window.lucide) lucide.createIcons();
     }
   } else {
     if (el.btnPauseTape) {
       el.btnPauseTape.innerHTML = `<i data-lucide="pause"></i> <span id="txtPauseTape">Pausar Fluxo</span>`;
-      if (window.lucide) lucide.createIcons();
+      if (window.refreshIcons) refreshIcons();
+      else if (window.lucide) lucide.createIcons();
     }
     // Flush buffered queue
     tapeState.queue = [];

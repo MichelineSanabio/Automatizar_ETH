@@ -100,6 +100,8 @@ let userPriceMarkings = []; // [{ id, price, label, color, lineStyle, lineWidth 
 let userChartPriceLines = new Map(); // id -> LightweightCharts PriceLine instance
 let isSettingsLoaded = false;
 let isRestoringSettings = true;
+window.isSettingsLoaded = false;
+window.isRestoringSettings = true;
 
 // DOM Elements Cache
 const el = {};

@@ -259,14 +259,14 @@
 
         <!-- Menu de Ordens & PnL + Resumo Rápido -->
         <div class="ticker-tools-group ticker-orders-group">
-          <button type="button" class="btn btn-secondary btn-header-orders" id="btnHeaderOrders" title="Painel de Minhas Ordens & Cálculo de Lucros (PnL)">
+          <button type="button" class="btn btn-secondary btn-header-orders" id="btnHeaderOrders" onclick="if (typeof openOrdersModal === 'function') openOrdersModal();" title="Painel de Minhas Ordens & Cálculo de Lucros (PnL)">
             <i data-lucide="wallet"></i>
             <span>Ordens & PnL</span>
             <span class="orders-badge" id="ordersHeaderBadge">0</span>
           </button>
 
           <!-- Resumo Rápido de Posição / Ordens Pendentes -->
-          <div class="orders-quick-summary-pill" id="ordersQuickSummaryPill" style="display: none;" title="Clique para abrir detalhes da posição e ordens">
+          <div class="orders-quick-summary-pill" id="ordersQuickSummaryPill" onclick="if (typeof openOrdersModal === 'function') openOrdersModal();" style="display: none;" title="Clique para abrir detalhes da posição e ordens">
             <span class="pill-label">Posição:</span>
             <strong class="pill-eth font-mono" id="pillHoldingsEth">0.00 ETH</strong>
             <span class="pill-sep">•</span>

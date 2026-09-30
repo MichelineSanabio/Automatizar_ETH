@@ -91,7 +91,8 @@ async function loadWhalesData(force = false) {
   } finally {
     if (el.btnRefreshWhales) {
       el.btnRefreshWhales.innerHTML = `<i data-lucide="refresh-cw"></i> Atualizar`;
-      if (window.lucide) lucide.createIcons();
+      if (window.refreshIcons) refreshIcons();
+      else if (window.lucide) lucide.createIcons();
     }
   }
 }
@@ -180,7 +181,9 @@ function renderWhalesList() {
     `;
   }).join('');
 
-  if (window.lucide) {
+  if (window.refreshIcons) {
+    refreshIcons();
+  } else if (window.lucide) {
     lucide.createIcons();
   }
 
@@ -247,10 +250,12 @@ function copyWhaleAddress(address, btn) {
   navigator.clipboard.writeText(address).then(() => {
     const originalText = btn.innerHTML;
     btn.innerHTML = `<i data-lucide="check" style="width:11px;height:11px;color:var(--green)"></i> Copiado!`;
-    if (window.lucide) lucide.createIcons();
+    if (window.refreshIcons) refreshIcons();
+    else if (window.lucide) lucide.createIcons();
     setTimeout(() => {
       btn.innerHTML = originalText;
-      if (window.lucide) lucide.createIcons();
+      if (window.refreshIcons) refreshIcons();
+      else if (window.lucide) lucide.createIcons();
     }, 1500);
   });
 }

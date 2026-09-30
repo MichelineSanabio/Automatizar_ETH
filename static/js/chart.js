@@ -3,6 +3,10 @@
  * Supports separate draggable and resizable Candlestick and Volume sub-chart panes
  */
 
+// Map de acesso O(1) aos candles por timestamp para performance do crosshair
+let candlesByTimeMap = new Map();
+let resizeChartsTimer = null;
+
 // Initialize Candlestick and Volume Charts
 function initChart() {
   const container = el.tvChartContainer || document.getElementById('tvChartContainer');
@@ -241,10 +245,13 @@ function initChart() {
   // 3. Initialize Interactive Splitter Drag & Resize
   initSplitterResize();
 
-  // 4. Handle Window Resize
-  window.addEventListener('resize', resizeAllCharts);
+  // 4. Handle Window Resize com debounce (evita múltiplos reflows ao redimensionar)
+  window.addEventListener('resize', () => {
+    if (resizeChartsTimer) clearTimeout(resizeChartsTimer);
+    resizeChartsTimer = setTimeout(resizeAllCharts, 120);
+  });
 
-  // 5. Crosshair listener for footer stats & splitter volume
+  // 5. Crosshair listener for footer stats & splitter volume (busca O(1) otimizada)
   tvChart.subscribeCrosshairMove((param) => {
     if (!param || !param.time || !param.seriesPrices) {
       return;
@@ -276,8 +283,8 @@ function initChart() {
         oTime.textContent = dt.toLocaleTimeString();
       }
     }
-    // Update live volume display on splitter
-    const matched = historicalCandles.find(c => c.time === param.time);
+    // Update live volume display on splitter com busca rápida O(1)
+    const matched = candlesByTimeMap.get(param.time) || historicalCandles.find(c => c.time === param.time);
     if (matched) {
       const liveVolEl = el.splitterLiveVol || document.getElementById('splitterLiveVol');
       if (liveVolEl) {
@@ -495,6 +502,7 @@ function processAndRenderCandles(rawKlines) {
   historicalCandles.forEach(c => candleMap.set(c.time, c));
   const sortedUnique = Array.from(candleMap.values()).sort((a, b) => a.time - b.time);
   historicalCandles = sortedUnique;
+  candlesByTimeMap = candleMap;
 
   const candleChartData = historicalCandles.map(c => ({
     time: c.time,
@@ -1066,7 +1074,11 @@ function showDrawingToast(msg) {
   }
 
   toast.innerHTML = `<i data-lucide="check-circle"></i> <span>${msg}</span>`;
-  if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+  if (window.refreshIcons) {
+    refreshIcons();
+  } else if (window.lucide) {
+    try { lucide.createIcons(); } catch (e) {}
+  }
   toast.classList.add('visible');
 
   clearTimeout(window.drawingToastTimer);

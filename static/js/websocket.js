@@ -168,13 +168,20 @@ function handleRealtimeKline(k) {
 
   // If candle closed, add to historical list and recalculate indicators
   if (k.x) {
-    historicalCandles.push({
+    const closedCandle = {
       time: candleTime,
       open, high, low, close, volume,
       closeTime: k.T,
-    });
+    };
+    historicalCandles.push(closedCandle);
+    if (typeof candlesByTimeMap !== 'undefined' && candlesByTimeMap.set) {
+      candlesByTimeMap.set(candleTime, closedCandle);
+    }
     if (historicalCandles.length > CONFIG.candleLimit) {
-      historicalCandles.shift();
+      const removed = historicalCandles.shift();
+      if (removed && typeof candlesByTimeMap !== 'undefined' && candlesByTimeMap.delete) {
+        candlesByTimeMap.delete(removed.time);
+      }
     }
     updateIndicatorsData();
   }

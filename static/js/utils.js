@@ -1,6 +1,18 @@
-/**
- * Binance Market Terminal - Utility & Formatting Functions
- */
+// Centralized Debounced Lucide Icons Refresh (evita re-renderizações e scans massivos no DOM)
+let _lucideDebounceTimer = null;
+function refreshIcons() {
+  if (typeof lucide === 'undefined' || !lucide.createIcons) return;
+  if (_lucideDebounceTimer) clearTimeout(_lucideDebounceTimer);
+  _lucideDebounceTimer = setTimeout(() => {
+    try {
+      lucide.createIcons();
+    } catch (e) {
+      console.warn('[Lucide] Erro ao renderizar ícones:', e);
+    }
+  }, 40);
+}
+window.refreshIcons = refreshIcons;
+window.debouncedLucideIcons = refreshIcons;
 
 // Helper to fetch Binance REST API with multi-tier fallback (direct -> data-api -> Flask local proxy)
 async function fetchBinance(endpoint) {
@@ -87,13 +99,23 @@ function showLoading(show) {
   else el.chartLoader.classList.add('hidden');
 }
 
-// Live Reload for Development
+// Live Reload for Development (executa apenas em localhost com throttling inteligente)
 function setupLiveReload() {
+  const isDevHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (!isDevHost) return;
+
   let initialServerTime = null;
-  setInterval(async () => {
+  let consecutiveErrors = 0;
+
+  const timerId = setInterval(async () => {
+    if (consecutiveErrors > 15) {
+      clearInterval(timerId);
+      return;
+    }
     try {
       const res = await fetch('/dev/version');
       if (res.ok) {
+        consecutiveErrors = 0;
         const data = await res.json();
         if (initialServerTime === null) {
           initialServerTime = data.server_start_time;
@@ -101,11 +123,13 @@ function setupLiveReload() {
           console.log('[LiveReload] Servidor Flask reiniciado por alteração de código. Recarregando página...');
           window.location.reload();
         }
+      } else {
+        consecutiveErrors++;
       }
     } catch (e) {
-      // Ignora falhas momentâneas durante reinício do servidor
+      consecutiveErrors++;
     }
-  }, 1200);
+  }, 2000);
 }
 
 // CSV Export Utility
@@ -280,12 +304,6 @@ function bindIndicatorTooltips() {
         `,
         footerHtml: '<span class="tooltip-hint">Clique para ligar / desligar no gráfico</span>',
       });
-    });
-
-    btn.addEventListener('mousemove', (e) => {
-      if (globalTooltipEl && globalTooltipEl.style.display !== 'none') {
-        // slightly track mouse if outside target
-      }
     });
 
     btn.addEventListener('mouseleave', hideAppTooltip);

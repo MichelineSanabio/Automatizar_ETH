@@ -4,7 +4,7 @@
  * verifica execução condicional ao toque de preço e calcula PnL apenas de ordens executadas.
  */
 
-// Default Registered User Buy Orders (Todas iniciam PENDING aguardando o preço do gráfico atingir)
+// Default Registered User Buy Orders (Configuradas pelo usuário para rastreamento de compras)
 const DEFAULT_USER_ORDERS = [
   { id: 'ord_buy_1', side: 'BUY', amount: 0.2662, price: 2530.0, total: 673.486, date: '2026-09-29 21:00', status: 'PENDING', notes: 'Ordem de Compra Limit (0,2662 ETH @ $2530)' },
   { id: 'ord_buy_2', side: 'BUY', amount: 0.1557, price: 2585.0, total: 402.4845, date: '2026-09-29 21:15', status: 'PENDING', notes: 'Ordem de Compra Limit (0,1557 ETH @ $2585)' },
@@ -43,7 +43,8 @@ function showOrderExecutionToast(msg) {
   toast.innerHTML = `<i data-lucide="check-circle" style="vertical-align: middle; margin-right: 6px; color: #0ecb81;"></i> <span>${msg}</span>`;
   toast.style.display = 'block';
   toast.style.opacity = '1';
-  if (window.lucide) { try { lucide.createIcons(); } catch(e){} }
+  if (window.refreshIcons) refreshIcons();
+  else if (window.lucide) { try { lucide.createIcons(); } catch(e){} }
   setTimeout(() => {
     toast.style.opacity = '0';
     setTimeout(() => { toast.style.display = 'none'; }, 400);
@@ -522,7 +523,8 @@ function renderOrdersListInModal() {
         <small>Adicione suas ordens acima para registrar no gráfico e calcular seus lucros.</small>
       </div>
     `;
-    if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+    if (window.refreshIcons) refreshIcons();
+    else if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
     return;
   }
 
@@ -573,7 +575,9 @@ function renderOrdersListInModal() {
     container.appendChild(row);
   });
 
-  if (window.lucide) {
+  if (window.refreshIcons) {
+    refreshIcons();
+  } else if (window.lucide) {
     try { lucide.createIcons(); } catch (e) {}
   }
 }
@@ -583,33 +587,41 @@ function renderOrdersListInModal() {
  */
 function openOrdersModal() {
   const modal = document.getElementById('modalOrdersBackdrop');
+  if (!modal) {
+    console.error('[Orders] Elemento modalOrdersBackdrop não encontrado no DOM!');
+    return;
+  }
+
   const inputPrice = document.getElementById('inputOrderPrice');
   const inputAmount = document.getElementById('inputOrderAmount');
   const inputDate = document.getElementById('inputOrderDate');
 
-  if (!modal) return;
-
-  // Preencher preço atual se o campo estiver vazio
-  if (inputPrice && (!inputPrice.value || parseFloat(inputPrice.value) <= 0)) {
-    if (typeof lastPrice === 'number' && lastPrice > 0) {
-      inputPrice.value = lastPrice.toFixed(2);
+  try {
+    // Preencher preço atual se o campo estiver vazio
+    if (inputPrice && (!inputPrice.value || parseFloat(inputPrice.value) <= 0)) {
+      if (typeof lastPrice === 'number' && lastPrice > 0) {
+        inputPrice.value = lastPrice.toFixed(2);
+      }
     }
-  }
 
-  // Preencher data/hora atual se vazio
-  if (inputDate && !inputDate.value) {
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    inputDate.value = dateStr;
-  }
+    // Preencher data/hora atual se vazio
+    if (inputDate && !inputDate.value) {
+      const now = new Date();
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      inputDate.value = dateStr;
+    }
 
-  calculateOrderTotalPreview();
-  renderOrdersListInModal();
-  updatePositionPnLUI();
+    calculateOrderTotalPreview();
+    renderOrdersListInModal();
+    updatePositionPnLUI();
+  } catch (err) {
+    console.warn('[Orders] Erro suave ao preparar modal:', err);
+  }
 
   modal.style.display = 'flex';
   if (inputAmount) inputAmount.focus();
 }
+window.openOrdersModal = openOrdersModal;
 
 /**
  * Fecha o Modal de Gerenciamento de Ordens
@@ -618,6 +630,7 @@ function closeOrdersModal() {
   const modal = document.getElementById('modalOrdersBackdrop');
   if (modal) modal.style.display = 'none';
 }
+window.closeOrdersModal = closeOrdersModal;
 
 /**
  * Atualiza o preview do valor total (Qtd * Preço)
@@ -636,10 +649,53 @@ function calculateOrderTotalPreview() {
   previewEl.textContent = `$${formatPrice(total)} USDT`;
 }
 
+let isOrdersUIInitialized = false;
+
 /**
  * Inicialização dos Event Listeners do Módulo de Ordens
  */
 function initOrdersUI() {
+  // Carregar dados salvos do localStorage ou fallback seguro
+  if (!userTradeOrders || userTradeOrders.length === 0) {
+    try {
+      const local = localStorage.getItem('binance_user_orders');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          userTradeOrders = parsed;
+        }
+      }
+    } catch (e) {}
+
+    // Fallback: carregar de binance_terminal_layout do localStorage
+    if (!userTradeOrders || userTradeOrders.length === 0) {
+      try {
+        const layoutStr = localStorage.getItem('binance_terminal_layout');
+        if (layoutStr) {
+          const parsedLayout = JSON.parse(layoutStr);
+          if (Array.isArray(parsedLayout.orders) && parsedLayout.orders.length > 0) {
+            userTradeOrders = parsedLayout.orders;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Fallback final: restaurar as 4 ordens padrão do usuário
+    if (!userTradeOrders || userTradeOrders.length === 0) {
+      userTradeOrders = [...DEFAULT_USER_ORDERS];
+      try {
+        localStorage.setItem('binance_user_orders', JSON.stringify(userTradeOrders));
+      } catch (e) {}
+    }
+  }
+
+  // Prevenir dupla anexação de ouvintes de eventos
+  if (isOrdersUIInitialized) {
+    updatePositionPnLUI();
+    return;
+  }
+  isOrdersUIInitialized = true;
+
   const btnOpen = document.getElementById('btnOpenOrdersTracker');
   const pillQuick = document.getElementById('ordersQuickSummaryPill');
   const btnClose = document.getElementById('btnCloseOrdersModal');
@@ -689,7 +745,8 @@ function initOrdersUI() {
       if (btnConfirm) {
         btnConfirm.className = 'btn btn-primary btn-add-order btn-buy';
         btnConfirm.innerHTML = '<i data-lucide="plus"></i> <span>Registrar Compra</span>';
-        if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+        if (window.refreshIcons) refreshIcons();
+        else if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
       }
     });
 
@@ -807,27 +864,25 @@ function initOrdersUI() {
   }
 
   // 10. Atualizar PnL e dados iniciais
+  renderOrderLinesOnChart();
   updatePositionPnLUI();
 }
 
-// Inicializar na carga da página
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    const local = localStorage.getItem('binance_user_orders');
-    if (local) {
-      const parsed = JSON.parse(local);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        userTradeOrders = parsed;
-      }
-    }
-  } catch (e) {}
-
-  if (!Array.isArray(userTradeOrders) || userTradeOrders.length === 0) {
-    userTradeOrders = [...DEFAULT_USER_ORDERS];
-    try {
-      localStorage.setItem('binance_user_orders', JSON.stringify(userTradeOrders));
-    } catch (e) {}
+// Delegação global para abertura do modal de ordens (garantia absoluta contra race conditions)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('#btnHeaderOrders, #btnOpenOrdersTracker, #btnOpenOrdersTrackerNav, #ordersQuickSummaryPill');
+  if (btn) {
+    e.preventDefault();
+    openOrdersModal();
   }
-
-  initOrdersUI();
 });
+
+// Inicialização imediata ou no DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initOrdersUI();
+  });
+} else {
+  initOrdersUI();
+}
+

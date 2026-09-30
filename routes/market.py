@@ -11,11 +11,17 @@ from indicators import calculate_ema, calculate_rsi, calculate_bollinger_bands, 
 
 market_bp = Blueprint("market", __name__)
 
+ALLOWED_BINANCE_PREFIXES = ("api/v3/", "api/v1/")
+
 @market_bp.route("/api/binance/<path:subpath>")
 def binance_proxy(subpath):
-    """Proxy local seguro caso o navegador sofra com bloqueios de CORS ou CDN da Binance."""
+    """Proxy local seguro com validação estrita de rotas públicas permitidas da Binance (prevenção contra SSRF)."""
+    clean_subpath = subpath.lstrip("/")
+    if ".." in clean_subpath or not clean_subpath.startswith(ALLOWED_BINANCE_PREFIXES):
+        return jsonify({"error": "Caminho não autorizado no proxy Binance"}), 403
+
     try:
-        url = f"https://api.binance.com/{subpath}"
+        url = f"https://api.binance.com/{clean_subpath}"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
@@ -23,7 +29,7 @@ def binance_proxy(subpath):
         return Response(resp.content, status=resp.status_code, content_type=resp.headers.get("content-type", "application/json"))
     except Exception as e1:
         try:
-            fallback_url = f"https://data-api.binance.vision/{subpath}"
+            fallback_url = f"https://data-api.binance.vision/{clean_subpath}"
             resp = requests.get(fallback_url, params=request.args, headers=headers, timeout=8)
             return Response(resp.content, status=resp.status_code, content_type=resp.headers.get("content-type", "application/json"))
         except Exception as e2:

@@ -21,11 +21,6 @@ const AccessibilityManager = {
     this.setupCardMagnifiers();
     this.setupFloatingHUD();
     this.setupKeyboardShortcuts();
-
-    // Reaplicar nos elementos gerados dinamicamente a cada 2 segundos
-    setInterval(() => {
-      this.attachMagnifiersToNewElements();
-    }, 2000);
   },
 
   loadSettings() {
@@ -261,6 +256,20 @@ const AccessibilityManager = {
 
   setupCardMagnifiers() {
     this.attachMagnifiersToNewElements();
+
+    if (window.MutationObserver && !this._cardObserver) {
+      let mutTimer = null;
+      this._cardObserver = new MutationObserver(() => {
+        if (mutTimer) clearTimeout(mutTimer);
+        mutTimer = setTimeout(() => {
+          this.attachMagnifiersToNewElements();
+        }, 300);
+      });
+      const targetNode = document.querySelector('.terminal-container') || document.body;
+      if (targetNode) {
+        this._cardObserver.observe(targetNode, { childList: true, subtree: true });
+      }
+    }
   },
 
   attachMagnifiersToNewElements() {

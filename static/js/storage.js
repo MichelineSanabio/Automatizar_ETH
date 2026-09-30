@@ -4,7 +4,7 @@
  * with the physical file 'terminal_layout.json' on disk and browser localStorage.
  */
 
-isRestoringSettings = true; // Mantém ativo durante o boot para prevenir que eventos da UI sobrescrevam o layout
+window.isRestoringSettings = true; // Mantém ativo durante o boot para prevenir que eventos da UI sobrescrevam o layout
 let saveLayoutTimeout = null;
 
 /**
@@ -544,7 +544,8 @@ function renderMarkingsListInModal() {
         <small>Adicione suportes, resistências ou níveis de interesse acima.</small>
       </div>
     `;
-    if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+    if (window.refreshIcons) refreshIcons();
+    else if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
     return;
   }
 
@@ -567,7 +568,9 @@ function renderMarkingsListInModal() {
     container.appendChild(row);
   });
 
-  if (window.lucide) {
+  if (window.refreshIcons) {
+    refreshIcons();
+  } else if (window.lucide) {
     try { lucide.createIcons(); } catch (e) {}
   }
 }
@@ -591,7 +594,8 @@ function openMarkingsModal(prefilledPrice = null) {
 
   renderMarkingsListInModal();
   modal.style.display = 'flex';
-  if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+  if (window.refreshIcons) refreshIcons();
+  else if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
   setTimeout(() => {
     if (inputLabel) inputLabel.focus();
   }, 60);

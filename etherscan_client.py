@@ -19,7 +19,7 @@ class EtherscanWhaleTracker:
     # Etherscan V2 endpoint
     BASE_URL = "https://api.etherscan.io/v2/api"
     CHAIN_ID = 1  # Ethereum Mainnet
-    DEFAULT_API_KEY = "313HF7ST9FPPYVEBDGCXK2MT78TRCWG8QQ"
+    DEFAULT_API_KEY = os.getenv("ETHERSCAN_API_KEY", "313HF7ST9FPPYVEBDGCXK2MT78TRCWG8QQ")
     CACHE_TTL_SECONDS = 300  # 5 minutos de cache em memória
     MIN_REQUEST_INTERVAL = 0.40  # 400ms (máx 2.5 req/s, bem abaixo do limite de 3 req/s)
 
