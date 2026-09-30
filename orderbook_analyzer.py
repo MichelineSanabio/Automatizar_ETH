@@ -6,6 +6,9 @@ identificando concentração de liquidez, presença institucional inferida e ris
 
 import os
 import json
+import time
+import threading
+from collections import deque
 import requests
 import numpy as np
 from typing import Dict, Any, Optional, List
@@ -36,11 +39,20 @@ def _load_market_tiers() -> Dict[str, Any]:
     return {}
 
 class OrderBookAnalyzer:
-    """Analisador estatístico de profundidade de livro de ofertas da Binance."""
+    """Analisador estatístico de profundidade de livro de ofertas e fluxo contínuo de trades da Binance."""
 
     def __init__(self, base_url: str = BINANCE_BASE_URL, fallback_url: str = BINANCE_FALLBACK_URL):
         self.base_url = base_url
         self.fallback_url = fallback_url
+        self.trade_buffer: deque = deque(maxlen=3000)
+        self.trade_lock = threading.Lock()
+        self.tracked_walls: Dict[str, Any] = {}
+        self.latest_depth: Dict[str, Any] = {}
+        self.background_running = False
+        self.background_thread: Optional[threading.Thread] = None
+        self.background_cycles = 0
+        self.last_background_timestamp = 0.0
+        self.active_symbol = "ETHUSDT"
 
     def fetch_depth(self, symbol: str = "ETHUSDT", limit: int = 1000) -> Dict[str, Any]:
         """
@@ -54,15 +66,171 @@ class OrderBookAnalyzer:
             url = f"{self.base_url}/api/v3/depth"
             resp = requests.get(url, params=params, headers=BINANCE_HEADERS, timeout=8)
             resp.raise_for_status()
-            return resp.json()
+            data = resp.json()
+            self.latest_depth = data
+            return data
         except Exception as e1:
             try:
                 fallback_url = f"{self.fallback_url}/api/v3/depth"
                 resp = requests.get(fallback_url, params=params, headers=BINANCE_HEADERS, timeout=8)
                 resp.raise_for_status()
-                return resp.json()
+                data = resp.json()
+                self.latest_depth = data
+                return data
             except Exception as e2:
                 raise RuntimeError(f"Falha ao obter livro de ofertas para {symbol}: {e1} | Fallback: {e2}")
+
+    def fetch_recent_trades(self, symbol: str = "ETHUSDT", limit: int = 500) -> List[Dict[str, Any]]:
+        """
+        Coleta os trades recentes na Binance e armazena em buffer circular contínuo,
+        classificando agressão compradora vs vendedora em tempo real.
+        """
+        symbol = symbol.upper()
+        limit = min(max(int(limit), 10), 1000)
+        params = {"symbol": symbol, "limit": limit}
+
+        raw_trades = []
+        try:
+            url = f"{self.base_url}/api/v3/trades"
+            resp = requests.get(url, params=params, headers=BINANCE_HEADERS, timeout=6)
+            if resp.ok:
+                raw_trades = resp.json()
+        except Exception:
+            try:
+                url_fb = f"{self.fallback_url}/api/v3/trades"
+                resp_fb = requests.get(url_fb, params=params, headers=BINANCE_HEADERS, timeout=6)
+                if resp_fb.ok:
+                    raw_trades = resp_fb.json()
+            except Exception:
+                pass
+
+        if not raw_trades:
+            with self.trade_lock:
+                return list(self.trade_buffer)
+
+        with self.trade_lock:
+            existing_ids = {t["id"] for t in self.trade_buffer}
+            for t in raw_trades:
+                tid = t.get("id")
+                if tid not in existing_ids:
+                    p = float(t.get("price", 0.0))
+                    q = float(t.get("qty", 0.0))
+                    is_buyer_maker = bool(t.get("isBuyerMaker", False))
+                    # isBuyerMaker == True: quem executou a mercado foi VENDEDOR (Agressão Sell)
+                    # isBuyerMaker == False: quem executou a mercado foi COMPRADOR (Agressão Buy)
+                    side = "SELL" if is_buyer_maker else "BUY"
+                    self.trade_buffer.append({
+                        "id": tid,
+                        "price": p,
+                        "qty": q,
+                        "usd": p * q,
+                        "time": t.get("time", int(time.time() * 1000)),
+                        "side": side,
+                        "isBuyerMaker": is_buyer_maker
+                    })
+            return list(self.trade_buffer)
+
+    def get_trade_flow_analysis(self, target_price: Optional[float] = None, atol: float = 0.5) -> Dict[str, Any]:
+        """Calcula métricas agregadas de ordens executadas de compra e venda a partir do buffer contínuo."""
+        with self.trade_lock:
+            trades = list(self.trade_buffer)
+
+        if not trades:
+            return {
+                "total_trades": 0,
+                "buy_volume": 0.0,
+                "sell_volume": 0.0,
+                "delta_volume": 0.0,
+                "buy_pct": 50.0,
+                "sell_pct": 50.0,
+                "pressao_dominante": "AGUARDANDO FLUXO",
+                "trades_bloco_volume": 0.0,
+                "trades_bloco_count": 0,
+                "absorcao_bloco_status": "SEM TRADES NA FAIXA"
+            }
+
+        buy_vol = sum(t["qty"] for t in trades if t["side"] == "BUY")
+        sell_vol = sum(t["qty"] for t in trades if t["side"] == "SELL")
+        total_vol = buy_vol + sell_vol
+        delta_vol = buy_vol - sell_vol
+
+        buy_pct = round((buy_vol / total_vol) * 100, 1) if total_vol > 0 else 50.0
+        sell_pct = round((sell_vol / total_vol) * 100, 1) if total_vol > 0 else 50.0
+
+        if delta_vol > 0.05 * total_vol:
+            pressao = "🟢 COMPRADORA FORTE" if delta_vol > 0.15 * total_vol else "🟢 COMPRADORA"
+        elif delta_vol < -0.05 * total_vol:
+            pressao = "🔴 VENDEDORA FORTE" if delta_vol < -0.15 * total_vol else "🔴 VENDEDORA"
+        else:
+            pressao = "⚪ EQUILIBRADA"
+
+        trades_bloco_vol = 0.0
+        trades_bloco_count = 0
+        trades_bloco_buy = 0.0
+        trades_bloco_sell = 0.0
+
+        if target_price is not None and target_price > 0:
+            p_min = target_price - atol
+            p_max = target_price + atol
+            for t in trades:
+                if p_min <= t["price"] <= p_max:
+                    trades_bloco_vol += t["qty"]
+                    trades_bloco_count += 1
+                    if t["side"] == "BUY":
+                        trades_bloco_buy += t["qty"]
+                    else:
+                        trades_bloco_sell += t["qty"]
+
+        absorcao_status = "SEM TRADES RECENTES NO BLOCO"
+        if trades_bloco_count > 0:
+            if trades_bloco_sell > trades_bloco_buy:
+                absorcao_status = f"ABSORVENDO VENDAS ({trades_bloco_vol:.2f} ETH em {trades_bloco_count} trades)"
+            else:
+                absorcao_status = f"ABSORVENDO COMPRAS ({trades_bloco_vol:.2f} ETH em {trades_bloco_count} trades)"
+
+        return {
+            "total_trades": len(trades),
+            "buy_volume": round(buy_vol, 4),
+            "sell_volume": round(sell_vol, 4),
+            "delta_volume": round(delta_vol, 4),
+            "buy_pct": buy_pct,
+            "sell_pct": sell_pct,
+            "pressao_dominante": pressao,
+            "trades_bloco_volume": round(trades_bloco_vol, 4),
+            "trades_bloco_count": trades_bloco_count,
+            "trades_bloco_buy": round(trades_bloco_buy, 4),
+            "trades_bloco_sell": round(trades_bloco_sell, 4),
+            "absorcao_bloco_status": absorcao_status
+        }
+
+    def start_background_worker(self, symbol: str = "ETHUSDT", interval: float = 2.5):
+        """Inicia o worker daemon contínuo em segundo plano para alimentar livro e trades ininterruptamente."""
+        self.active_symbol = symbol.upper()
+        if self.background_running:
+            return
+
+        self.background_running = True
+        self.background_thread = threading.Thread(
+            target=self._background_loop,
+            args=(self.active_symbol, interval),
+            daemon=True,
+            name="BlockAnalyzerBackgroundWorker"
+        )
+        self.background_thread.start()
+
+    def _background_loop(self, symbol: str, interval: float):
+        """Loop infinito de segundo plano: roda sem parar independente de abas ativas."""
+        while self.background_running:
+            try:
+                # 1. Ingestão contínua de trades de compra e venda
+                self.fetch_recent_trades(symbol=symbol, limit=200)
+                # 2. Ingestão contínua de profundidade
+                self.fetch_depth(symbol=symbol, limit=1000)
+                self.background_cycles += 1
+                self.last_background_timestamp = time.time()
+            except Exception:
+                pass
+            time.sleep(interval)
 
     def analyze_support_block(
         self,
@@ -251,6 +419,14 @@ class OrderBookAnalyzer:
                 }
             }
 
+        if len(self.trade_buffer) < 50:
+            try:
+                self.fetch_recent_trades(symbol=symbol, limit=200)
+            except Exception:
+                pass
+
+        trade_flow = self.get_trade_flow_analysis(target_price=target_price, atol=atol)
+
         return {
             "success": True,
             "symbol": symbol,
@@ -264,6 +440,14 @@ class OrderBookAnalyzer:
             "best_bid_grouped": round(best_bid_grouped, 2),
             "best_ask_grouped": round(best_ask_grouped, 2),
             "bloco": result_bloco,
+            "fluxo_trades": trade_flow,
+            "background_engine": {
+                "active": self.background_running,
+                "cycles": self.background_cycles,
+                "last_update": self.last_background_timestamp,
+                "trades_buffered": len(self.trade_buffer),
+                "status": "Executando continuamente em segundo plano" if self.background_running else "Ativo sob demanda"
+            },
             "estatisticas_livro": {
                 "total_degraus_analisados": len(active_data),
                 "media_volume": round(media_volume, 4),

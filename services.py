@@ -18,6 +18,10 @@ whale_tracker = EtherscanWhaleTracker()
 volatility_analyzer = VolatilityAnalyzer(client)
 liquidity_analyzer = MarketLiquidityAnalyzer()
 orderbook_analyzer = OrderBookAnalyzer()
+try:
+    orderbook_analyzer.start_background_worker(symbol="ETHUSDT", interval=2.5)
+except Exception:
+    pass
 
 _last_version_check = 0.0
 _cached_version = SERVER_START_TIME

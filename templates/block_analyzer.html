@@ -42,6 +42,11 @@
       </div>
 
       <div class="ba-header-actions">
+        <div class="ba-badge-bg-live" id="badgeBgLive" title="Motor contínuo em segundo plano ativo: processa ordens de compra e venda sem interrupções mesmo se você clicar em outra tela">
+          <span class="bg-live-dot"></span>
+          <span>SEGUNDO PLANO ATIVO</span>
+          <span class="bg-live-trades font-mono" id="badgeTradesCount">0 trades</span>
+        </div>
         <span id="lastUpdatedClock" style="font-size: 11px; color: var(--text-secondary); margin-right: 8px; font-family: var(--font-mono);"></span>
         <a href="/tui" class="btn-ba" title="Terminal Quant Institucional (TUI)">
           <i data-lucide="terminal"></i>
@@ -149,6 +154,34 @@
         <div class="card-val-sub">Probabilidade de cancelamento súbito</div>
       </div>
     </section>
+
+    <!-- FLUXO CONTÍNUO DE ORDENS DE COMPRA E VENDA (TRADES AO VIVO EM SEGUNDO PLANO) -->
+    <div class="ba-flow-banner" id="tradeFlowBanner">
+      <div class="flow-item">
+        <i data-lucide="activity"></i>
+        <span>Fluxo de Agressão:</span>
+        <strong id="flowPressure">Aguardando Trades...</strong>
+      </div>
+      <div class="flow-item">
+        <span>🟢 Compras:</span>
+        <strong id="flowBuyVol" style="color: var(--binance-green);">0.00 ETH (0%)</strong>
+      </div>
+      <div class="flow-item">
+        <span>🔴 Vendas:</span>
+        <strong id="flowSellVol" style="color: var(--binance-red);">0.00 ETH (0%)</strong>
+      </div>
+      <div class="flow-item">
+        <span>⚖️ Delta:</span>
+        <strong id="flowDeltaVol" style="font-family: var(--font-mono);">0.00 ETH</strong>
+      </div>
+      <div class="flow-item">
+        <span>🎯 Absorção no Bloco:</span>
+        <strong id="flowBlockAbsorb" style="color: #00d2ff;">Sem trades recentes</strong>
+      </div>
+      <div class="flow-item" style="margin-left: auto;">
+        <span style="font-size: 11px; color: var(--text-muted);" id="flowEngineStatus">⚡ Background Ativo</span>
+      </div>
+    </div>
 
     <!-- RESUMO ESTATÍSTICO GLOBAL DA PROFUNDIDADE -->
     <div class="ba-stats-banner" id="statsBanner">
@@ -351,22 +384,77 @@
       });
     }
 
+    let bgWorker = null;
+
     function startAutoRefresh() {
       stopAutoRefresh();
+
+      // Web Worker inline: roda continuamente em segundo plano sem throttling do navegador
+      if (window.Worker) {
+        try {
+          const workerCode = `
+            let timer = null;
+            self.onmessage = function(e) {
+              if (e.data === 'start') {
+                if (timer) clearInterval(timer);
+                timer = setInterval(function() {
+                  self.postMessage('tick');
+                }, 3000);
+              } else if (e.data === 'stop') {
+                if (timer) clearInterval(timer);
+                timer = null;
+              }
+            };
+          `;
+          const blob = new Blob([workerCode], { type: "application/javascript" });
+          bgWorker = new Worker(URL.createObjectURL(blob));
+          bgWorker.onmessage = function(e) {
+            if (e.data === "tick") {
+              const chk = document.getElementById("chkAutoRefresh");
+              if (!chk || chk.checked) {
+                runBlockAnalysis(true);
+              }
+            }
+          };
+          bgWorker.postMessage("start");
+          return;
+        } catch (err) {
+          console.warn("[BlockAnalyzer] Fallback para setInterval padrão:", err);
+        }
+      }
+
+      // Fallback padrão se Web Workers não forem suportados
       autoRefreshTimer = setInterval(() => {
         const chk = document.getElementById("chkAutoRefresh");
         if (chk && chk.checked) {
           runBlockAnalysis(true);
         }
-      }, 5000);
+      }, 3000);
     }
 
     function stopAutoRefresh() {
+      if (bgWorker) {
+        try {
+          bgWorker.postMessage("stop");
+          bgWorker.terminate();
+        } catch (e) {}
+        bgWorker = null;
+      }
       if (autoRefreshTimer) {
         clearInterval(autoRefreshTimer);
         autoRefreshTimer = null;
       }
     }
+
+    // Reatividade imediata ao trocar de abas ou reativar a tela
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        runBlockAnalysis(true);
+      }
+    });
+    window.addEventListener("focus", () => {
+      runBlockAnalysis(true);
+    });
 
     async function runBlockAnalysis(isSilent = false) {
       const selSymbol = document.getElementById("selSymbol");
@@ -496,6 +584,36 @@
       if (elMedian) elMedian.textContent = `${stats.mediana_volume || 0} ${baseAsset}`;
       const elMax = document.getElementById("statMax");
       if (elMax) elMax.textContent = `${stats.volume_maximo || 0} ${baseAsset}`;
+
+      // 2.1 Banner de Fluxo Contínuo de Trades (Compra/Venda ao Vivo em Background)
+      const ft = data.fluxo_trades || {};
+      const bg = data.background_engine || {};
+
+      const elPressure = document.getElementById("flowPressure");
+      if (elPressure) elPressure.textContent = ft.pressao_dominante || "AGUARDANDO TRADES";
+
+      const elBuyVol = document.getElementById("flowBuyVol");
+      if (elBuyVol) elBuyVol.textContent = `${(ft.buy_volume || 0).toFixed(2)} ${baseAsset} (${ft.buy_pct || 50}%)`;
+
+      const elSellVol = document.getElementById("flowSellVol");
+      if (elSellVol) elSellVol.textContent = `${(ft.sell_volume || 0).toFixed(2)} ${baseAsset} (${ft.sell_pct || 50}%)`;
+
+      const elDeltaVol = document.getElementById("flowDeltaVol");
+      if (elDeltaVol) {
+        const d = ft.delta_volume || 0;
+        const sign = d >= 0 ? "+" : "";
+        elDeltaVol.textContent = `${sign}${d.toFixed(2)} ${baseAsset}`;
+        elDeltaVol.style.color = d >= 0 ? "#0ecb81" : "#f6465d";
+      }
+
+      const elBlockAbsorb = document.getElementById("flowBlockAbsorb");
+      if (elBlockAbsorb) elBlockAbsorb.textContent = ft.absorcao_bloco_status || "Sem trades na faixa";
+
+      const elEngineStatus = document.getElementById("flowEngineStatus");
+      if (elEngineStatus) elEngineStatus.textContent = `⚡ Ciclo #${bg.cycles || 0} contínuo (${bg.trades_buffered || 0} trades)`;
+
+      const elBadgeTrades = document.getElementById("badgeTradesCount");
+      if (elBadgeTrades) elBadgeTrades.textContent = `${bg.trades_buffered || ft.total_trades || 0} trades`;
 
       // Spread Manual & Detalhamento Visual
       const statSpread = document.getElementById("statSpread");

@@ -32,12 +32,12 @@ Automatizar_ETH/
 │   ├── etherscan_client.py        # Rastreador de saldos on-chain e baleias ETH via Etherscan
 │   ├── indicators.py              # Cálculo numérico puro de EMA, RSI, Bollinger Bands e MACD
 │   ├── liquidity_analyzer.py      # Avaliação de liquidez, caça de stops e desequilíbrios
-│   ├── orderbook_analyzer.py      # Motor estatístico Z-Score de blocos e risco de spoofing
+│   ├── orderbook_analyzer.py      # Motor estatístico Z-Score de blocos, spoofing e worker contínuo de fluxo de trades
 │   └── volatility_analyzer.py     # Motor estatístico de volatilidade por turnos/horas com suporte a CSV
 │
 ├── templates/                     # Interfaces HTML (Jinja2)
 │   ├── index.html                 # Interface do Terminal Principal (Gráfico, Book, Tape, Ordens, Ticker)
-│   ├── block_analyzer.html        # Interface dedicada ao Z-Score, Análise de Blocos e Spread Manual (0.01, 1, 10)
+│   ├── block_analyzer.html        # Interface dedicada ao Z-Score, Blocos, Fluxo de Trades e Segundo Plano Contínuo
 │   ├── liquidez.html              # Interface de Monitoramento de Liquidez (com suporte a modo embutido limpo)
 │   ├── data_analise.html          # Interface de Estatísticas de Volatilidade (com suporte a modo embutido limpo)
 │   └── tui.html                   # Interface Web do Terminal Quant Institucional (TUI Web & Rich Buffer)
@@ -93,7 +93,7 @@ Automatizar_ETH/
 | **quant_analyzer.py** | `QuantTradingEngine`, `get_full_quant_state` | Motor quantitativo: Spot/Futuros, Altseason, Livro 2660, Probabilidades e Fibo. | `requests`, `math`, `time` |
 | **tui_terminal.py**   | `build_full_layout`, `async_main` | Terminal rico (TUI) com 3 blocos, painel de descida, ordens e Live 2Hz. | `rich`, `asyncio`, `quant_analyzer` |
 | **binance_client.py**| `BinanceClient` | Requisições HTTP com fallback multi-domínio (`api.binance.com` / `vision`). | `requests`, `time` |
-| **orderbook_analyzer.py**| `OrderBookAnalyzer` | Análise quantitativa via desvio padrão, Z-Score de ordens, spoofing e agrupamento de spread manual. | `numpy`, `requests` |
+| **orderbook_analyzer.py**| `OrderBookAnalyzer` | Análise quantitativa via desvio padrão, Z-Score de ordens, risco de spoofing, buffer circular de 3.000 trades, cálculo contínuo de agressão (Buy/Sell/Delta/Absorção) e thread daemon em segundo plano. | `numpy`, `requests`, `threading` |
 | **volatility_analyzer.py**| `VolatilityAnalyzer` | Quebra de volatilidade em turnos horários, cálculo de amplitude e spikes. | `datetime`, `numpy`, `csv` |
 | **static/js/state.js** | `initDOMElements`, `MARKET_TIERS` | Declaração do estado reativo global e cache de nós do DOM. | Global Scope |
 | **static/js/storage.js** | `saveLayoutImmediate`, `restoreLayout` | Sincroniza estado da UI com `terminal_layout.json` no backend. | `fetch`, `localStorage` |
@@ -128,6 +128,11 @@ Automatizar_ETH/
    - Qualquer interação de personalização do usuário (mudança de intervalo, ativação de indicador EMA/MACD, adição de linha de suporte, ajuste de agrupamento) dispara `saveLayoutDebounced()` em [storage.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/storage.js).
    - O payload consolida o estado da UI e envia via `POST /api/settings`, que salva fisicamente em [terminal_layout.json](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/terminal_layout.json) e no `localStorage`.
 
+5. **Motor Contínuo de Segundo Plano & Análise de Blocos (Background Worker & Anti-Throttling)**:
+   - [orderbook_analyzer.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/orderbook_analyzer.py) executa uma thread daemon independente (`BlockAnalyzerBackgroundWorker`) a cada 2.5s via [services.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/services.py).
+   - Ingestão contínua alimenta um buffer circular de até 3.000 trades, classificando a agressão de ordens de compra e venda a mercado (`isBuyerMaker`), calculando Delta de volume e taxa de absorção de liquidez dentro da faixa do degrau/bloco selecionado.
+   - No frontend [templates/block_analyzer.html](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/templates/block_analyzer.html), um **Blob Web Worker** roda em thread dedicada de SO para contornar o congelamento/throttling de abas dos navegadores (Chrome/Edge/Firefox), mantendo as requisições ativas ininterruptamente mesmo quando o usuário navega em outras abas ou telas.
+
 ---
 
 ## 4. Tags de Busca Rápida (Catálogo de Contexto LLM)
@@ -138,7 +143,7 @@ Automatizar_ETH/
 | `[TELEGRAM_NOTIFIER]` | `telegram_notifier.py`, `routes/quant.py`, `.env` | Ajustar regras de alertas do bot Telegram, histerese (±10%), proximidade (<1%) ou rate-limit. |
 | `[QUANT_ENGINE_MATH]` | `quant_analyzer.py`, `routes/quant.py` | Ajustar fórmulas de indicadores avançados (SuperTrend, SAR, KDJ), Z-Score de 2.660 ou Macro. |
 | `[CHART_CANDLES_ZOOM]` | `static/js/chart.js`, `static/css/chart.css` | Alterar comportamento de velas, zoom TradingView, navegação, escala de preço ou HUD OHLC. |
-| `[ORDER_BOOK_GROUPING]`| `static/js/orderbook.js`, `routes/orderbook.py`, `orderbook_analyzer.py`, `templates/block_analyzer.html` | Modificar agrupamento de ticks, profundidade de linhas, spread manual (0.01, 1, 10) ou cálculo de Z-Score. |
+| `[ORDER_BOOK_GROUPING]`| `static/js/orderbook.js`, `routes/orderbook.py`, `orderbook_analyzer.py`, `templates/block_analyzer.html` | Modificar agrupamento de ticks, profundidade de linhas, spread manual (0.01, 1, 10), background worker contínuo de fluxo de trades ou cálculo de Z-Score. |
 | `[INDICATORS_MATH]` | `indicators.py`, `static/js/indicators.js`, `routes/market.py` | Incluir ou refinar fórmulas de indicadores técnicos (RSI, Bollinger, Médias, MACD). |
 | `[TAPE_READING_TRADES]`| `static/js/tapereading.js`, `static/js/websocket.js` | Ajustar fita de trades, classificação de ordens por porte (Varejo/Baleia) ou delta. |
 | `[LAYOUT_PERSISTENCE]` | `static/js/storage.js`, `routes/settings.py`, `terminal_layout.json` | Adicionar novas preferências que devem ser lembradas ao recarregar a página. |

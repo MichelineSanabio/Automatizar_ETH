@@ -112,6 +112,44 @@ body.block-analyzer-body {
   gap: 10px;
 }
 
+/* BADGE BACKGROUND LIVE */
+.ba-badge-bg-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(14, 203, 129, 0.12);
+  border: 1px solid rgba(14, 203, 129, 0.35);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--binance-green);
+  letter-spacing: 0.4px;
+}
+
+.bg-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--binance-green);
+  box-shadow: 0 0 8px var(--binance-green);
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(14, 203, 129, 0.7); }
+  70% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 6px rgba(14, 203, 129, 0); }
+  100% { transform: scale(0.95); opacity: 0.8; box-shadow: 0 0 0 0 rgba(14, 203, 129, 0); }
+}
+
+.bg-live-trades {
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  color: #ffffff;
+}
+
 .btn-ba {
   display: inline-flex;
   align-items: center;
@@ -317,6 +355,36 @@ body.block-analyzer-body {
 .card-val-sub {
   font-size: 11px;
   color: var(--text-muted);
+}
+
+/* FLUXO CONTÍNUO DE TRADES (ORDENS DE COMPRA E VENDA) */
+.ba-flow-banner {
+  background: #0c121e;
+  border: 1px solid rgba(0, 210, 255, 0.22);
+  border-radius: 10px;
+  padding: 10px 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.flow-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flow-item i {
+  color: var(--accent-cyan);
+}
+
+.flow-item strong {
+  font-family: var(--font-mono);
+  color: #ffffff;
 }
 
 /* RESUMO ESTATÍSTICO GLOBAL */
