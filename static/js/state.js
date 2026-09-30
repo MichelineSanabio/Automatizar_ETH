@@ -145,8 +145,14 @@ function initDOMElements() {
   // Tape Reading / Expanded Live Trades Elements
   el.btnViewChart = document.getElementById('btnViewChart');
   el.btnViewTape = document.getElementById('btnViewTape');
+  el.btnViewLiquidity = document.getElementById('btnViewLiquidity');
+  el.btnViewDataAnalysis = document.getElementById('btnViewDataAnalysis');
   el.chartMainView = document.getElementById('chartMainView');
   el.tapeReadingMainView = document.getElementById('tapeReadingMainView');
+  el.liquidityMainView = document.getElementById('liquidityMainView');
+  el.dataAnalysisMainView = document.getElementById('dataAnalysisMainView');
+  el.iframeLiquidity = document.getElementById('iframeLiquidity');
+  el.iframeDataAnalysis = document.getElementById('iframeDataAnalysis');
   el.chartControlsGroup = document.getElementById('chartControlsGroup');
   el.chartLegend = document.getElementById('chartLegend');
   el.tapeBuyVol = document.getElementById('tapeBuyVol');

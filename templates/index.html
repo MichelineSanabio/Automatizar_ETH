@@ -150,13 +150,15 @@
             </div>
           </div>
 
-          <a href="/liquidez" class="btn btn-secondary btn-liquidity-link" id="btnLiquidityMonitor" title="Módulo Extra: Monitor de Liquidez e Caça de Stops (Sweep Hunter)">
+          <a href="/liquidez" class="btn btn-secondary btn-liquidity-link" id="btnLiquidityMonitor" target="_blank" title="Abrir Monitor de Liquidez e Stops em Nova Aba">
             <i data-lucide="crosshair"></i>
             <span>Liquidez</span>
+            <i data-lucide="external-link" style="width: 12px; height: 12px; opacity: 0.7;"></i>
           </a>
-          <a href="/data-analise" class="btn btn-secondary btn-analysis-link" id="btnDataAnalysis" title="Módulo Extra: Data Análise e Volatilidade Histórica (Manhã, Tarde e Noite)">
+          <a href="/data-analise" class="btn btn-secondary btn-analysis-link" id="btnDataAnalysis" target="_blank" title="Abrir Data Análise e Estatísticas em Nova Aba">
             <i data-lucide="bar-chart-2"></i>
             <span>Data Análise</span>
+            <i data-lucide="external-link" style="width: 12px; height: 12px; opacity: 0.7;"></i>
           </a>
           <button class="btn btn-secondary" id="btnResetLayout" title="Restaurar layout, spreads, indicadores e marcações para o padrão">
             <i data-lucide="rotate-ccw"></i>
@@ -239,12 +241,12 @@
             <button class="view-tab-btn" data-view="tape" id="btnViewTape">
               <i data-lucide="zap"></i> <span>Tape Reading Expandido</span>
             </button>
-            <a href="/liquidez" class="view-tab-btn view-tab-link" id="btnViewLiquidity" title="Abrir Monitor de Liquidez e Stops (Sweep Hunter)">
+            <button class="view-tab-btn" data-view="liquidity" id="btnViewLiquidity" title="Exibir Monitor de Liquidez e Stops no frame abaixo">
               <i data-lucide="crosshair"></i> <span>Liquidez</span>
-            </a>
-            <a href="/data-analise" class="view-tab-btn view-tab-link" id="btnViewDataAnalysis" title="Abrir Módulo de Data Análise e Estatísticas Históricas">
+            </button>
+            <button class="view-tab-btn" data-view="data-analysis" id="btnViewDataAnalysis" title="Exibir Data Análise e Volatilidade no frame abaixo">
               <i data-lucide="pie-chart"></i> <span>Data Análise</span>
-            </a>
+            </button>
           </div>
 
           <div class="toolbar-separator"></div>
@@ -634,6 +636,16 @@
 
             </div>
           </div>
+        </div>
+
+        <!-- VIEW 4: LIQUIDEZ (SWEEP HUNTER) SUBVIEW -->
+        <div class="main-subview" id="liquidityMainView" style="display: none; height: 100%; flex: 1; flex-direction: column;">
+          <iframe id="iframeLiquidity" class="embedded-subview-frame" title="Monitor de Liquidez"></iframe>
+        </div>
+
+        <!-- VIEW 5: DATA ANÁLISE SUBVIEW -->
+        <div class="main-subview" id="dataAnalysisMainView" style="display: none; height: 100%; flex: 1; flex-direction: column;">
+          <iframe id="iframeDataAnalysis" class="embedded-subview-frame" title="Data Análise e Volatilidade"></iframe>
         </div>
       </section>
 

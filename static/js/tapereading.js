@@ -30,6 +30,8 @@ function setMainView(view) {
   if (el.btnViewChart) el.btnViewChart.classList.toggle('active', view === 'chart');
   if (el.btnViewOrderBook) el.btnViewOrderBook.classList.toggle('active', view === 'orderbook');
   if (el.btnViewTape) el.btnViewTape.classList.toggle('active', view === 'tape');
+  if (el.btnViewLiquidity) el.btnViewLiquidity.classList.toggle('active', view === 'liquidity');
+  if (el.btnViewDataAnalysis) el.btnViewDataAnalysis.classList.toggle('active', view === 'data-analysis');
 
   // 2. Toggle Subviews
   if (el.chartMainView) {
@@ -43,6 +45,20 @@ function setMainView(view) {
   if (el.tapeReadingMainView) {
     el.tapeReadingMainView.style.display = view === 'tape' ? 'flex' : 'none';
     el.tapeReadingMainView.classList.toggle('active', view === 'tape');
+  }
+  if (el.liquidityMainView) {
+    el.liquidityMainView.style.display = view === 'liquidity' ? 'flex' : 'none';
+    el.liquidityMainView.classList.toggle('active', view === 'liquidity');
+    if (view === 'liquidity' && el.iframeLiquidity && (!el.iframeLiquidity.src || el.iframeLiquidity.src === 'about:blank' || el.iframeLiquidity.src === window.location.href)) {
+      el.iframeLiquidity.src = '/liquidez';
+    }
+  }
+  if (el.dataAnalysisMainView) {
+    el.dataAnalysisMainView.style.display = view === 'data-analysis' ? 'flex' : 'none';
+    el.dataAnalysisMainView.classList.toggle('active', view === 'data-analysis');
+    if (view === 'data-analysis' && el.iframeDataAnalysis && (!el.iframeDataAnalysis.src || el.iframeDataAnalysis.src === 'about:blank' || el.iframeDataAnalysis.src === window.location.href)) {
+      el.iframeDataAnalysis.src = '/data-analise';
+    }
   }
 
   // 3. Toolbar Controls (Indicators and Intervals only relevant in Chart view)

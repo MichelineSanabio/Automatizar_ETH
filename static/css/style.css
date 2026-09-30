@@ -4581,3 +4581,24 @@ body.high-contrast-mode .live-price {
 body.high-contrast-mode .font-mono {
   font-weight: 600 !important;
 }
+
+/* ==========================================================================
+   SUBVIEWS EMBUTIDAS (LIQUIDEZ & DATA ANÁLISE NO FRAME PRINCIPAL)
+   ========================================================================== */
+.embedded-subview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: var(--bg-main);
+  flex: 1;
+}
+
+#liquidityMainView,
+#dataAnalysisMainView {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  overflow: hidden;
+  background-color: var(--bg-main);
+}
+
