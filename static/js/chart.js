@@ -193,10 +193,30 @@ function initChart() {
     }
     const candleData = param.seriesPrices.get(candleSeries);
     if (candleData) {
-      if (el.statOpen) el.statOpen.textContent = formatPrice(candleData.open);
-      if (el.statHigh) el.statHigh.textContent = formatPrice(candleData.high);
-      if (el.statLow) el.statLow.textContent = formatPrice(candleData.low);
-      if (el.statClose) el.statClose.textContent = formatPrice(candleData.close);
+      const openStr = formatPrice(candleData.open);
+      const highStr = formatPrice(candleData.high);
+      const lowStr = formatPrice(candleData.low);
+      const closeStr = formatPrice(candleData.close);
+
+      if (el.statOpen) el.statOpen.textContent = openStr;
+      if (el.statHigh) el.statHigh.textContent = highStr;
+      if (el.statLow) el.statLow.textContent = lowStr;
+      if (el.statClose) el.statClose.textContent = closeStr;
+
+      const oOpen = document.getElementById('ohlcValOpen');
+      const oHigh = document.getElementById('ohlcValHigh');
+      const oLow = document.getElementById('ohlcValLow');
+      const oClose = document.getElementById('ohlcValClose');
+      const oTime = document.getElementById('ohlcValTime');
+
+      if (oOpen) oOpen.textContent = openStr;
+      if (oHigh) oHigh.textContent = highStr;
+      if (oLow) oLow.textContent = lowStr;
+      if (oClose) oClose.textContent = closeStr;
+      if (oTime && param.time) {
+        const dt = new Date(typeof param.time === 'number' ? param.time * 1000 : param.time);
+        oTime.textContent = dt.toLocaleTimeString();
+      }
     }
     // Update live volume display on splitter
     const matched = historicalCandles.find(c => c.time === param.time);
@@ -427,15 +447,35 @@ function processAndRenderCandles(rawKlines) {
     renderAllUserPriceLines();
   }
 
-  // Update Footer Stats with latest candle
+  // Update Footer Stats & Floating OHLC HUD with latest candle
   if (historicalCandles.length > 0) {
     const last = historicalCandles[historicalCandles.length - 1];
+    const openStr = formatPrice(last.open);
+    const highStr = formatPrice(last.high);
+    const lowStr = formatPrice(last.low);
+    const closeStr = formatPrice(last.close);
+    const timeStr = new Date(last.closeTime).toLocaleTimeString();
+
     if (el.statCandlesCount) el.statCandlesCount.textContent = historicalCandles.length;
-    if (el.statOpen) el.statOpen.textContent = formatPrice(last.open);
-    if (el.statHigh) el.statHigh.textContent = formatPrice(last.high);
-    if (el.statLow) el.statLow.textContent = formatPrice(last.low);
-    if (el.statClose) el.statClose.textContent = formatPrice(last.close);
-    if (el.statLastUpdate) el.statLastUpdate.textContent = new Date(last.closeTime).toLocaleTimeString();
+    if (el.statOpen) el.statOpen.textContent = openStr;
+    if (el.statHigh) el.statHigh.textContent = highStr;
+    if (el.statLow) el.statLow.textContent = lowStr;
+    if (el.statClose) el.statClose.textContent = closeStr;
+    if (el.statLastUpdate) el.statLastUpdate.textContent = timeStr;
+
+    const oOpen = document.getElementById('ohlcValOpen');
+    const oHigh = document.getElementById('ohlcValHigh');
+    const oLow = document.getElementById('ohlcValLow');
+    const oClose = document.getElementById('ohlcValClose');
+    const oTime = document.getElementById('ohlcValTime');
+    const oSym = document.getElementById('ohlcSymbolBadge');
+
+    if (oOpen) oOpen.textContent = openStr;
+    if (oHigh) oHigh.textContent = highStr;
+    if (oLow) oLow.textContent = lowStr;
+    if (oClose) oClose.textContent = closeStr;
+    if (oTime) oTime.textContent = timeStr;
+    if (oSym) oSym.textContent = currentSymbol;
 
     // Update Splitter Volume Label
     const liveVolEl = el.splitterLiveVol || document.getElementById('splitterLiveVol');

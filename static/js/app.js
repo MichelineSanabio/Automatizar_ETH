@@ -261,6 +261,20 @@ function setupEventListeners() {
     });
   }
 
+  // Tornar os itens da Legenda clicáveis para alternar EMA 20, EMA 50 e RSI diretamente
+  const legendEma20 = document.getElementById('legendEma20');
+  if (legendEma20 && toggleEma20) {
+    legendEma20.addEventListener('click', () => toggleEma20.click());
+  }
+  const legendEma50 = document.getElementById('legendEma50');
+  if (legendEma50 && toggleEma50) {
+    legendEma50.addEventListener('click', () => toggleEma50.click());
+  }
+  const legendRsiEl = document.getElementById('legendRsi');
+  if (legendRsiEl && toggleRsi) {
+    legendRsiEl.addEventListener('click', () => toggleRsi.click());
+  }
+
   const toggleMacd = document.getElementById('toggleMacd');
   if (toggleMacd) {
     toggleMacd.addEventListener('click', function () {

@@ -293,11 +293,11 @@
             </div>
           </div>
 
-          <div class="toolbar-group" style="margin-left: auto;">
+          <div class="toolbar-group legend-toolbar-group" style="margin-left: auto;">
             <div class="chart-legend" id="chartLegend">
-              <span class="legend-item ema20-legend">EMA 20: <span id="valEma20">---</span></span>
-              <span class="legend-item ema50-legend">EMA 50: <span id="valEma50">---</span></span>
-              <span class="legend-item rsi-legend" id="legendRsi" style="display:none;">RSI: <span id="valRsi">---</span></span>
+              <span class="legend-item ema20-legend" id="legendEma20" title="Clique para ligar/desligar EMA 20">EMA 20: <span id="valEma20">---</span></span>
+              <span class="legend-item ema50-legend" id="legendEma50" title="Clique para ligar/desligar EMA 50">EMA 50: <span id="valEma50">---</span></span>
+              <span class="legend-item rsi-legend" id="legendRsi" style="display:none;" title="Clique para alternar RSI">RSI: <span id="valRsi">---</span></span>
               <span class="legend-item macd-legend" id="legendMacd" style="display:none;">MACD: <span id="valMacd">---</span> | Sinal: <span id="valMacdSignal">---</span> | Hist: <span id="valMacdHist">---</span></span>
             </div>
           </div>
@@ -306,6 +306,16 @@
         <!-- VIEW 1: TRADINGVIEW CHART CONTAINER -->
         <div class="main-subview active" id="chartMainView">
           <div class="chart-wrapper" id="tvChartContainer">
+            <!-- HUD Superior de Dados do Candle Ativo (OHLC) -->
+            <div class="chart-ohlc-floating-bar" id="chartOhlcFloatingBar" title="Métricas do Candle Selecionado (OHLC em Tempo Real)">
+              <span class="ohlc-symbol-badge" id="ohlcSymbolBadge">ETH/USDT</span>
+              <span class="ohlc-metric">Abertura: <strong id="ohlcValOpen">---</strong></span>
+              <span class="ohlc-metric">Máx: <strong class="green" id="ohlcValHigh">---</strong></span>
+              <span class="ohlc-metric">Mín: <strong class="red" id="ohlcValLow">---</strong></span>
+              <span class="ohlc-metric">Fech: <strong id="ohlcValClose">---</strong></span>
+              <span class="ohlc-metric ohlc-time-metric"><i data-lucide="clock" style="width: 12px; height: 12px; display: inline-block;"></i> <span id="ohlcValTime">--:--:--</span></span>
+            </div>
+
             <div class="chart-loading-overlay" id="chartLoader">
               <div class="spinner"></div>
               <span>Carregando dados históricos da Binance...</span>
