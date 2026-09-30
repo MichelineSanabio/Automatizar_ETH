@@ -27,6 +27,8 @@ except ImportError:
     sys.exit(1)
 
 from quant_analyzer import quant_engine
+from telegram_notifier import telegram_notifier
+
 # Configurar codificação UTF-8 robusta para Windows
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -87,7 +89,10 @@ def make_header_panel(state: dict) -> Panel:
     macro_text = Text()
     macro_text.append(f"S&P500: {macro.get('sp500', 0):,.0f} | DXY: {macro.get('dxy', 0):.2f}\n", style="dim white")
     macro_text.append(f"OURO: ${macro.get('gold', 0):,.1f} | WTI: ${macro.get('oil_wti', 0):.1f}\n", style="dim white")
-    macro_text.append(f"● LOCAL: {now_str} UTC-3", style="bold green")
+
+    tg_status = "TG: ● ATIVO" if telegram_notifier.is_configured() else "TG: ○ STANDBY"
+    tg_style = "bold green" if telegram_notifier.is_configured() else "dim yellow"
+    macro_text.append(f"{tg_status}  |  ● LOCAL: {now_str} UTC-3", style=tg_style)
 
     grid.add_row(title_text, ticker_text, macro_text)
 

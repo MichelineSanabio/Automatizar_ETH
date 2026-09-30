@@ -25,6 +25,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const valGold = document.getElementById("valGold");
   const valOil = document.getElementById("valOil");
   const valWeb3Status = document.getElementById("valWeb3Status");
+  const valTelegramStatus = document.getElementById("valTelegramStatus");
+
+  async function fetchTelegramStatus() {
+    if (!valTelegramStatus) return;
+    try {
+      const res = await fetch("/api/quant/telegram/status");
+      if (res.ok) {
+        const json = await res.json();
+        const d = json.data || {};
+        if (d.configured) {
+          valTelegramStatus.textContent = `● Ativo (Chat: ${d.masked_chat_id})`;
+          valTelegramStatus.className = "macro-value status-ok";
+        } else {
+          valTelegramStatus.textContent = `○ Standby (Configure no .env)`;
+          valTelegramStatus.className = "macro-value";
+        }
+      }
+    } catch (e) {}
+  }
 
   // Bloco 2: Altseason
   const altseasonScoreVal = document.getElementById("altseasonScoreVal");
@@ -430,4 +449,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Polling inicial e loop de 1.5s
   fetchQuantState();
   pollInterval = setInterval(fetchQuantState, 1500);
+
+  // Status do Telegram
+  fetchTelegramStatus();
+  setInterval(fetchTelegramStatus, 15000);
 });

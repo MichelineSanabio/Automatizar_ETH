@@ -52,3 +52,46 @@ def recalculate_fibonacci():
             "status": "error",
             "message": str(e)
         }), 400
+
+@quant_bp.route("/telegram/status", methods=["GET"])
+def get_telegram_status():
+    """Retorna o status de configuração e histórico recente do bot Telegram."""
+    from telegram_notifier import telegram_notifier
+    configured = telegram_notifier.is_configured()
+    masked_chat = ""
+    if telegram_notifier.chat_id:
+        cid = telegram_notifier.chat_id
+        masked_chat = cid[:2] + "****" + cid[-2:] if len(cid) > 4 else "****"
+
+    return jsonify({
+        "status": "success",
+        "data": {
+            "configured": configured,
+            "bot_token_set": bool(telegram_notifier.bot_token),
+            "chat_id_set": bool(telegram_notifier.chat_id),
+            "masked_chat_id": masked_chat,
+            "rate_limit_seconds": telegram_notifier.rate_limit_seconds,
+            "recent_logs": telegram_notifier.notification_logs[-10:]
+        }
+    })
+
+@quant_bp.route("/telegram/test", methods=["POST"])
+def send_telegram_test():
+    """Envia um alerta de teste para validação de credenciais."""
+    from telegram_notifier import telegram_notifier
+    if not telegram_notifier.is_configured():
+        return jsonify({
+            "status": "warning",
+            "message": "Telegram não configurado. Defina TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID no arquivo .env."
+        }), 400
+
+    test_msg = (
+        "🔔 *[TESTE DE CONECTIVIDADE - BOT TELEGRAM]*\n"
+        "✅ Conexão estabelecida com sucesso com o Binance Market Terminal!\n"
+        "📊 Alertas de probabilidade, proximidade de ordens e risco de spoofing estão ativos."
+    )
+    dispatched = telegram_notifier.send_message_async(test_msg, category="test_alert")
+    return jsonify({
+        "status": "success" if dispatched else "rate_limited",
+        "message": "Mensagem de teste enviada em background!" if dispatched else "Rate-limit atingido. Aguarde 60 segundos."
+    })

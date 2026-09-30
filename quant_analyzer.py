@@ -25,6 +25,8 @@ HEADERS = {
     "Accept": "application/json"
 }
 
+from telegram_notifier import telegram_notifier
+
 class QuantTradingEngine:
     """Motor quantitativo completo com dados Spot, Futuros, Indicadores e Modelos de Probabilidade."""
 
@@ -725,6 +727,13 @@ class QuantTradingEngine:
 
         self.cached_state = state
         self.last_cache_time = now
+
+        # Avaliar e disparar alertas via Telegram em background
+        try:
+            telegram_notifier.check_and_notify(state)
+        except Exception as e:
+            logger.warning(f"Erro ao verificar alertas do Telegram: {e}")
+
         return state
 
     @staticmethod

@@ -11,6 +11,7 @@ Automatizar_ETH/
 ├── app.py                         # Ponto de entrada Flask (bootstrap, favicon e registro de Blueprints)
 ├── services.py                    # Singleton de serviços compartilhados (BinanceClient, Analisadores, Cache-Busting)
 ├── quant_analyzer.py              # Motor Quantitativo Institucional (Spot, Futuros, Altseason, Macro, Fibonacci)
+├── telegram_notifier.py           # Mensageria e alertas assíncronos no Telegram (Histerese, Spoofing, Proximidade)
 ├── tui_terminal.py                # Interface Gráfica de Console Terminal (TUI) rica via biblioteca Rich (2Hz Live)
 ├── Iniciar_TUI.bat                # Inicializador em lote (1 clique) do console TUI em Windows com suporte UTF-8
 ├── terminal_layout.json           # Persistência do layout do usuário, marcações e preferências
@@ -88,6 +89,7 @@ Automatizar_ETH/
 | **routes/whales.py** | `get_whales`, `get_whales_quota` | Top 50 holders on-chain e consumo da quota da Etherscan. | `services.whale_tracker` |
 | **routes/settings.py**| `get_settings`, `save_settings` | Leitura e gravação no `terminal_layout.json` e `Definir_Baleias.json`. | `os`, `json`, `datetime` |
 | **routes/quant.py**   | `get_quant_state`, `recalculate_fibonacci` | API do motor quantitativo com estado consolidado e recálculo Fibonacci. | `quant_analyzer.quant_engine` |
+| **telegram_notifier.py**| `TelegramAlertManager`, `check_and_notify` | Alertas no Telegram (Proximidade <= 1%, Variação +-10%, Spoofing e Pivô). | `requests`, `threading`, `time` |
 | **quant_analyzer.py** | `QuantTradingEngine`, `get_full_quant_state` | Motor quantitativo: Spot/Futuros, Altseason, Livro 2660, Probabilidades e Fibo. | `requests`, `math`, `time` |
 | **tui_terminal.py**   | `build_full_layout`, `async_main` | Terminal rico (TUI) com 3 blocos, painel de descida, ordens e Live 2Hz. | `rich`, `asyncio`, `quant_analyzer` |
 | **binance_client.py**| `BinanceClient` | Requisições HTTP com fallback multi-domínio (`api.binance.com` / `vision`). | `requests`, `time` |
@@ -133,6 +135,7 @@ Automatizar_ETH/
 | Tag de Busca | Arquivos Relevantes | Quando Modificar |
 | :--- | :--- | :--- |
 | `[TUI_QUANT_TERMINAL]` | `tui_terminal.py`, `quant_analyzer.py`, `templates/tui.html`, `static/js/tui.js` | Modificar layout TUI console (rich), termômetro Altseason, ordens limite A-D ou recálculo Fibo. |
+| `[TELEGRAM_NOTIFIER]` | `telegram_notifier.py`, `routes/quant.py`, `.env` | Ajustar regras de alertas do bot Telegram, histerese (±10%), proximidade (<1%) ou rate-limit. |
 | `[QUANT_ENGINE_MATH]` | `quant_analyzer.py`, `routes/quant.py` | Ajustar fórmulas de indicadores avançados (SuperTrend, SAR, KDJ), Z-Score de 2.660 ou Macro. |
 | `[CHART_CANDLES_ZOOM]` | `static/js/chart.js`, `static/css/chart.css` | Alterar comportamento de velas, zoom TradingView, navegação, escala de preço ou HUD OHLC. |
 | `[ORDER_BOOK_GROUPING]`| `static/js/orderbook.js`, `routes/orderbook.py`, `orderbook_analyzer.py` | Modificar agrupamento de ticks, profundidade de linhas, radar de paredes ou cálculo de Z-Score. |
