@@ -182,4 +182,9 @@ function updateLivePrice(price) {
     el.livePrice.classList.add(isUp ? 'price-flash-up' : 'price-flash-down');
   }
   lastPrice = price;
+
+  // Atualizar PnL e métricas da carteira em tempo real a cada tick de preço
+  if (typeof updatePositionPnLUI === 'function') {
+    updatePositionPnLUI(price);
+  }
 }

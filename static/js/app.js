@@ -22,9 +22,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     initMarkingsUI();
   }
 
+  if (typeof initOrdersUI === 'function') {
+    initOrdersUI();
+  }
+
   // 2. Fetch and apply latest persistent settings from terminal_layout.json
   if (typeof loadAndApplyLayoutSettings === 'function') {
     await loadAndApplyLayoutSettings();
+  }
+
+  // 3. Renderizar ordens e marcações salvas no gráfico
+  if (typeof renderAllUserPriceLines === 'function') {
+    renderAllUserPriceLines();
+  }
+  if (typeof renderOrderLinesOnChart === 'function') {
+    renderOrderLinesOnChart();
+  }
+  if (typeof updatePositionPnLUI === 'function') {
+    updatePositionPnLUI();
   }
 
   loadSymbolData(currentSymbol, currentInterval);
@@ -256,7 +271,9 @@ function setupEventListeners() {
     toggleRsi.addEventListener('click', function () {
       showRsi = !showRsi;
       this.classList.toggle('active', showRsi);
-      if (el.legendRsi) el.legendRsi.style.display = showRsi ? 'inline' : 'none';
+      const legRsi = document.getElementById('legendRsi') || el.legendRsi;
+      if (legRsi) legRsi.style.display = showRsi ? 'inline' : 'none';
+      if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
       if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
     });
   }

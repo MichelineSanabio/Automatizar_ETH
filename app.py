@@ -8,7 +8,7 @@ import os
 import csv
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import Flask, render_template, jsonify, request, Response, send_from_directory
 from binance_client import BinanceClient
 from etherscan_client import EtherscanWhaleTracker
@@ -484,7 +484,7 @@ LAYOUT_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ter
 def get_default_layout_settings():
     return {
         "version": "1.0",
-        "lastUpdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "lastUpdated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "chart": {
             "symbol": "ETHUSDT",
             "interval": "15m",
@@ -510,7 +510,15 @@ def get_default_layout_settings():
             "tapeSizeFilter": "all",
             "tapeSideFilter": "all"
         },
-        "markings": []
+        "accessibility": {
+            "tvMode": False,
+            "scaleLevel": "100",
+            "highContrast": False,
+            "hoverZoom": True,
+            "floatingLens": True
+        },
+        "markings": [],
+        "orders": []
     }
 
 @app.route("/api/settings", methods=["GET"])
@@ -551,7 +559,7 @@ def save_settings():
                 pass
 
         # Merge de seções
-        for key in ["chart", "spreads", "indicators", "views"]:
+        for key in ["chart", "spreads", "indicators", "views", "accessibility"]:
             if key in new_data and isinstance(new_data[key], dict):
                 if key not in current_data:
                     current_data[key] = {}
@@ -561,8 +569,12 @@ def save_settings():
         if "markings" in new_data and isinstance(new_data["markings"], list):
             current_data["markings"] = new_data["markings"]
 
+        # Se orders vier no payload, substitui ou atualiza a lista de ordens do usuário
+        if "orders" in new_data and isinstance(new_data["orders"], list):
+            current_data["orders"] = new_data["orders"]
+
         current_data["version"] = new_data.get("version", current_data.get("version", "1.0"))
-        current_data["lastUpdated"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        current_data["lastUpdated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         with open(LAYOUT_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(current_data, f, indent=2, ensure_ascii=False)

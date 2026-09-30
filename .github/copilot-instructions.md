@@ -1,5 +1,10 @@
-# Instruções de Commit (Git)
+# Instruções de Assistência e Controle de Versão
 
-Todas as mensagens de commit geradas pela IA (inclusive através do botão 'Generate commit message' do Source Control) devem ser estritamente em português do Brasil (pt-BR).
-
-Formato: Conventional Commits em português (ex: `feat: ...`, `fix: ...`, `docs: ...`, `style: ...`).
+## Idioma Obrigatório
+- Todas as mensagens de commit (inclusive as geradas pelo botão "Generate Commit Message" no Source Control / Git) devem ser **SEMPRE geradas em português do Brasil (pt-BR)**.
+- É estritamente proibido gerar mensagens em inglês.
+- Padrão Conventional Commits em português:
+  - `feat: adicionar suporte a ordens manuais e persistência de layout`
+  - `fix: corrigir alinhamento das ferramentas e exibição de linhas no gráfico`
+  - `style: aprimorar layout e responsividade do terminal`
+  - `docs: atualizar documentação técnica`

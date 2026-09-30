@@ -45,6 +45,41 @@ const AccessibilityManager = {
     } catch (e) {
       console.warn('Erro ao salvar acessibilidade:', e);
     }
+
+    // Persistir imediatamente em terminal_layout.json via /api/settings
+    if (typeof saveLayoutImmediate === 'function') {
+      saveLayoutImmediate();
+    }
+  },
+
+  syncUIState() {
+    const chkTvMode = document.getElementById('toggleTvMode');
+    const chkHoverZoom = document.getElementById('toggleHoverMagnifier');
+    const chkFloatingLens = document.getElementById('toggleFloatingLens');
+    const chkHighContrast = document.getElementById('toggleHighContrast');
+    const scaleBtns = document.querySelectorAll('.comfort-scale-buttons .scale-btn');
+
+    if (chkTvMode) chkTvMode.checked = Boolean(this.settings.tvMode);
+    if (chkHoverZoom) chkHoverZoom.checked = Boolean(this.settings.hoverZoom);
+    if (chkFloatingLens) chkFloatingLens.checked = Boolean(this.settings.floatingLens);
+    if (chkHighContrast) chkHighContrast.checked = Boolean(this.settings.highContrast);
+
+    if (scaleBtns) {
+      scaleBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.scale === this.settings.scaleLevel);
+      });
+    }
+    this.updateHeaderButtonState();
+  },
+
+  syncFromSettings(obj) {
+    if (!obj || typeof obj !== 'object') return;
+    this.settings = Object.assign({}, this.settings, obj);
+    try {
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.settings));
+    } catch (e) {}
+    this.applySettings();
+    this.syncUIState();
   },
 
   applySettings() {

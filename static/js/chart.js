@@ -228,6 +228,26 @@ function initChart() {
       }
     }
   });
+
+  // 6. Clique Interativo no Gráfico para Traçar Linhas de Preço
+  tvChart.subscribeClick((param) => {
+    if (!window.isDrawingLineModeActive) return;
+    if (!param || !param.point || !candleSeries) return;
+
+    try {
+      const price = candleSeries.coordinateToPrice(param.point.y);
+      if (price && price > 0) {
+        const color = window.selectedMarkingColor || '#f0b90b';
+        addUserPriceMarking(price, `Nível $${formatPrice(price)}`, color, 0);
+        if (typeof toggleDrawingLineMode === 'function') {
+          toggleDrawingLineMode(false);
+        }
+        showDrawingToast(`Linha traçada em $${formatPrice(price)} e salva com sucesso!`);
+      }
+    } catch (e) {
+      console.warn('Erro ao traçar linha interativa no clique:', e);
+    }
+  });
 }
 
 // Resizes all active chart containers to match their DOM dimensions
@@ -445,6 +465,11 @@ function processAndRenderCandles(rawKlines) {
   // Render User Custom Price Markings (Supports, Resistances, Custom Lines)
   if (typeof renderAllUserPriceLines === 'function') {
     renderAllUserPriceLines();
+  }
+
+  // Render User Manual Trade Orders & Breakeven Price Lines
+  if (typeof renderOrderLinesOnChart === 'function') {
+    renderOrderLinesOnChart();
   }
 
   // Update Footer Stats & Floating OHLC HUD with latest candle
@@ -719,7 +744,11 @@ function setMacdVisibility(show) {
     }
   }
   resizeAllCharts();
-  if (typeof saveLayoutDebounced === 'function') saveLayoutDebounced();
+  if (typeof saveLayoutImmediate === 'function') {
+    saveLayoutImmediate();
+  } else if (typeof saveLayoutDebounced === 'function') {
+    saveLayoutDebounced();
+  }
 }
 
 // Whale Visual Markers & Price Lines on Candlestick Chart
@@ -871,8 +900,9 @@ function addUserPriceMarking(price, label, color = '#f0b90b', lineStyle = 0) {
   if (typeof renderMarkingsListInModal === 'function') {
     renderMarkingsListInModal();
   }
-  if (typeof saveLayoutDebounced === 'function') {
-    saveLayoutDebounced();
+  // Salvar imediatamente no arquivo terminal_layout.json e localStorage
+  if (typeof saveLayoutImmediate === 'function') {
+    saveLayoutImmediate();
   }
   return mark;
 }
@@ -889,8 +919,9 @@ function removeUserPriceMarking(id) {
   if (typeof renderMarkingsListInModal === 'function') {
     renderMarkingsListInModal();
   }
-  if (typeof saveLayoutDebounced === 'function') {
-    saveLayoutDebounced();
+  // Salvar imediatamente no arquivo terminal_layout.json e localStorage
+  if (typeof saveLayoutImmediate === 'function') {
+    saveLayoutImmediate();
   }
 }
 
@@ -907,9 +938,55 @@ function clearAllUserPriceMarkings() {
   if (typeof renderMarkingsListInModal === 'function') {
     renderMarkingsListInModal();
   }
-  if (typeof saveLayoutDebounced === 'function') {
-    saveLayoutDebounced();
+  // Salvar imediatamente no arquivo terminal_layout.json e localStorage
+  if (typeof saveLayoutImmediate === 'function') {
+    saveLayoutImmediate();
   }
+}
+
+// ==========================================
+// MODO DESENHO RÁPIDO & FEEDBACK VISUAL
+// ==========================================
+
+window.isDrawingLineModeActive = false;
+
+function toggleDrawingLineMode(forceState = null) {
+  window.isDrawingLineModeActive = (forceState !== null) ? forceState : !window.isDrawingLineModeActive;
+  const btn = document.getElementById('btnOpenAddMarking');
+  const chartWrapper = document.getElementById('tvChartContainer');
+
+  if (btn) {
+    btn.classList.toggle('drawing-active', window.isDrawingLineModeActive);
+    if (window.isDrawingLineModeActive) {
+      btn.title = 'Modo Desenho ATIVO: Clique no gráfico para traçar a linha (ou clique aqui para cancelar)';
+      showDrawingToast('Clique em qualquer altura do gráfico para fixar a linha de preço!');
+    } else {
+      btn.title = 'Adicionar Linha de Preço (Suporte / Resistência / Alvo) no Gráfico';
+    }
+  }
+
+  if (chartWrapper) {
+    chartWrapper.classList.toggle('crosshair-drawing-mode', window.isDrawingLineModeActive);
+  }
+}
+
+function showDrawingToast(msg) {
+  let toast = document.getElementById('drawingToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'drawingToast';
+    toast.className = 'drawing-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `<i data-lucide="check-circle"></i> <span>${msg}</span>`;
+  if (window.lucide) { try { lucide.createIcons(); } catch (e) {} }
+  toast.classList.add('visible');
+
+  clearTimeout(window.drawingToastTimer);
+  window.drawingToastTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+  }, 3200);
 }
 
 

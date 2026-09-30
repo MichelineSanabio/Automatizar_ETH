@@ -31,13 +31,19 @@ function exportCurrentLayoutState() {
     binanceActiveSubtab: binanceActiveSubtab || 'livro',
   };
 
-  // 3. Indicator Visibility
+  // 3. Indicator Visibility (Ler do DOM com fallback das variáveis globais)
+  const btnEma20 = document.getElementById('toggleEma20');
+  const btnEma50 = document.getElementById('toggleEma50');
+  const btnRsi = document.getElementById('toggleRsi');
+  const btnBands = document.getElementById('toggleBands');
+  const btnMacd = document.getElementById('toggleMacd');
+
   const indicatorsState = {
-    showEma20: Boolean(showEma20),
-    showEma50: Boolean(showEma50),
-    showRsi: Boolean(showRsi),
-    showBands: Boolean(showBands),
-    showMacd: Boolean(showMacd),
+    showEma20: btnEma20 ? btnEma20.classList.contains('active') : Boolean(showEma20),
+    showEma50: btnEma50 ? btnEma50.classList.contains('active') : Boolean(showEma50),
+    showRsi: btnRsi ? btnRsi.classList.contains('active') : Boolean(showRsi),
+    showBands: btnBands ? btnBands.classList.contains('active') : Boolean(showBands),
+    showMacd: btnMacd ? btnMacd.classList.contains('active') : Boolean(showMacd),
   };
 
   // 4. View & Window Layout Settings
@@ -58,6 +64,14 @@ function exportCurrentLayoutState() {
   // 5. User Custom Price Markings (Supports, Resistances, Targets)
   const markingsState = Array.isArray(userPriceMarkings) ? [...userPriceMarkings] : [];
 
+  // 6. User Manual Trade Orders (Buy/Sell, Amounts, Costs, Notes)
+  const ordersState = Array.isArray(userTradeOrders) ? [...userTradeOrders] : [];
+
+  // 7. Visual Accessibility & 55" TV Settings
+  const accessibilityState = (window.AccessibilityManager && AccessibilityManager.settings)
+    ? { ...AccessibilityManager.settings }
+    : {};
+
   return {
     version: '1.0',
     lastUpdated: new Date().toISOString(),
@@ -65,7 +79,9 @@ function exportCurrentLayoutState() {
     spreads: spreadsState,
     indicators: indicatorsState,
     views: viewsState,
+    accessibility: accessibilityState,
     markings: markingsState,
+    orders: ordersState,
   };
 }
 
@@ -269,11 +285,11 @@ function applySettingsObject(settings) {
 
   // 3. Indicators State
   if (settings.indicators) {
-    showEma20 = settings.indicators.showEma20 !== undefined ? Boolean(settings.indicators.showEma20) : false;
-    showEma50 = settings.indicators.showEma50 !== undefined ? Boolean(settings.indicators.showEma50) : false;
-    showRsi = settings.indicators.showRsi !== undefined ? Boolean(settings.indicators.showRsi) : false;
-    showBands = settings.indicators.showBands !== undefined ? Boolean(settings.indicators.showBands) : false;
-    showMacd = settings.indicators.showMacd !== undefined ? Boolean(settings.indicators.showMacd) : false;
+    showEma20 = Boolean(settings.indicators.showEma20);
+    showEma50 = Boolean(settings.indicators.showEma50);
+    showRsi = Boolean(settings.indicators.showRsi);
+    showBands = Boolean(settings.indicators.showBands);
+    showMacd = Boolean(settings.indicators.showMacd);
 
     const toggleEma20 = document.getElementById('toggleEma20');
     if (toggleEma20) toggleEma20.classList.toggle('active', showEma20);
@@ -283,7 +299,8 @@ function applySettingsObject(settings) {
 
     const toggleRsi = document.getElementById('toggleRsi');
     if (toggleRsi) toggleRsi.classList.toggle('active', showRsi);
-    if (el.legendRsi) el.legendRsi.style.display = showRsi ? 'inline' : 'none';
+    const legendRsiEl = document.getElementById('legendRsi') || el.legendRsi;
+    if (legendRsiEl) legendRsiEl.style.display = showRsi ? 'inline' : 'none';
 
     const toggleBands = document.getElementById('toggleBands');
     if (toggleBands) toggleBands.classList.toggle('active', showBands);
@@ -291,8 +308,8 @@ function applySettingsObject(settings) {
     const toggleMacd = document.getElementById('toggleMacd');
     if (toggleMacd) toggleMacd.classList.toggle('active', showMacd);
 
-    if (showMacd && typeof setMacdVisibility === 'function') {
-      setMacdVisibility(true);
+    if (typeof setMacdVisibility === 'function') {
+      setMacdVisibility(showMacd);
     }
 
     if (typeof updateIndicatorsData === 'function') {
@@ -308,6 +325,27 @@ function applySettingsObject(settings) {
     }
     if (typeof renderAllUserPriceLines === 'function') {
       renderAllUserPriceLines();
+    }
+  }
+
+  // 4.1 User Manual Trade Orders & Position
+  if (Array.isArray(settings.orders)) {
+    userTradeOrders = settings.orders;
+    if (typeof renderOrderLinesOnChart === 'function') {
+      renderOrderLinesOnChart();
+    }
+    if (typeof updatePositionPnLUI === 'function') {
+      updatePositionPnLUI();
+    }
+    if (typeof renderOrdersListInModal === 'function') {
+      renderOrdersListInModal();
+    }
+  }
+
+  // 4.2 Visual Accessibility & 55" TV Settings
+  if (settings.accessibility && window.AccessibilityManager) {
+    if (typeof AccessibilityManager.syncFromSettings === 'function') {
+      AccessibilityManager.syncFromSettings(settings.accessibility);
     }
   }
 
@@ -543,8 +581,27 @@ function initMarkingsUI() {
   const listContainer = document.getElementById('markingsListContainer');
   const btnReset = document.getElementById('btnResetLayout');
 
+  const btnStartDraw = document.getElementById('btnStartDrawOnChart');
+
   if (btnOpen) {
-    btnOpen.addEventListener('click', () => openMarkingsModal());
+    btnOpen.addEventListener('click', () => {
+      // Alterna o modo desenho com clique no gráfico; se já ativo, abre o modal
+      if (window.isDrawingLineModeActive) {
+        if (typeof toggleDrawingLineMode === 'function') toggleDrawingLineMode(false);
+        openMarkingsModal();
+      } else {
+        if (typeof toggleDrawingLineMode === 'function') toggleDrawingLineMode(true);
+      }
+    });
+  }
+
+  if (btnStartDraw) {
+    btnStartDraw.addEventListener('click', () => {
+      closeMarkingsModal();
+      if (typeof toggleDrawingLineMode === 'function') {
+        toggleDrawingLineMode(true);
+      }
+    });
   }
 
   if (btnManage) {

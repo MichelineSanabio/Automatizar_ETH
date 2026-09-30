@@ -150,6 +150,12 @@
             </div>
           </div>
 
+          <button type="button" class="btn btn-secondary btn-header-orders" id="btnHeaderOrders" title="Painel de Minhas Ordens & Cálculo de Lucros (PnL)">
+            <i data-lucide="wallet"></i>
+            <span>Ordens & PnL</span>
+            <span class="orders-badge" id="ordersHeaderBadge">4</span>
+          </button>
+
           <a href="/liquidez" class="btn btn-secondary btn-liquidity-link" id="btnLiquidityMonitor" target="_blank" title="Abrir Monitor de Liquidez e Stops em Nova Aba">
             <i data-lucide="crosshair"></i>
             <span>Liquidez</span>
@@ -247,6 +253,21 @@
             <button class="view-tab-btn" data-view="data-analysis" id="btnViewDataAnalysis" title="Exibir Data Análise e Volatilidade no frame abaixo">
               <i data-lucide="pie-chart"></i> <span>Data Análise</span>
             </button>
+            <button class="view-tab-btn btn-orders-tab" id="btnOpenOrdersTrackerNav" title="Painel de Minhas Ordens & Lucro (PnL)">
+              <i data-lucide="wallet"></i> <span>Minhas Ordens</span>
+              <span class="orders-badge" id="ordersNavBadge">4</span>
+            </button>
+          </div>
+
+          <div class="orders-quick-summary-pill" id="ordersQuickSummaryPill" title="Clique para abrir detalhes da posição e ordens">
+            <span class="pill-label">Posição:</span>
+            <strong class="pill-eth font-mono" id="pillHoldingsEth">1.6977 ETH</strong>
+            <span class="pill-sep">•</span>
+            <span class="pill-label">PM:</span>
+            <strong class="pill-pm font-mono" id="pillAvgPrice">$2,525.65</strong>
+            <span class="pill-sep">•</span>
+            <span class="pill-label">PnL:</span>
+            <strong class="pill-pnl font-mono green" id="pillPnlText">+$0.00 (+0.00%)</strong>
           </div>
 
           <div class="toolbar-separator"></div>
@@ -1068,10 +1089,12 @@
               </div>
             </div>
 
-            <div class="form-field action-field">
-              <label>&nbsp;</label>
+            <div class="form-field action-field" style="display: flex; gap: 8px; flex-direction: row; align-items: flex-end;">
               <button type="button" class="btn btn-primary btn-add-marking" id="btnConfirmAddMarking">
                 <i data-lucide="plus"></i> <span>Criar Linha</span>
+              </button>
+              <button type="button" class="btn btn-secondary btn-draw-on-chart" id="btnStartDrawOnChart" title="Clique no gráfico para fixar a linha">
+                <i data-lucide="edit-3"></i> <span>Traçar com Clique</span>
               </button>
             </div>
           </div>
@@ -1098,6 +1121,131 @@
     </div>
   </div>
 
+  <!-- MODAL: GERENCIADOR DE ORDENS E POSIÇÃO (TRADE & PNL TRACKER) -->
+  <div class="modal-backdrop" id="modalOrdersBackdrop" style="display: none;">
+    <div class="modal-dialog orders-modal">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="wallet"></i>
+          <span>Minhas Ordens & Calculadora de Ganhos (Trade Tracker)</span>
+        </div>
+        <button class="modal-close" id="btnCloseOrdersModal" title="Fechar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Grid Superior com Métricas da Carteira e Lucro em Tempo Real -->
+        <div class="orders-metrics-grid">
+          <div class="order-metric-card">
+            <span class="metric-title"><i data-lucide="layers"></i> Posição Total (ETH)</span>
+            <strong class="metric-value font-mono" id="modalEthHoldings">1.6977 ETH</strong>
+            <small class="metric-sub">Quantidade acumulada</small>
+          </div>
+          <div class="order-metric-card">
+            <span class="metric-title"><i data-lucide="target"></i> Preço Médio (PM)</span>
+            <strong class="metric-value font-mono yellow" id="modalAvgPrice">$2,525.65</strong>
+            <small class="metric-sub">Custo médio por ETH</small>
+          </div>
+          <div class="order-metric-card">
+            <span class="metric-title"><i data-lucide="dollar-sign"></i> Total Investido</span>
+            <strong class="metric-value font-mono" id="modalTotalCost">$4,287.80</strong>
+            <small class="metric-sub">Capital aportado em USDT</small>
+          </div>
+          <div class="order-metric-card">
+            <span class="metric-title"><i data-lucide="bar-chart-2"></i> Valor Atual</span>
+            <strong class="metric-value font-mono" id="modalCurrentValue">$0.00</strong>
+            <small class="metric-sub">Cotação ao vivo</small>
+          </div>
+          <div class="order-metric-card highlight-pnl">
+            <span class="metric-title"><i data-lucide="trending-up"></i> Lucro / Prejuízo (PnL)</span>
+            <strong class="metric-value font-mono green" id="modalUnrealizedPnl">+$0.00 (+0.00%)</strong>
+            <small class="metric-sub">Ganho não realizado ao vivo</small>
+          </div>
+        </div>
+
+        <!-- Formulário de Registrar Nova Ordem -->
+        <div class="markings-add-card order-add-card">
+          <div class="order-form-header">
+            <h5>Registrar Ordem Manualmente</h5>
+            <div class="order-side-toggle">
+              <button type="button" class="btn-side-toggle btn-side-buy active" id="btnSideBuy">
+                <i data-lucide="arrow-up-circle"></i> COMPRA
+              </button>
+              <button type="button" class="btn-side-toggle btn-side-sell" id="btnSideSell">
+                <i data-lucide="arrow-down-circle"></i> VENDA
+              </button>
+            </div>
+          </div>
+
+          <div class="orders-form-grid">
+            <div class="form-field">
+              <label for="inputOrderAmount">Quantidade (ETH):</label>
+              <input type="number" id="inputOrderAmount" step="0.0001" placeholder="Ex: 0.2662" />
+            </div>
+
+            <div class="form-field">
+              <label for="inputOrderPrice">Preço de Execução (USDT):</label>
+              <div class="input-with-action">
+                <input type="number" id="inputOrderPrice" step="0.01" placeholder="Ex: 2530.00" />
+                <button type="button" class="btn-live-fill" id="btnOrderUseLivePrice" title="Preencher com o preço atual do ETH">Preço Atual</button>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="inputOrderDate">Data & Hora:</label>
+              <input type="datetime-local" id="inputOrderDate" />
+            </div>
+
+            <div class="form-field">
+              <label for="inputOrderNotes">Identificação / Anotação:</label>
+              <input type="text" id="inputOrderNotes" placeholder="Ex: Compra parcial suporte" />
+            </div>
+
+            <div class="form-field total-preview-field">
+              <label>Valor Total Estimado:</label>
+              <strong class="font-mono total-preview-text" id="orderTotalPreview">$0.00 USDT</strong>
+            </div>
+
+            <div class="form-field action-field">
+              <label>&nbsp;</label>
+              <button type="button" class="btn btn-primary btn-add-order btn-buy" id="btnConfirmAddOrder">
+                <i data-lucide="plus"></i> <span>Registrar Compra</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="order-chart-options">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="chkShowOrdersOnChart" checked />
+              <span>Exibir Linhas de Ordens de Compra/Venda no Gráfico</span>
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" id="chkShowBreakevenOnChart" checked />
+              <span>Exibir Linha de Preço Médio (PM) no Gráfico</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Lista de Ordens Registradas -->
+        <div class="markings-list-section">
+          <div class="markings-list-header">
+            <span>Ordens Registradas (<span id="modalOrdersCount">0</span>)</span>
+            <button type="button" class="btn-clear-markings" id="btnClearAllOrders">Limpar Todas as Ordens</button>
+          </div>
+          <div class="markings-table-container">
+            <div class="orders-list" id="ordersListContainer">
+              <!-- Gerado dinamicamente via JS -->
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-note">
+          <i data-lucide="shield-check"></i>
+          <span>Todas as suas ordens e cálculos são gravados automaticamente no arquivo <code>terminal_layout.json</code> e persistem mesmo ao fechar ou reiniciar o sistema.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modular Frontend Architecture with Cache-Busting -->
   <script src="{{ url_for('static', filename='js/state.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/utils.js') }}?v={{ version }}"></script>
@@ -1109,6 +1257,7 @@
   <script src="{{ url_for('static', filename='js/whales.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/websocket.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ version }}"></script>
+  <script src="{{ url_for('static', filename='js/orders.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
   <script>
     // Initialize Lucide Icons

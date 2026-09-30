@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-26T20:00:47Z",
+  "lastUpdated": "2026-09-30T01:44:01Z",
   "chart": {
     "symbol": "ETHUSDT",
     "interval": "15m",
@@ -15,9 +15,9 @@
   "indicators": {
     "showEma20": false,
     "showEma50": false,
-    "showRsi": false,
+    "showRsi": true,
     "showBands": false,
-    "showMacd": false
+    "showMacd": true
   },
   "views": {
     "activeMainView": "chart",
@@ -25,6 +25,13 @@
     "whaleSubview": "holders",
     "tapeSizeFilter": "all",
     "tapeSideFilter": "all"
+  },
+  "accessibility": {
+    "tvMode": true,
+    "scaleLevel": "120",
+    "highContrast": false,
+    "hoverZoom": true,
+    "floatingLens": true
   },
   "markings": [
     {
@@ -42,6 +49,48 @@
       "lineStyle": 0,
       "lineWidth": 2,
       "price": 2620
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord_buy_1",
+      "side": "BUY",
+      "amount": 0.2662,
+      "price": 2530.0,
+      "total": 673.486,
+      "date": "2026-09-29 22:12",
+      "status": "FILLED",
+      "notes": "Ordem de Compra (0,2662 ETH @ $2530)"
+    },
+    {
+      "id": "ord_buy_2",
+      "side": "BUY",
+      "amount": 0.1557,
+      "price": 2585.0,
+      "total": 402.4845,
+      "date": "2026-09-29 22:12",
+      "status": "FILLED",
+      "notes": "Ordem de Compra (0,1557 ETH @ $2585)"
+    },
+    {
+      "id": "ord_buy_3",
+      "side": "BUY",
+      "amount": 0.3188,
+      "price": 2480.0,
+      "total": 790.624,
+      "date": "2026-09-29 22:12",
+      "status": "FILLED",
+      "notes": "Ordem de Compra (0,3188 ETH @ $2480)"
+    },
+    {
+      "id": "ord_buy_4",
+      "side": "BUY",
+      "amount": 0.957,
+      "price": 2530.0,
+      "total": 2421.21,
+      "date": "2026-09-29 22:12",
+      "status": "FILLED",
+      "notes": "Ordem de Compra (0,9570 ETH @ $2530)"
     }
   ]
 }
