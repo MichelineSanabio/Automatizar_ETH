@@ -49,15 +49,23 @@ Automatizar_ETH/
    - Inicia o servidor Flask em segundo plano;
    - Abre automaticamente a página principal no seu navegador em `http://127.0.0.1:5000`.
 
+3. Para executar o Terminal Quant Institucional em modo Console (Rich TUI):
+   👉 **`Iniciar_TUI.bat`**
+   - Executa no terminal uma interface institucional com `rich.live.Live` (2Hz);
+   - Fatores da Descida, Probabilidade das 4 Ordens Limite, Altseason Index e Recálculo Fibonacci.
+
 ---
 
 ### 💻 Ou via Terminal Manual:
 ```bash
 pip install -r requirements.txt
+pip install rich python-binance pandas-ta yfinance web3 requests
 python app.py
 ```
 Acesse no navegador:
-👉 **[http://127.0.0.1:5000](http://127.0.0.1:5000)** (Terminal)
+👉 **[http://127.0.0.1:5000](http://127.0.0.1:5000)** (Terminal Principal)
+👉 **[http://127.0.0.1:5000/tui](http://127.0.0.1:5000/tui)** (TUI Web & Rich Console View)
+👉 **[http://127.0.0.1:5000/zscore-blocos](http://127.0.0.1:5000/zscore-blocos)** (Analisador de Blocos & Z-Score)
 👉 **[http://127.0.0.1:5000/data-analise](http://127.0.0.1:5000/data-analise)** (Data Análise & Volatilidade)
 👉 **[http://127.0.0.1:5000/liquidez](http://127.0.0.1:5000/liquidez)** (Monitor de Liquidez & Stops)
 
@@ -70,6 +78,8 @@ Além de servir a interface gráfica, o backend Flask disponibiliza rotas REST p
 | Rota | Método | Descrição |
 | :--- | :---: | :--- |
 | `/` | `GET` | Renderiza a página principal do terminal (`index.html`). |
+| `/tui` ou `/tui.html` | `GET` | Renderiza a interface do Terminal Quant Institucional (`tui.html`). |
+| `/api/quant/state` | `GET` | Retorna o estado completo quantitativo (descida, ordens, altseason e Fibo). |
 | `/api/price/<symbol>` | `GET` | Retorna o preço atual do par (ex: `/api/price/ETHUSDT`). |
 | `/api/ticker/<symbol>` | `GET` | Retorna métricas de 24 horas (máx, mín, variação, volume). |
 | `/api/klines/<symbol>` | `GET` | Retorna candles históricos (`?interval=15m&limit=500`). |

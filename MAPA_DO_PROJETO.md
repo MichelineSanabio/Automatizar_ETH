@@ -10,17 +10,21 @@ Documento estruturado de arquitetura, mapeamento funcional, fluxo de dados e cat
 Automatizar_ETH/
 ├── app.py                         # Ponto de entrada Flask (bootstrap, favicon e registro de Blueprints)
 ├── services.py                    # Singleton de serviços compartilhados (BinanceClient, Analisadores, Cache-Busting)
+├── quant_analyzer.py              # Motor Quantitativo Institucional (Spot, Futuros, Altseason, Macro, Fibonacci)
+├── tui_terminal.py                # Interface Gráfica de Console Terminal (TUI) rica via biblioteca Rich (2Hz Live)
+├── Iniciar_TUI.bat                # Inicializador em lote (1 clique) do console TUI em Windows com suporte UTF-8
 ├── terminal_layout.json           # Persistência do layout do usuário, marcações e preferências
 ├── Definir_Baleias.json           # Definição e faixas de volume para classificação de baleias e tiers
 │
 ├── routes/                        # Módulos REST & Views (Flask Blueprints)
 │   ├── __init__.py                # Agregador e registrador de blueprints (register_blueprints)
-│   ├── views.py                   # Renderização de HTMLs (/, /zscore-blocos, /liquidez, /data-analise)
+│   ├── views.py                   # Renderização de HTMLs (/, /zscore-blocos, /liquidez, /data-analise, /tui)
 │   ├── market.py                  # Cotações, candles (klines), depth, trades, indicadores e proxy
 │   ├── orderbook.py               # Z-Score de blocos, anomalias do livro de ofertas e liquidez
 │   ├── volatility.py              # Análise estatística de volatilidade horária e relatórios CSV
 │   ├── whales.py                  # Rastreador de baleias on-chain (Etherscan V2) e cotas
-│   └── settings.py                # Persistência de layout e parâmetros de baleias (Definir_Baleias)
+│   ├── settings.py                # Persistência de layout e parâmetros de baleias (Definir_Baleias)
+│   └── quant.py                   # API REST do Motor Quantitativo (/api/quant/state e recálculo Fibonacci)
 │
 ├── core_engines/ (Python)
 │   ├── binance_client.py          # Cliente HTTP REST para Binance API & Binance Vision (com fallbacks)
@@ -34,7 +38,8 @@ Automatizar_ETH/
 │   ├── index.html                 # Interface do Terminal Principal (Gráfico, Book, Tape, Ordens, Ticker)
 │   ├── block_analyzer.html        # Interface dedicada ao Z-Score e Análise de Blocos/Paredes
 │   ├── liquidez.html              # Interface de Monitoramento de Liquidez e Caça de Stops
-│   └── data_analise.html          # Interface de Estatísticas de Volatilidade e Turnos
+│   ├── data_analise.html          # Interface de Estatísticas de Volatilidade e Turnos
+│   └── tui.html                   # Interface Web do Terminal Quant Institucional (TUI Web & Rich Buffer)
 │
 └── static/
     ├── css/                       # Estilização Modular Vanilla CSS
@@ -44,7 +49,8 @@ Automatizar_ETH/
     │   ├── orders.css             # Modal de ordens PnL, quick summary pill e linhas de breakeven
     │   ├── modals.css             # Modais genéricos, confirmações e avisos
     │   ├── accessibility.css      # Modo TV 55", alto contraste, lupas inteligentes e escalas
-    │   └── block_analyzer.css     # Estilos da página de Z-Score de Blocos
+    │   ├── block_analyzer.css     # Estilos da página de Z-Score de Blocos
+    │   └── tui.css                # Estilos do Terminal Quant TUI Institucional (Dark, Mono e Cards)
     │
     └── js/                        # Frontend Modular em JavaScript Vanilla
         ├── state.js               # Estado global compartilhado, variáveis de runtime e cache de elementos DOM
@@ -59,10 +65,12 @@ Automatizar_ETH/
         ├── accessibility.js       # Controle de Modo TV 55", Lupa no cursor e alto contraste
         ├── orders.js              # Gestor de ordens do usuário, PnL flutuante e linhas no gráfico
         ├── block_analyzer.js      # Lógica da interface de Z-Score e blocos institucionais
+        ├── tui.js                 # Lógica de atualização em tempo real (1.5s), cards, tabelas e Rich View
         ├── ticker.js              # Atualização das métricas de 24h na barra superior
         ├── loader.js              # Carga inicial de dados históricos e sincronização de abas
         ├── events.js              # Event listeners centralizados de botões, abas e atalhos de teclado
         └── app.js                 # Inicializador central do frontend (boot lifecycle)
+
 ```
 
 ---
@@ -79,6 +87,9 @@ Automatizar_ETH/
 | **routes/volatility.py**| `api_volatility_analysis`, `export_csv` | Estatísticas históricas por período (madrugada/manhã/tarde/noite). | `services.volatility_analyzer` |
 | **routes/whales.py** | `get_whales`, `get_whales_quota` | Top 50 holders on-chain e consumo da quota da Etherscan. | `services.whale_tracker` |
 | **routes/settings.py**| `get_settings`, `save_settings` | Leitura e gravação no `terminal_layout.json` e `Definir_Baleias.json`. | `os`, `json`, `datetime` |
+| **routes/quant.py**   | `get_quant_state`, `recalculate_fibonacci` | API do motor quantitativo com estado consolidado e recálculo Fibonacci. | `quant_analyzer.quant_engine` |
+| **quant_analyzer.py** | `QuantTradingEngine`, `get_full_quant_state` | Motor quantitativo: Spot/Futuros, Altseason, Livro 2660, Probabilidades e Fibo. | `requests`, `math`, `time` |
+| **tui_terminal.py**   | `build_full_layout`, `async_main` | Terminal rico (TUI) com 3 blocos, painel de descida, ordens e Live 2Hz. | `rich`, `asyncio`, `quant_analyzer` |
 | **binance_client.py**| `BinanceClient` | Requisições HTTP com fallback multi-domínio (`api.binance.com` / `vision`). | `requests`, `time` |
 | **orderbook_analyzer.py**| `OrderBookAnalyzer` | Análise quantitativa via desvio padrão, Z-Score de ordens e spoofing. | `numpy`, `requests` |
 | **volatility_analyzer.py**| `VolatilityAnalyzer` | Quebra de volatilidade em turnos horários, cálculo de amplitude e spikes. | `datetime`, `numpy`, `csv` |
@@ -88,6 +99,7 @@ Automatizar_ETH/
 | **static/js/orderbook.js**| `setOrderBookGrouping`, `renderOrderBook` | Agrupa preços por tick size, soma volumes e detecta paredes. | `state.js`, `utils.js` |
 | **static/js/websocket.js**| `initWebSocket`, `handleTradeMessage` | Stream multiplexado (kline + depth + trade) e reconexão silenciosa. | `WebSocket`, `state.js` |
 | **static/js/orders.js** | `addManualOrder`, `updatePositions` | Gestão de ordens manuais, cálculo de PnL não realizado e breakeven. | `chart.js`, `storage.js` |
+| **static/js/tui.js**    | `fetchQuantState`, `renderState` | Atualização do TUI Web a 1.5s, checklist de descida e visualizador Rich. | `fetch`, `lucide` |
 | **static/js/events.js** | `setupEventListeners` | Ligações de cliques, atalhos de teclado (Alt+T, Alt+L) e seletores. | Todos os módulos frontend |
 
 ---
@@ -105,7 +117,12 @@ Automatizar_ETH/
    - Profundidade alimenta [orderbook.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/orderbook.js) aplicando o agrupamento aritmético ativo.
    - Trades agressivos alimentam o Tape Reading e o velocímetro de pressão compradora/vendedora em [tapereading.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/tapereading.js).
 
-3. **Ciclo de Persistência (State Syncing)**:
+3. **Fluxo Quantitativo & Terminal TUI (Console & Web)**:
+   - [quant_analyzer.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/quant_analyzer.py) agrega cotações Spot, Futuros, Macro e On-Chain com cache interno de 2s contra rate-limits.
+   - No terminal console, [tui_terminal.py](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/tui_terminal.py) roda de forma assíncrona com `rich.live.Live(..., refresh_per_second=2)` renderizando os 3 blocos analíticos e logs.
+   - Na web, o frontend [tui.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/tui.js) consulta `GET /api/quant/state` a cada 1.5s, atualizando os cartões de probabilidade (Ordens A, B, C, D), termômetro de altseason e recálculo Fibonacci.
+
+4. **Ciclo de Persistência (State Syncing)**:
    - Qualquer interação de personalização do usuário (mudança de intervalo, ativação de indicador EMA/MACD, adição de linha de suporte, ajuste de agrupamento) dispara `saveLayoutDebounced()` em [storage.js](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/static/js/storage.js).
    - O payload consolida o estado da UI e envia via `POST /api/settings`, que salva fisicamente em [terminal_layout.json](file:///c:/Users/Misha/Documents/Github/Automatizar_ETH/terminal_layout.json) e no `localStorage`.
 
@@ -115,6 +132,8 @@ Automatizar_ETH/
 
 | Tag de Busca | Arquivos Relevantes | Quando Modificar |
 | :--- | :--- | :--- |
+| `[TUI_QUANT_TERMINAL]` | `tui_terminal.py`, `quant_analyzer.py`, `templates/tui.html`, `static/js/tui.js` | Modificar layout TUI console (rich), termômetro Altseason, ordens limite A-D ou recálculo Fibo. |
+| `[QUANT_ENGINE_MATH]` | `quant_analyzer.py`, `routes/quant.py` | Ajustar fórmulas de indicadores avançados (SuperTrend, SAR, KDJ), Z-Score de 2.660 ou Macro. |
 | `[CHART_CANDLES_ZOOM]` | `static/js/chart.js`, `static/css/chart.css` | Alterar comportamento de velas, zoom TradingView, navegação, escala de preço ou HUD OHLC. |
 | `[ORDER_BOOK_GROUPING]`| `static/js/orderbook.js`, `routes/orderbook.py`, `orderbook_analyzer.py` | Modificar agrupamento de ticks, profundidade de linhas, radar de paredes ou cálculo de Z-Score. |
 | `[INDICATORS_MATH]` | `indicators.py`, `static/js/indicators.js`, `routes/market.py` | Incluir ou refinar fórmulas de indicadores técnicos (RSI, Bollinger, Médias, MACD). |
