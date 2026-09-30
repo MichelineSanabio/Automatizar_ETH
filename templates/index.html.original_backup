@@ -71,85 +71,6 @@
 
         <!-- Quick Actions -->
         <div class="action-buttons">
-          <!-- Visual Comfort & 55" TV Accessibility Dropdown -->
-          <div class="visual-comfort-dropdown-container">
-            <button type="button" class="btn-comfort-toggle" id="btnComfortToggle" title="Ajustes de Conforto Visual, Modo TV 55 pol e Lupa de Acessibilidade">
-              <i data-lucide="eye"></i>
-              <span class="comfort-btn-text">TV 55" & Conforto</span>
-              <span class="comfort-active-dot" id="comfortActiveDot"></span>
-            </button>
-            
-            <div class="comfort-dropdown-menu" id="comfortDropdownMenu" style="display: none;">
-              <div class="comfort-menu-header">
-                <div class="comfort-menu-title">
-                  <i data-lucide="tv"></i>
-                  <span>Conforto Visual & TV 55"</span>
-                </div>
-                <span class="comfort-badge">Acessibilidade</span>
-              </div>
-
-              <div class="comfort-section">
-                <div class="comfort-row">
-                  <div class="comfort-label-group">
-                    <strong>Modo TV 55" (Grandes Telas)</strong>
-                    <small>Fontes ampliadas, números gigantes de fácil leitura à distância [Alt+T]</small>
-                  </div>
-                  <label class="switch-toggle" title="Ativar Modo TV 55 pol">
-                    <input type="checkbox" id="toggleTvMode">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-
-                <div class="comfort-row">
-                  <div class="comfort-label-group">
-                    <strong>Lupa Inteligente no Cursor (Hover)</strong>
-                    <small>Ao passar o mouse sobre um quadro, exibe ícone de lupa e amplia os dados [Alt+L]</small>
-                  </div>
-                  <label class="switch-toggle" title="Ativar Lupa no Hover">
-                    <input type="checkbox" id="toggleHoverMagnifier" checked>
-                    <span class="slider"></span>
-                  </label>
-                </div>
-
-                <div class="comfort-row">
-                  <div class="comfort-label-group">
-                    <strong>Lupa Flutuante (Order Book & Trades)</strong>
-                    <small>Painel suspenso ampliado ao passar o mouse nas tabelas densas</small>
-                  </div>
-                  <label class="switch-toggle" title="Ativar Lupa Flutuante">
-                    <input type="checkbox" id="toggleFloatingLens" checked>
-                    <span class="slider"></span>
-                  </label>
-                </div>
-
-                <div class="comfort-row">
-                  <div class="comfort-label-group">
-                    <strong>Alto Contraste (Anti-Ofuscamento)</strong>
-                    <small>Acentua bordas e saturação sem reflexo (ideal para catarata)</small>
-                  </div>
-                  <label class="switch-toggle" title="Ativar Alto Contraste">
-                    <input type="checkbox" id="toggleHighContrast">
-                    <span class="slider"></span>
-                  </label>
-                </div>
-
-                <div class="comfort-scale-group">
-                  <span class="comfort-scale-title">Escala Geral de Texto (Presbiopia):</span>
-                  <div class="comfort-scale-buttons">
-                    <button type="button" class="scale-btn active" data-scale="100">100% Padrão</button>
-                    <button type="button" class="scale-btn" data-scale="120">120% Conforto</button>
-                    <button type="button" class="scale-btn" data-scale="140">140% TV Grande</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="comfort-menu-footer">
-                <button type="button" class="btn-restore-comfort" id="btnResetComfortSettings">Restaurar Padrão</button>
-                <button type="button" class="btn-close-comfort" id="btnCloseComfortMenu">Fechar</button>
-              </div>
-            </div>
-          </div>
-
           <a href="/liquidez" class="btn btn-secondary btn-liquidity-link" id="btnLiquidityMonitor" title="Módulo Extra: Monitor de Liquidez e Caça de Stops (Sweep Hunter)">
             <i data-lucide="crosshair"></i>
             <span>Liquidez</span>
@@ -1086,7 +1007,6 @@
   <script src="{{ url_for('static', filename='js/tapereading.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/whales.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/websocket.js') }}?v={{ version }}"></script>
-  <script src="{{ url_for('static', filename='js/accessibility.js') }}?v={{ version }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}?v={{ version }}"></script>
   <script>
     // Initialize Lucide Icons
