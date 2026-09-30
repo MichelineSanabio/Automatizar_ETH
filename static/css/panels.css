@@ -1538,12 +1538,12 @@
   overflow: hidden;
 }
 
-/* Sidebar Expand Button */
+/* Sidebar Expand Button (Oculto visualmente para despoluir a sidebar direita) */
 .ob-sidebar-actions {
+  display: none !important;
   padding: 6px 10px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
-  display: flex;
   align-items: center;
   gap: 8px;
 }
