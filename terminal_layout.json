@@ -1,9 +1,9 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-30T11:34:57Z",
+  "lastUpdated": "2026-09-30T11:48:33Z",
   "chart": {
     "symbol": "ETHUSDT",
-    "interval": "1h",
+    "interval": "1d",
     "isVolumeSeparated": true,
     "volumeHeight": 135
   },
@@ -20,7 +20,7 @@
     "showMacd": false
   },
   "views": {
-    "activeMainView": "data-analysis",
+    "activeMainView": "chart",
     "activeSideTab": "orderbook",
     "whaleSubview": "holders",
     "tapeSizeFilter": "all",
@@ -35,12 +35,13 @@
   },
   "markings": [
     {
-      "color": "#f6465d",
-      "id": "mark_test_1",
-      "label": "Resistência Forte",
+      "color": "#f0b90b",
+      "createdAt": "2026-09-30T11:43:12.840Z",
+      "id": "mark_1790768592840_ytmn",
+      "label": "Nível $2,635.01",
       "lineStyle": 0,
       "lineWidth": 2,
-      "price": 2750
+      "price": 2635.01374010321
     }
   ],
   "orders": [
@@ -86,7 +87,7 @@
     }
   ],
   "ordersOptions": {
-    "showOrdersOnChart": true,
+    "showOrdersOnChart": false,
     "showBreakevenOnChart": true
   }
 }

@@ -867,3 +867,19 @@
   }
 }
 
+/* Ocultação de navegação redundante quando aberto dentro do frame no terminal */
+.embedded-in-frame .nav-cross-module,
+.embedded-in-frame #btnBackToTerminal,
+.embedded-in-frame a[href="/tui"],
+.embedded-in-frame a[href="/liquidez"],
+.embedded-in-frame a[href="/zscore-blocos"],
+.embedded-in-frame a[href="/data-analise"],
+.embedded-in-frame a[href="/"] {
+  display: none !important;
+}
+
+.embedded-in-frame .analysis-container {
+  padding-top: 10px;
+}
+
+

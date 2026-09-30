@@ -155,6 +155,7 @@
       <div class="stat-item">📊 <span>Volume Médio por Nível:</span> <strong id="statMean">---</strong></div>
       <div class="stat-item">📈 <span>Desvio Padrão (σ):</span> <strong id="statStd">---</strong></div>
       <div class="stat-item">🎯 <span>Mediana do Livro:</span> <strong id="statMedian">---</strong></div>
+      <div class="stat-item">⚡ <span>Volume Máximo:</span> <strong id="statMax">---</strong></div>
       <div class="stat-item stat-item-spread">
         <div class="stat-spread-top">
           <span>⚖️ Spread Atual:</span>
@@ -426,59 +427,76 @@
       const valRisk = document.getElementById("valRisk");
 
       if (bloco && bloco.encontrado) {
-        valPrice.textContent = `$${bloco.preco.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+        if (valPrice) valPrice.textContent = `$${bloco.preco.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
         const sign = bloco.distancia_preco >= 0 ? "+" : "";
-        valDist.textContent = `Distância: ${sign}$${bloco.distancia_preco.toFixed(2)} do topo (${data.lado_analisado})`;
+        if (valDist) valDist.textContent = `Distância: ${sign}$${bloco.distancia_preco.toFixed(2)} do topo (${data.lado_analisado})`;
 
-        valVolume.textContent = `${bloco.volume_moeda.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${baseAsset}`;
-        valUsd.textContent = `$${bloco.valor_usd.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD`;
+        if (valVolume) valVolume.textContent = `${bloco.volume_moeda.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${baseAsset}`;
+        if (valUsd) valUsd.textContent = `$${bloco.valor_usd.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD`;
 
         const z = bloco.desvios_acima_da_media;
         const zPrefix = z >= 0 ? "+" : "";
-        valZScore.textContent = `${zPrefix}${z.toFixed(2)}σ`;
-        valTier.textContent = `Classificação: ${bloco.classificacao_tier || "Regular"}`;
+        if (valZScore) {
+          valZScore.textContent = `${zPrefix}${z.toFixed(2)}σ`;
+          if (z >= 3.0) {
+            valZScore.style.color = "#00d2ff"; // Ciano neon
+          } else if (z >= 2.0) {
+            valZScore.style.color = "#0ecb81"; // Verde
+          } else {
+            valZScore.style.color = "#f0b90b"; // Amarelo
+          }
+        }
+        if (valTier) valTier.textContent = `Classificação: ${bloco.classificacao_tier || "Regular"}`;
 
-        if (z >= 3.0) {
-          valZScore.style.color = "#00d2ff"; // Ciano neon
-        } else if (z >= 2.0) {
-          valZScore.style.color = "#0ecb81"; // Verde
-        } else {
-          valZScore.style.color = "#f0b90b"; // Amarelo
+        if (valInstitutional) {
+          if (bloco.presenca_institucional_inferida) {
+            valInstitutional.innerHTML = `<span style="color: #0ecb81;">SIM (Baleia / Bloco Detectado)</span>`;
+          } else {
+            valInstitutional.innerHTML = `<span style="color: #848e9c;">NÃO (Fluxo Regular de Varejo)</span>`;
+          }
+        }
+        if (valSignificance) {
+          if (bloco.presenca_institucional_inferida) {
+            valSignificance.textContent = z >= 3.0 ? "Anomalia volumétrica acima de 3.0 sigmas" : "Volume institucional acima da média";
+          } else {
+            valSignificance.textContent = "Volume dentro da distribuição esperada";
+          }
         }
 
-        if (bloco.presenca_institucional_inferida) {
-          valInstitutional.innerHTML = `<span style="color: #0ecb81;">SIM (Baleia / Bloco Detectado)</span>`;
-          valSignificance.textContent = z >= 3.0 ? "Anomalia volumétrica acima de 3.0 sigmas" : "Volume institucional acima da média";
-        } else {
-          valInstitutional.innerHTML = `<span style="color: #848e9c;">NÃO (Fluxo Regular de Varejo)</span>`;
-          valSignificance.textContent = "Volume dentro da distribuição esperada";
-        }
-
-        valRisk.textContent = bloco.risco_de_evaporacao;
-        if (bloco.risco_de_evaporacao.includes("ALTO")) {
-          valRisk.style.color = "#f6465d";
-        } else if (bloco.risco_de_evaporacao.includes("MÉDIO")) {
-          valRisk.style.color = "#f0b90b";
-        } else {
-          valRisk.style.color = "#0ecb81";
+        if (valRisk) {
+          valRisk.textContent = bloco.risco_de_evaporacao;
+          if (bloco.risco_de_evaporacao.includes("ALTO")) {
+            valRisk.style.color = "#f6465d";
+          } else if (bloco.risco_de_evaporacao.includes("MÉDIO")) {
+            valRisk.style.color = "#f0b90b";
+          } else {
+            valRisk.style.color = "#0ecb81";
+          }
         }
       } else {
-        valPrice.textContent = `$${(data.target_price || 0).toFixed(2)}`;
-        valDist.textContent = bloco ? bloco.mensagem : "Não encontrado";
-        valVolume.textContent = "0.00";
-        valUsd.textContent = "$0.00 USD";
-        valZScore.textContent = "0.00σ";
-        valTier.textContent = "Classificação: Fora do livro";
-        valInstitutional.innerHTML = `<span style="color: #848e9c;">Não visível no topo</span>`;
-        valRisk.textContent = "INDEFINIDO";
-        valRisk.style.color = "#848e9c";
+        if (valPrice) valPrice.textContent = `$${(data.target_price || 0).toFixed(2)}`;
+        if (valDist) valDist.textContent = bloco ? bloco.mensagem : "Não encontrado";
+        if (valVolume) valVolume.textContent = "0.00";
+        if (valUsd) valUsd.textContent = "$0.00 USD";
+        if (valZScore) valZScore.textContent = "0.00σ";
+        if (valTier) valTier.textContent = "Classificação: Fora do livro";
+        if (valInstitutional) valInstitutional.innerHTML = `<span style="color: #848e9c;">Não visível no topo</span>`;
+        if (valRisk) {
+          valRisk.textContent = "INDEFINIDO";
+          valRisk.style.color = "#848e9c";
+        }
       }
 
       // 2. Banner de Estatísticas Globais
-      document.getElementById("statMean").textContent = `${stats.media_volume || 0} ${baseAsset}`;
-      document.getElementById("statStd").textContent = `${stats.desvio_padrao || 0} ${baseAsset}`;
-      document.getElementById("statMedian").textContent = `${stats.mediana_volume || 0} ${baseAsset}`;
-      document.getElementById("statMax").textContent = `${stats.volume_maximo || 0} ${baseAsset}`;
+      const elMean = document.getElementById("statMean");
+      if (elMean) elMean.textContent = `${stats.media_volume || 0} ${baseAsset}`;
+      const elStd = document.getElementById("statStd");
+      if (elStd) elStd.textContent = `${stats.desvio_padrao || 0} ${baseAsset}`;
+      const elMedian = document.getElementById("statMedian");
+      if (elMedian) elMedian.textContent = `${stats.mediana_volume || 0} ${baseAsset}`;
+      const elMax = document.getElementById("statMax");
+      if (elMax) elMax.textContent = `${stats.volume_maximo || 0} ${baseAsset}`;
+
       // Spread Manual & Detalhamento Visual
       const statSpread = document.getElementById("statSpread");
       const currentGrouping = data.grouping !== undefined && data.grouping !== null ? data.grouping : manualSpreadStep;
@@ -489,17 +507,19 @@
       const bidVal = data.best_bid_grouped !== undefined ? data.best_bid_grouped : data.best_bid;
       const askVal = data.best_ask_grouped !== undefined ? data.best_ask_grouped : data.best_ask;
 
-      if (isManual) {
-        statSpread.innerHTML = `
-          <span class="spread-val-main">$${spreadVal.toFixed(2)}</span>
-          <span class="spread-val-detail">(Bid: $${bidVal.toFixed(2)} | Ask: $${askVal.toFixed(2)})</span>
-          <span class="spread-val-raw" title="Spread Nativo do Livro Binance da Moeda">[Mercado: $${spreadRaw.toFixed(2)}]</span>
-        `;
-      } else {
-        statSpread.innerHTML = `
-          <span class="spread-val-main">$${spreadVal.toFixed(2)}</span>
-          <span class="spread-val-detail">(Bid: $${bidVal.toFixed(2)} | Ask: $${askVal.toFixed(2)})</span>
-        `;
+      if (statSpread) {
+        if (isManual) {
+          statSpread.innerHTML = `
+            <span class="spread-val-main">$${spreadVal.toFixed(2)}</span>
+            <span class="spread-val-detail">(Bid: $${bidVal.toFixed(2)} | Ask: $${askVal.toFixed(2)})</span>
+            <span class="spread-val-raw" title="Spread Nativo do Livro Binance da Moeda">[Mercado: $${spreadRaw.toFixed(2)}]</span>
+          `;
+        } else {
+          statSpread.innerHTML = `
+            <span class="spread-val-main">$${spreadVal.toFixed(2)}</span>
+            <span class="spread-val-detail">(Bid: $${bidVal.toFixed(2)} | Ask: $${askVal.toFixed(2)})</span>
+          `;
+        }
       }
 
       updateSpreadPillsUI(manualSpreadStep);

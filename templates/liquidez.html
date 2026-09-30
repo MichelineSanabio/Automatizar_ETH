@@ -18,6 +18,13 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Detecção antecipada de frame embutido no terminal -->
+  <script>
+    if (window.self !== window.top || window.location.search.includes('embedded=1')) {
+      document.documentElement.classList.add('embedded-in-frame');
+    }
+  </script>
+
   <!-- CSS Styles -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ version }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/liquidez.css') }}?v={{ version }}">
@@ -43,19 +50,19 @@
 
       <div class="liquidity-header-actions">
         <span id="lastUpdated" style="font-size: 11px; color: var(--text-secondary); margin-right: 8px;"></span>
-        <a href="/tui" class="btn btn-secondary" title="Abrir Terminal Quant Institucional (TUI)">
+        <a href="/tui" class="btn btn-secondary nav-cross-module" title="Abrir Terminal Quant Institucional (TUI)">
           <i data-lucide="terminal"></i>
           <span>TUI Quant</span>
         </a>
-        <a href="/" class="btn btn-secondary" title="Voltar ao Terminal Principal">
+        <a href="/" class="btn btn-secondary nav-cross-module" title="Voltar ao Terminal Principal">
           <i data-lucide="layout-dashboard"></i>
           <span>Terminal</span>
         </a>
-        <a href="/data-analise" class="btn btn-secondary" title="Abrir Módulo de Data Análise">
+        <a href="/data-analise" class="btn btn-secondary nav-cross-module" title="Abrir Módulo de Data Análise">
           <i data-lucide="bar-chart-2"></i>
           <span>Data Análise</span>
         </a>
-        <a href="/zscore-blocos" class="btn btn-secondary" title="Abrir Analisador de Blocos & Z-Score">
+        <a href="/zscore-blocos" class="btn btn-secondary nav-cross-module" title="Abrir Analisador de Blocos & Z-Score">
           <i data-lucide="calculator"></i>
           <span>Z-Score Blocos</span>
         </a>

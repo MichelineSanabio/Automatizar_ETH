@@ -38,8 +38,8 @@ Automatizar_ETH/
 ├── templates/                     # Interfaces HTML (Jinja2)
 │   ├── index.html                 # Interface do Terminal Principal (Gráfico, Book, Tape, Ordens, Ticker)
 │   ├── block_analyzer.html        # Interface dedicada ao Z-Score, Análise de Blocos e Spread Manual (0.01, 1, 10)
-│   ├── liquidez.html              # Interface de Monitoramento de Liquidez e Caça de Stops
-│   ├── data_analise.html          # Interface de Estatísticas de Volatilidade e Turnos
+│   ├── liquidez.html              # Interface de Monitoramento de Liquidez (com suporte a modo embutido limpo)
+│   ├── data_analise.html          # Interface de Estatísticas de Volatilidade (com suporte a modo embutido limpo)
 │   └── tui.html                   # Interface Web do Terminal Quant Institucional (TUI Web & Rich Buffer)
 │
 └── static/

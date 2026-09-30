@@ -50,14 +50,14 @@ function setMainView(view) {
     el.liquidityMainView.style.display = view === 'liquidity' ? 'flex' : 'none';
     el.liquidityMainView.classList.toggle('active', view === 'liquidity');
     if (view === 'liquidity' && el.iframeLiquidity && (!el.iframeLiquidity.src || el.iframeLiquidity.src === 'about:blank' || el.iframeLiquidity.src === window.location.href)) {
-      el.iframeLiquidity.src = '/liquidez';
+      el.iframeLiquidity.src = '/liquidez?embedded=1';
     }
   }
   if (el.dataAnalysisMainView) {
     el.dataAnalysisMainView.style.display = view === 'data-analysis' ? 'flex' : 'none';
     el.dataAnalysisMainView.classList.toggle('active', view === 'data-analysis');
     if (view === 'data-analysis' && el.iframeDataAnalysis && (!el.iframeDataAnalysis.src || el.iframeDataAnalysis.src === 'about:blank' || el.iframeDataAnalysis.src === window.location.href)) {
-      el.iframeDataAnalysis.src = '/data-analise';
+      el.iframeDataAnalysis.src = '/data-analise?embedded=1';
     }
   }
 
