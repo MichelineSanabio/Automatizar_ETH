@@ -135,11 +135,9 @@ function setupEventListeners() {
   const toggleRsi = document.getElementById('toggleRsi');
   if (toggleRsi) {
     toggleRsi.addEventListener('click', function () {
-      showRsi = !showRsi;
-      this.classList.toggle('active', showRsi);
-      const legRsi = document.getElementById('legendRsi') || el.legendRsi;
-      if (legRsi) legRsi.style.display = showRsi ? 'inline' : 'none';
-      if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
+      if (typeof setRsiVisibility === 'function') {
+        setRsiVisibility(!showRsi);
+      }
       if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
     });
   }

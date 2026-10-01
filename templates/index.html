@@ -365,6 +365,7 @@
               <button class="toggle-pill" id="toggleSuperTrend" data-indicator="supertrend">SuperTrend</button>
               <button class="toggle-pill" id="toggleSar" data-indicator="sar">SAR</button>
               <button class="toggle-pill" id="toggleRsi" data-indicator="rsi">RSI (14)</button>
+              <span class="legend-item rsi-legend" id="legendRsi" style="display:none; margin-left: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #b388ff; background: rgba(179, 136, 255, 0.15); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(179, 136, 255, 0.35); cursor: pointer;" title="Clique para alternar o gráfico de RSI">RSI: <strong id="valRsi">50.0</strong></span>
               <button class="toggle-pill" id="toggleMacd" data-indicator="macd">MACD (12, 26, 9)</button>
               <button class="toggle-pill" id="toggleKdj" data-indicator="kdj">KDJ</button>
               <button class="toggle-pill" id="toggleObv" data-indicator="obv">OBV</button>
@@ -432,12 +433,18 @@
           </div>
 
           <!-- RSI Sub-chart Container (Toggleable) -->
-          <div class="rsi-chart-wrapper" id="rsiChartContainer" style="display: none;">
-            <div class="rsi-chart-header">
-              <span>Relative Strength Index (RSI 14)</span>
-              <span class="rsi-current-val" id="rsiSubVal">50.0</span>
+          <div class="macd-chart-wrapper" id="rsiChartContainer" style="display: none;">
+            <div class="macd-chart-header">
+              <div class="macd-header-title">
+                <i data-lucide="trending-up"></i>
+                <span>RSI (14 períodos)</span>
+              </div>
+              <div class="macd-header-vals font-mono" id="rsiHeaderVals">
+                <span style="color: #b388ff;">RSI: <strong id="rsiSubVal">50.0</strong></span>
+                <span style="color: rgba(255,255,255,0.4); font-size: 11px;">(30 Sobrevenda / 70 Sobrecompra)</span>
+              </div>
             </div>
-            <div id="tvRsiContainer" style="height: 120px; width: 100%;"></div>
+            <div id="tvRsiContainer" style="height: 110px; width: 100%;"></div>
           </div>
 
           <!-- MACD Sub-chart Container (Toggleable) -->
@@ -1014,12 +1021,24 @@
                   <span class="font-mono yellow" id="cardEma20">---</span>
                 </div>
                 <div class="metric-row">
+                  <span>Média Intermediária (EMA 25):</span>
+                  <span class="font-mono orange" id="cardEma25">---</span>
+                </div>
+                <div class="metric-row">
                   <span>Média Lenta (EMA 50):</span>
                   <span class="font-mono cyan" id="cardEma50">---</span>
                 </div>
                 <div class="metric-row">
+                  <span>Média Tendência (EMA 99):</span>
+                  <span class="font-mono purple" id="cardEma99">---</span>
+                </div>
+                <div class="metric-row">
                   <span>VWAP Estimado:</span>
                   <span class="font-mono" id="cardVwap">---</span>
+                </div>
+                <div class="metric-row">
+                  <span>Volatilidade ATR (14):</span>
+                  <span class="font-mono orange" id="cardAtr">---</span>
                 </div>
                 <div class="metric-row">
                   <span>MACD (12, 26):</span>

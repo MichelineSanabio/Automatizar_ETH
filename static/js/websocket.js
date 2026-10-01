@@ -174,21 +174,23 @@ function handleRealtimeKline(k) {
     el.statClose.textContent = formatPrice(close);
   }
 
-  // If candle closed, add/update in historical list and recalculate indicators
+  // Mantém o candle corrente atualizado em tempo real no histórico para que os cálculos reflitam cada tick
+  const activeCandle = {
+    time: candleTime,
+    open, high, low, close, volume,
+    closeTime: k.T,
+  };
+  const lastIdx = historicalCandles.length - 1;
+  if (lastIdx >= 0 && historicalCandles[lastIdx].time === candleTime) {
+    historicalCandles[lastIdx] = activeCandle;
+  } else if (lastIdx >= 0 && candleTime > historicalCandles[lastIdx].time) {
+    historicalCandles.push(activeCandle);
+  }
+
+  // Se o candle fechou definitivamente (k.x), consolida no histórico e atualiza imediatamente
   if (k.x) {
-    const closedCandle = {
-      time: candleTime,
-      open, high, low, close, volume,
-      closeTime: k.T,
-    };
-    const lastIdx = historicalCandles.length - 1;
-    if (lastIdx >= 0 && historicalCandles[lastIdx].time === candleTime) {
-      historicalCandles[lastIdx] = closedCandle;
-    } else {
-      historicalCandles.push(closedCandle);
-    }
     if (typeof candlesByTimeMap !== 'undefined' && candlesByTimeMap.set) {
-      candlesByTimeMap.set(candleTime, closedCandle);
+      candlesByTimeMap.set(candleTime, activeCandle);
     }
     if (historicalCandles.length > CONFIG.candleLimit) {
       const removed = historicalCandles.shift();
@@ -197,6 +199,16 @@ function handleRealtimeKline(k) {
       }
     }
     updateIndicatorsData();
+  } else {
+    // Throttle de 1 segundo para atualizar indicadores analíticos do painel enquanto o candle está em formação
+    if (!window.klineIndicatorThrottleTimer) {
+      window.klineIndicatorThrottleTimer = setTimeout(() => {
+        window.klineIndicatorThrottleTimer = null;
+        if (typeof updateIndicatorsData === 'function') {
+          updateIndicatorsData();
+        }
+      }, 1000);
+    }
   }
 }
 

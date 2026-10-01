@@ -227,16 +227,25 @@ function initDOMElements() {
   el.rsiChartContainer = document.getElementById('rsiChartContainer');
   el.tvRsiContainer = document.getElementById('tvRsiContainer');
   el.rsiSubVal = document.getElementById('rsiSubVal');
-  // Analytics Card
+  // Analytics Card & 24h Summary
   el.cardRsi = document.getElementById('cardRsi');
   el.cardEma20 = document.getElementById('cardEma20');
+  el.cardEma25 = document.getElementById('cardEma25');
   el.cardEma50 = document.getElementById('cardEma50');
+  el.cardEma99 = document.getElementById('cardEma99');
   el.cardTrendBadge = document.getElementById('cardTrendBadge');
   el.cardVwap = document.getElementById('cardVwap');
+  el.cardSuperTrend = document.getElementById('cardSuperTrend');
+  el.cardSar = document.getElementById('cardSar');
+  el.cardAtr = document.getElementById('cardAtr');
   el.cardMacd = document.getElementById('cardMacd');
   el.cardMacdSignal = document.getElementById('cardMacdSignal');
   el.cardMacdHist = document.getElementById('cardMacdHist');
   el.cardMacdStatusBadge = document.getElementById('cardMacdStatusBadge');
+  el.metricHigh24 = document.getElementById('metricHigh24');
+  el.metricLow24 = document.getElementById('metricLow24');
+  el.metricVolBase24 = document.getElementById('metricVolBase24');
+  el.metricVolQuote24 = document.getElementById('metricVolQuote24');
   // Whale Radar Elements
   el.binanceBidWhaleCount = document.getElementById('binanceBidWhaleCount');
   el.binanceAskWhaleCount = document.getElementById('binanceAskWhaleCount');

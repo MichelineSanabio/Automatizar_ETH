@@ -419,6 +419,13 @@ function resizeAllCharts() {
       height: 100,
     });
   }
+  const rsiWrapper = el.tvRsiContainer || document.getElementById('tvRsiContainer');
+  if (rsiChart && rsiWrapper && showRsi) {
+    rsiChart.applyOptions({
+      width: rsiWrapper.clientWidth,
+      height: 110,
+    });
+  }
 }
 
 // Initialize Interactive Drag Splitter between Candlesticks and Volume
@@ -698,56 +705,91 @@ function updateIndicatorsData() {
   const volumes = historicalCandles.map(c => c.volume);
   const times = historicalCandles.map(c => c.time);
 
-  // EMA 20
+  // Cálculos Fundamentais das Médias Móveis (Sempre calculados para o painel analítico)
+  const ema20 = calculateEMA(closes, 20);
+  const ema25 = calculateEMA(closes, 25);
+  const ema50 = calculateEMA(closes, 50);
+  const ema99 = calculateEMA(closes, 99);
+
+  const lastEma20 = ema20[ema20.length - 1];
+  const lastEma25 = ema25[ema25.length - 1];
+  const lastEma50 = ema50[ema50.length - 1];
+  const lastEma99 = ema99[ema99.length - 1];
+  const lastPriceVal = closes[closes.length - 1];
+
+  // Atualizar Card Analítico de Métricas Técnicas no Painel Lateral (SEMPRE ATIVO)
+  if (el.cardEma20 && !isNaN(lastEma20)) el.cardEma20.textContent = formatPrice(lastEma20);
+  if (el.cardEma25 && !isNaN(lastEma25)) el.cardEma25.textContent = formatPrice(lastEma25);
+  if (el.cardEma50 && !isNaN(lastEma50)) el.cardEma50.textContent = formatPrice(lastEma50);
+  if (el.cardEma99 && !isNaN(lastEma99)) el.cardEma99.textContent = formatPrice(lastEma99);
+
+  // Avaliação da Tendência com EMA 50 e EMA 20
+  if (el.cardTrendBadge && !isNaN(lastEma50) && !isNaN(lastPriceVal)) {
+    if (lastPriceVal >= lastEma50) {
+      if (!isNaN(lastEma20) && lastEma20 > lastEma50) {
+        el.cardTrendBadge.textContent = 'Forte Alta (Bullish)';
+        el.cardTrendBadge.className = 'badge green';
+      } else {
+        el.cardTrendBadge.textContent = 'Bullish (Acima EMA 50)';
+        el.cardTrendBadge.className = 'badge green';
+      }
+    } else {
+      if (!isNaN(lastEma20) && lastEma20 < lastEma50) {
+        el.cardTrendBadge.textContent = 'Forte Baixa (Bearish)';
+        el.cardTrendBadge.className = 'badge red';
+      } else {
+        el.cardTrendBadge.textContent = 'Bearish (Abaixo EMA 50)';
+        el.cardTrendBadge.className = 'badge red';
+      }
+    }
+  }
+
+  // VWAP Estimado (Volume-Weighted Average Price) - Fallback a partir dos candles
+  if (el.cardVwap && (!el.cardVwap.textContent || el.cardVwap.textContent === '---')) {
+    let totV = 0;
+    let totVP = 0;
+    for (let i = 0; i < historicalCandles.length; i++) {
+      const c = historicalCandles[i];
+      if (c.volume > 0) {
+        totV += c.volume;
+        totVP += (c.volume * ((c.high + c.low + c.close) / 3));
+      }
+    }
+    if (totV > 0) {
+      el.cardVwap.textContent = formatPrice(totVP / totV);
+    }
+  }
+
+  // EMA 20 (Série Visual do Gráfico)
   if (showEma20 && ema20Series) {
-    const ema20 = calculateEMA(closes, 20);
     const ema20Data = times.map((t, i) => isNaN(ema20[i]) ? { time: t } : { time: t, value: ema20[i] });
     ema20Series.setData(ema20Data);
-    const lastEma20 = ema20[ema20.length - 1];
     if (el.valEma20) el.valEma20.textContent = formatPrice(lastEma20);
-    if (el.cardEma20) el.cardEma20.textContent = formatPrice(lastEma20);
   } else if (ema20Series) {
     ema20Series.setData([]);
     if (el.valEma20) el.valEma20.textContent = 'Off';
   }
 
-  // EMA 25 (Laranja)
+  // EMA 25 (Série Visual do Gráfico - Laranja)
   if (showEma25 && ema25Series) {
-    const ema25 = calculateEMA(closes, 25);
     const ema25Data = times.map((t, i) => isNaN(ema25[i]) ? { time: t } : { time: t, value: ema25[i] });
     ema25Series.setData(ema25Data);
   } else if (ema25Series) {
     ema25Series.setData([]);
   }
 
-  // EMA 50
+  // EMA 50 (Série Visual do Gráfico)
   if (showEma50 && ema50Series) {
-    const ema50 = calculateEMA(closes, 50);
     const ema50Data = times.map((t, i) => isNaN(ema50[i]) ? { time: t } : { time: t, value: ema50[i] });
     ema50Series.setData(ema50Data);
-    const lastEma50 = ema50[ema50.length - 1];
     if (el.valEma50) el.valEma50.textContent = formatPrice(lastEma50);
-    if (el.cardEma50) el.cardEma50.textContent = formatPrice(lastEma50);
-
-    // Trend Evaluation
-    const lastPriceVal = closes[closes.length - 1];
-    if (el.cardTrendBadge) {
-      if (lastPriceVal > lastEma50) {
-        el.cardTrendBadge.textContent = 'Bullish (Acima EMA 50)';
-        el.cardTrendBadge.className = 'badge green';
-      } else {
-        el.cardTrendBadge.textContent = 'Bearish (Abaixo EMA 50)';
-        el.cardTrendBadge.className = 'badge red';
-      }
-    }
   } else if (ema50Series) {
     ema50Series.setData([]);
     if (el.valEma50) el.valEma50.textContent = 'Off';
   }
 
-  // EMA 99 (Roxo Suave)
+  // EMA 99 (Série Visual do Gráfico - Roxo Suave)
   if (showEma99 && ema99Series) {
-    const ema99 = calculateEMA(closes, 99);
     const ema99Data = times.map((t, i) => isNaN(ema99[i]) ? { time: t } : { time: t, value: ema99[i] });
     ema99Series.setData(ema99Data);
   } else if (ema99Series) {
@@ -797,6 +839,9 @@ function updateIndicatorsData() {
   const rsiValues = calculateRSI(closes, 14);
   const currentRsi = rsiValues[rsiValues.length - 1] || 50;
   if (el.valRsi) el.valRsi.textContent = currentRsi.toFixed(1);
+  const rsiSubValEl = el.rsiSubVal || document.getElementById('rsiSubVal');
+  if (rsiSubValEl && !isNaN(currentRsi)) rsiSubValEl.textContent = currentRsi.toFixed(1);
+
   if (el.cardRsi) {
     el.cardRsi.textContent = currentRsi.toFixed(1);
     if (currentRsi >= 70) {
@@ -811,6 +856,18 @@ function updateIndicatorsData() {
   const needle = document.getElementById('cardRsiNeedle');
   if (needle) {
     needle.style.left = `${Math.min(100, Math.max(0, currentRsi))}%`;
+  }
+
+  // Populate RSI 14 Sub-chart if active
+  if (showRsi && rsiChart) {
+    if (typeof rsiValuesByTimeMap === 'undefined') window.rsiValuesByTimeMap = new Map();
+    rsiValuesByTimeMap.clear();
+    times.forEach((t, i) => {
+      rsiValuesByTimeMap.set(t, { rsi: rsiValues[i] });
+    });
+
+    const rsiData = times.map((t, i) => isNaN(rsiValues[i]) ? { time: t } : { time: t, value: rsiValues[i] });
+    if (rsiLineSeries) rsiLineSeries.setData(rsiData);
   }
 
   // MACD (12, 26, 9)
@@ -919,15 +976,18 @@ function updateIndicatorsData() {
     if (obvSignalSeries) obvSignalSeries.setData(obvEmaData);
   }
 
+  // ATR 14 (Volatilidade Real)
+  const atr = calculateATR(highs, lows, closes, 14);
+  const lastAtr = atr[atr.length - 1];
+  if (el.cardAtr && !isNaN(lastAtr)) el.cardAtr.textContent = `$${formatPrice(lastAtr)}`;
+
   // Populate ATR 14 Sub-chart if active
   if (showAtr && atrChart) {
     if (typeof atrValuesByTimeMap === 'undefined') window.atrValuesByTimeMap = new Map();
     atrValuesByTimeMap.clear();
-    const atr = calculateATR(highs, lows, closes, 14);
     times.forEach((t, i) => {
       atrValuesByTimeMap.set(t, { atr: atr[i] });
     });
-    const lastAtr = atr[atr.length - 1];
     if (el.atrSubVal && !isNaN(lastAtr)) el.atrSubVal.textContent = `$${formatPrice(lastAtr)}`;
 
     const atrData = times.map((t, i) => isNaN(atr[i]) ? { time: t } : { time: t, value: atr[i] });
@@ -1042,6 +1102,7 @@ function syncAllChartsRange(sourceChart, range) {
       tvChart,
       (isVolumeSeparated ? volumeChart : null),
       (showMacd ? macdChart : null),
+      (showRsi ? rsiChart : null),
       (showKdj ? kdjChart : null),
       (showObv ? obvChart : null),
       (showAtr ? atrChart : null)
@@ -1103,6 +1164,148 @@ function setMacdVisibility(show) {
   } else if (typeof saveLayoutDebounced === 'function') {
     saveLayoutDebounced();
   }
+}
+
+// Initialize Separate RSI Sub-Chart
+function initRsiChart() {
+  const container = el.tvRsiContainer || document.getElementById('tvRsiContainer');
+  const wrapper = el.rsiChartContainer || document.getElementById('rsiChartContainer');
+  if (!container || !wrapper) return;
+  container.innerHTML = '';
+
+  rsiChart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 600,
+    height: 110,
+    layout: {
+      background: { color: '#0b0e14' },
+      textColor: '#848e9c',
+      fontSize: 10,
+      fontFamily: "'JetBrains Mono', monospace",
+    },
+    grid: {
+      vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: {
+        color: '#f0b90b',
+        width: 1,
+        style: LightweightCharts.LineStyle.Dashed,
+        labelBackgroundColor: '#1f273b',
+      },
+      horzLine: { visible: false, labelVisible: false },
+    },
+    localization: {
+      locale: 'pt-BR',
+      dateFormat: 'dd/MM/yyyy',
+      timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
+    },
+    rightPriceScale: {
+      minimumWidth: 75,
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      scaleMargins: { top: 0.1, bottom: 0.1 },
+    },
+    timeScale: {
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      timeVisible: true,
+      secondsVisible: false,
+      rightOffset: 12,
+      barSpacing: 9,
+      minBarSpacing: 1.0,
+      shiftVisibleRangeOnNewBar: true,
+      fixLeftEdge: false,
+      fixRightEdge: false,
+    },
+  });
+
+  rsiLineSeries = rsiChart.addLineSeries({
+    color: '#b388ff',
+    lineWidth: 2,
+    priceLineVisible: false,
+  });
+
+  // Linhas de Sobrecompra (70), Centro (50) e Sobrevenda (30)
+  try {
+    rsiLineSeries.createPriceLine({
+      price: 70,
+      color: 'rgba(246, 70, 93, 0.7)',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: '70 Sobrecompra',
+    });
+    rsiLineSeries.createPriceLine({
+      price: 50,
+      color: 'rgba(255, 255, 255, 0.25)',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dotted,
+      axisLabelVisible: true,
+      title: '50 Neutro',
+    });
+    rsiLineSeries.createPriceLine({
+      price: 30,
+      color: 'rgba(14, 203, 129, 0.7)',
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: '30 Sobrevenda',
+    });
+  } catch (e) {}
+
+  rsiChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    syncAllChartsRange(rsiChart, range);
+  });
+
+  rsiChart.subscribeCrosshairMove(param => {
+    if (!param || !param.time) return;
+    if (typeof rsiValuesByTimeMap !== 'undefined' && rsiValuesByTimeMap.has(param.time)) {
+      const v = rsiValuesByTimeMap.get(param.time);
+      if (v && el.rsiSubVal && !isNaN(v.rsi)) {
+        el.rsiSubVal.textContent = v.rsi.toFixed(1);
+        const needle = document.getElementById('cardRsiNeedle');
+        if (needle) {
+          needle.style.left = `${Math.min(100, Math.max(0, v.rsi))}%`;
+        }
+      }
+    }
+  });
+}
+
+function setRsiVisibility(show) {
+  showRsi = show;
+  const wrapper = el.rsiChartContainer || document.getElementById('rsiChartContainer');
+  const btn = el.toggleRsi || document.getElementById('toggleRsi');
+  const legRsi = document.getElementById('legendRsi') || el.legendRsi;
+
+  if (btn) btn.classList.toggle('active', showRsi);
+  if (legRsi) legRsi.style.display = showRsi ? 'inline' : 'none';
+  if (wrapper) wrapper.style.display = showRsi ? 'block' : 'none';
+
+  if (showRsi) {
+    if (!rsiChart) initRsiChart();
+    updateIndicatorsData();
+    if (rsiChart && tvChart) {
+      setTimeout(() => {
+        const container = el.tvRsiContainer || document.getElementById('tvRsiContainer');
+        if (container) {
+          rsiChart.applyOptions({ width: container.clientWidth, height: 110 });
+          const tvOpts = tvChart.timeScale().options();
+          rsiChart.timeScale().applyOptions({
+            rightOffset: tvOpts.rightOffset !== undefined ? tvOpts.rightOffset : 12,
+            barSpacing: tvOpts.barSpacing || 9,
+            minBarSpacing: tvOpts.minBarSpacing || 1.0,
+          });
+          const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+          if (currentRange) {
+            try { rsiChart.timeScale().setVisibleLogicalRange(currentRange); } catch (e) {}
+          }
+        }
+      }, 50);
+    }
+  }
+  resizeAllCharts();
+  if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
 }
 
 // Initialize Separate KDJ Sub-Chart
@@ -1713,6 +1916,9 @@ function zoomInCandles(factor = 1.25) {
   if (macdChart && showMacd) {
     macdChart.timeScale().applyOptions({ barSpacing: newSpacing });
   }
+  if (rsiChart && showRsi) {
+    rsiChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
   if (kdjChart && showKdj) {
     kdjChart.timeScale().applyOptions({ barSpacing: newSpacing });
   }
@@ -1734,6 +1940,9 @@ function zoomOutCandles(factor = 1.25) {
   }
   if (macdChart && showMacd) {
     macdChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (rsiChart && showRsi) {
+    rsiChart.timeScale().applyOptions({ barSpacing: newSpacing });
   }
   if (kdjChart && showKdj) {
     kdjChart.timeScale().applyOptions({ barSpacing: newSpacing });
@@ -1791,6 +2000,14 @@ function resetChartZoom() {
     });
     safeScrollToRealtime(macdChart);
   }
+  if (rsiChart && showRsi) {
+    rsiChart.priceScale('right').applyOptions({ autoScale: true });
+    rsiChart.timeScale().applyOptions({
+      rightOffset: 12,
+      barSpacing: 9,
+    });
+    safeScrollToRealtime(rsiChart);
+  }
   if (kdjChart && showKdj) {
     kdjChart.priceScale('right').applyOptions({ autoScale: true });
     kdjChart.timeScale().applyOptions({
@@ -1826,6 +2043,9 @@ function scrollChartToRealtime() {
   }
   if (macdChart && showMacd) {
     safeScrollToRealtime(macdChart);
+  }
+  if (rsiChart && showRsi) {
+    safeScrollToRealtime(rsiChart);
   }
   if (kdjChart && showKdj) {
     safeScrollToRealtime(kdjChart);

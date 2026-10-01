@@ -4,8 +4,11 @@
  * além dos painéis dedicados de métricas estatísticas e status da API.
  */
 
+window.lastTicker24hData = null;
+
 // Render 24h Ticker Stats
 function renderTicker24h(data) {
+  if (!data) return;
   const price = parseFloat(data.lastPrice || data.c || 0);
   const changeVal = parseFloat(data.priceChange || data.p || 0);
   const changePct = parseFloat(data.priceChangePercent || data.P || 0);
@@ -15,7 +18,10 @@ function renderTicker24h(data) {
   const volQuote = parseFloat(data.quoteVolume || data.q || 0);
   const vwap = parseFloat(data.weightedAvgPrice || data.w || 0);
 
-  if (typeof updateLivePrice === 'function') {
+  // Cache para consultas e trocas de aba
+  window.lastTicker24hData = { price, changeVal, changePct, high, low, volBase, volQuote, vwap };
+
+  if (typeof updateLivePrice === 'function' && price > 0) {
     updateLivePrice(price);
   }
 
@@ -27,16 +33,18 @@ function renderTicker24h(data) {
     el.changePercentBadge.className = `badge ${changeVal >= 0 ? 'green' : 'red'}`;
   }
 
-  // High & Low
-  if (el.high24h) el.high24h.textContent = formatPrice(high);
-  if (el.low24h) el.low24h.textContent = formatPrice(low);
+  // High & Low no Ticker Bar
+  if (el.high24h && high > 0) el.high24h.textContent = formatPrice(high);
+  if (el.low24h && low > 0) el.low24h.textContent = formatPrice(low);
 
-  // Volume
-  if (el.volBase24h) el.volBase24h.textContent = formatCompactNumber(volBase);
-  if (el.volQuote24h) el.volQuote24h.textContent = '$' + formatCompactNumber(volQuote);
+  // Volume no Ticker Bar
+  if (el.volBase24h && volBase > 0) el.volBase24h.textContent = formatCompactNumber(volBase);
+  if (el.volQuote24h && volQuote > 0) el.volQuote24h.textContent = '$' + formatCompactNumber(volQuote);
 
-  if (vwap && el.cardVwap) {
-    el.cardVwap.textContent = formatPrice(vwap);
+  // VWAP no painel de Métricas Técnicas
+  const cardVwapEl = el.cardVwap || document.getElementById('cardVwap');
+  if (vwap > 0 && cardVwapEl) {
+    cardVwapEl.textContent = formatPrice(vwap);
   }
 
   // Range 24h bar
@@ -45,6 +53,21 @@ function renderTicker24h(data) {
     el.rangePercent.textContent = `${rangePos.toFixed(0)}%`;
     el.rangeBarFill.style.width = `${rangePos}%`;
   }
+
+  // Atualização em Tempo Real do Card "Resumo de Mercado (24 Horas)" na aba Métricas
+  const assetLabel = (typeof getBaseAssetFromSymbol === 'function')
+    ? getBaseAssetFromSymbol(currentSymbol)
+    : (currentSymbol ? currentSymbol.replace('USDT', '') : 'ETH');
+
+  const metricHigh24 = el.metricHigh24 || document.getElementById('metricHigh24');
+  const metricLow24 = el.metricLow24 || document.getElementById('metricLow24');
+  const metricVolBase24 = el.metricVolBase24 || document.getElementById('metricVolBase24');
+  const metricVolQuote24 = el.metricVolQuote24 || document.getElementById('metricVolQuote24');
+
+  if (metricHigh24 && high > 0) metricHigh24.textContent = formatPrice(high);
+  if (metricLow24 && low > 0) metricLow24.textContent = formatPrice(low);
+  if (metricVolBase24 && volBase > 0) metricVolBase24.textContent = `${formatCompactNumber(volBase)} ${assetLabel}`;
+  if (metricVolQuote24 && volQuote > 0) metricVolQuote24.textContent = `$${formatCompactNumber(volQuote)}`;
 }
 
 // Update Dedicated Metrics Tab
@@ -55,15 +78,43 @@ function updateMetricsPanel() {
     needle.style.left = `${Math.min(100, Math.max(0, rsiVal))}%`;
   }
 
-  const metricHigh24 = document.getElementById('metricHigh24');
-  const metricLow24 = document.getElementById('metricLow24');
-  const metricVolBase24 = document.getElementById('metricVolBase24');
-  const metricVolQuote24 = document.getElementById('metricVolQuote24');
+  const assetLabel = (typeof getBaseAssetFromSymbol === 'function')
+    ? getBaseAssetFromSymbol(currentSymbol)
+    : (currentSymbol ? currentSymbol.replace('USDT', '') : 'ETH');
 
-  if (metricHigh24 && el.high24h) metricHigh24.textContent = el.high24h.textContent;
-  if (metricLow24 && el.low24h) metricLow24.textContent = el.low24h.textContent;
-  if (metricVolBase24 && el.volBase24h) metricVolBase24.textContent = el.volBase24h.textContent + ' ' + (currentSymbol.slice(0, 3));
-  if (metricVolQuote24 && el.volQuote24h) metricVolQuote24.textContent = el.volQuote24h.textContent;
+  const metricHigh24 = el.metricHigh24 || document.getElementById('metricHigh24');
+  const metricLow24 = el.metricLow24 || document.getElementById('metricLow24');
+  const metricVolBase24 = el.metricVolBase24 || document.getElementById('metricVolBase24');
+  const metricVolQuote24 = el.metricVolQuote24 || document.getElementById('metricVolQuote24');
+
+  if (window.lastTicker24hData) {
+    const { high, low, volBase, volQuote, vwap } = window.lastTicker24hData;
+    if (metricHigh24 && high > 0) metricHigh24.textContent = formatPrice(high);
+    if (metricLow24 && low > 0) metricLow24.textContent = formatPrice(low);
+    if (metricVolBase24 && volBase > 0) metricVolBase24.textContent = `${formatCompactNumber(volBase)} ${assetLabel}`;
+    if (metricVolQuote24 && volQuote > 0) metricVolQuote24.textContent = `$${formatCompactNumber(volQuote)}`;
+    const cardVwapEl = el.cardVwap || document.getElementById('cardVwap');
+    if (cardVwapEl && vwap > 0) cardVwapEl.textContent = formatPrice(vwap);
+  } else {
+    // Fallback lendo do ticker bar
+    if (metricHigh24 && el.high24h && el.high24h.textContent !== '---.--') {
+      metricHigh24.textContent = el.high24h.textContent;
+    }
+    if (metricLow24 && el.low24h && el.low24h.textContent !== '---.--') {
+      metricLow24.textContent = el.low24h.textContent;
+    }
+    if (metricVolBase24 && el.volBase24h && el.volBase24h.textContent !== '---') {
+      metricVolBase24.textContent = `${el.volBase24h.textContent} ${assetLabel}`;
+    }
+    if (metricVolQuote24 && el.volQuote24h && el.volQuote24h.textContent !== '---') {
+      metricVolQuote24.textContent = el.volQuote24h.textContent;
+    }
+  }
+
+  // Recalcular indicadores da aba se necessário
+  if (typeof updateIndicatorsData === 'function') {
+    updateIndicatorsData();
+  }
 }
 
 // Update Dedicated API & Quotas Tab

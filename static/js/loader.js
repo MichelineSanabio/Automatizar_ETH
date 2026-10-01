@@ -46,6 +46,9 @@ async function loadSymbolData(symbol, interval) {
     if (typeof renderTicker24h === 'function') {
       renderTicker24h(tickerData);
     }
+    if (typeof updateMetricsPanel === 'function') {
+      updateMetricsPanel();
+    }
 
     // 3. Process Orderbook
     if (typeof renderOrderBook === 'function') {

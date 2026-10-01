@@ -365,6 +365,9 @@ function applySettingsObject(settings) {
     const toggleAtr = document.getElementById('toggleAtr');
     if (toggleAtr) toggleAtr.classList.toggle('active', showAtr);
 
+    if (typeof setRsiVisibility === 'function') {
+      setRsiVisibility(showRsi);
+    }
     if (typeof setMacdVisibility === 'function') {
       setMacdVisibility(showMacd);
     }

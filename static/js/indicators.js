@@ -41,7 +41,7 @@ function calculateBollingerBands(values, period = 20, multiplier = 2) {
 // Relative Strength Index (RSI - Wilder's Smoothing)
 function calculateRSI(values, period = 14) {
   const rsi = new Array(values.length).fill(NaN);
-  if (values.length <= period) return rsi;
+  if (!values || values.length <= period) return rsi;
 
   let gains = 0;
   let losses = 0;
@@ -55,7 +55,14 @@ function calculateRSI(values, period = 14) {
   let avgGain = gains / period;
   let avgLoss = losses / period;
 
-  rsi[period] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+  if (avgLoss === 0 && avgGain === 0) {
+    rsi[period] = 50;
+  } else if (avgLoss === 0) {
+    rsi[period] = 100;
+  } else {
+    const rs = avgGain / avgLoss;
+    rsi[period] = 100 - (100 / (1 + rs));
+  }
 
   for (let i = period + 1; i < values.length; i++) {
     const diff = values[i] - values[i - 1];
@@ -65,7 +72,14 @@ function calculateRSI(values, period = 14) {
     avgGain = (avgGain * (period - 1) + gain) / period;
     avgLoss = (avgLoss * (period - 1) + loss) / period;
 
-    rsi[i] = avgLoss === 0 ? 100 : 100 - (100 / (1 + avgGain / avgLoss));
+    if (avgLoss === 0 && avgGain === 0) {
+      rsi[i] = 50;
+    } else if (avgLoss === 0) {
+      rsi[i] = 100;
+    } else {
+      const rs = avgGain / avgLoss;
+      rsi[i] = 100 - (100 / (1 + rs));
+    }
   }
 
   return rsi;
