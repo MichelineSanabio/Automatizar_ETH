@@ -63,5 +63,37 @@
       "minUsd": 100000.0,
       "descricao": "Mega Baleias de BTC: a partir de 1.80 BTC ou $100.000"
     }
+  },
+  "SOLUSDT": {
+    "retail": {
+      "label": "🦐 Varejo",
+      "maxQty": 20.0,
+      "maxUsd": 2500.0,
+      "descricao": "Ordens pequenas de varejo abaixo de 20 SOL"
+    },
+    "medium": {
+      "label": "🐟 Médio",
+      "minQty": 20.0,
+      "minUsd": 2500.0,
+      "descricao": "Traders regulares de SOL (20 a 100 SOL)"
+    },
+    "shark": {
+      "label": "🐬 Tubarão",
+      "minQty": 100.0,
+      "minUsd": 12000.0,
+      "descricao": "Tubarões de SOL (100 a 200 SOL)"
+    },
+    "whale": {
+      "label": "🐋 Baleia",
+      "minQty": 200.0,
+      "minUsd": 25000.0,
+      "descricao": "Baleias de SOL: a partir de 200 SOL ou $25.000"
+    },
+    "mega_whale": {
+      "label": "🐳 Mega Baleia",
+      "minQty": 750.0,
+      "minUsd": 90000.0,
+      "descricao": "Mega Baleias de SOL: a partir de 750 SOL ou $90.000"
+    }
   }
 }

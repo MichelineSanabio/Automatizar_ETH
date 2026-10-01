@@ -710,17 +710,20 @@ body.resizing-chart * {
 .macd-chart-wrapper {
   background: #0b0e14;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 6px 12px;
+  padding: 0;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .macd-chart-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 4px;
+  padding: 4px 12px;
   font-size: 11px;
   color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .macd-header-title {

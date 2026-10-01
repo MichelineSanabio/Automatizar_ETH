@@ -65,6 +65,17 @@ function setupEventListeners() {
     });
   }
 
+  // Indicator Toggles: EMA 25
+  const toggleEma25 = document.getElementById('toggleEma25');
+  if (toggleEma25) {
+    toggleEma25.addEventListener('click', function () {
+      showEma25 = !showEma25;
+      this.classList.toggle('active', showEma25);
+      if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
   // Indicator Toggles: EMA 50
   const toggleEma50 = document.getElementById('toggleEma50');
   if (toggleEma50) {
@@ -76,12 +87,45 @@ function setupEventListeners() {
     });
   }
 
+  // Indicator Toggles: EMA 99
+  const toggleEma99 = document.getElementById('toggleEma99');
+  if (toggleEma99) {
+    toggleEma99.addEventListener('click', function () {
+      showEma99 = !showEma99;
+      this.classList.toggle('active', showEma99);
+      if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
   // Indicator Toggles: Bollinger Bands
   const toggleBands = document.getElementById('toggleBands');
   if (toggleBands) {
     toggleBands.addEventListener('click', function () {
       showBands = !showBands;
       this.classList.toggle('active', showBands);
+      if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
+  // Indicator Toggles: SuperTrend
+  const toggleSuperTrend = document.getElementById('toggleSuperTrend');
+  if (toggleSuperTrend) {
+    toggleSuperTrend.addEventListener('click', function () {
+      showSuperTrend = !showSuperTrend;
+      this.classList.toggle('active', showSuperTrend);
+      if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
+  // Indicator Toggles: Parabolic SAR
+  const toggleSar = document.getElementById('toggleSar');
+  if (toggleSar) {
+    toggleSar.addEventListener('click', function () {
+      showSar = !showSar;
+      this.classList.toggle('active', showSar);
       if (typeof updateIndicatorsData === 'function') updateIndicatorsData();
       if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
     });
@@ -120,6 +164,39 @@ function setupEventListeners() {
     toggleMacd.addEventListener('click', function () {
       if (typeof setMacdVisibility === 'function') {
         setMacdVisibility(!showMacd);
+      }
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
+  // Indicator Toggles: KDJ (9, 3, 3)
+  const toggleKdj = document.getElementById('toggleKdj');
+  if (toggleKdj) {
+    toggleKdj.addEventListener('click', function () {
+      if (typeof setKdjVisibility === 'function') {
+        setKdjVisibility(!showKdj);
+      }
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
+  // Indicator Toggles: OBV
+  const toggleObv = document.getElementById('toggleObv');
+  if (toggleObv) {
+    toggleObv.addEventListener('click', function () {
+      if (typeof setObvVisibility === 'function') {
+        setObvVisibility(!showObv);
+      }
+      if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+    });
+  }
+
+  // Indicator Toggles: ATR (14)
+  const toggleAtr = document.getElementById('toggleAtr');
+  if (toggleAtr) {
+    toggleAtr.addEventListener('click', function () {
+      if (typeof setAtrVisibility === 'function') {
+        setAtrVisibility(!showAtr);
       }
       if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
     });

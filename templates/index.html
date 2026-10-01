@@ -358,10 +358,17 @@
             <div class="toolbar-group indicators-toolbar-group">
               <span class="toolbar-label"><i data-lucide="trending-up" style="width: 13px; height: 13px; display: inline-block; vertical-align: middle; margin-right: 2px;"></i> Indicadores:</span>
               <button class="toggle-pill" id="toggleEma20" data-indicator="ema20">EMA 20</button>
+              <button class="toggle-pill" id="toggleEma25" data-indicator="ema25">EMA 25</button>
               <button class="toggle-pill" id="toggleEma50" data-indicator="ema50">EMA 50</button>
-              <button class="toggle-pill" id="toggleRsi" data-indicator="rsi">RSI (14)</button>
+              <button class="toggle-pill" id="toggleEma99" data-indicator="ema99">EMA 99</button>
               <button class="toggle-pill" id="toggleBands" data-indicator="bands">Bollinger</button>
+              <button class="toggle-pill" id="toggleSuperTrend" data-indicator="supertrend">SuperTrend</button>
+              <button class="toggle-pill" id="toggleSar" data-indicator="sar">SAR</button>
+              <button class="toggle-pill" id="toggleRsi" data-indicator="rsi">RSI (14)</button>
               <button class="toggle-pill" id="toggleMacd" data-indicator="macd">MACD (12, 26, 9)</button>
+              <button class="toggle-pill" id="toggleKdj" data-indicator="kdj">KDJ</button>
+              <button class="toggle-pill" id="toggleObv" data-indicator="obv">OBV</button>
+              <button class="toggle-pill" id="toggleAtr" data-indicator="atr">ATR (14)</button>
             </div>
           </div>
         </div>
@@ -447,6 +454,50 @@
               </div>
             </div>
             <div id="tvMacdChart" style="height: 110px; width: 100%;"></div>
+          </div>
+
+          <!-- KDJ Sub-chart Container (Toggleable) -->
+          <div class="macd-chart-wrapper" id="kdjChartContainer" style="display: none;">
+            <div class="macd-chart-header">
+              <div class="macd-header-title">
+                <i data-lucide="sliders"></i>
+                <span>KDJ (9, 3, 3)</span>
+              </div>
+              <div class="macd-header-vals font-mono" id="kdjHeaderVals">
+                <span style="color: #f0b90b;">K: <strong id="kdjSubK">0.00</strong></span>
+                <span style="color: #2962ff;">D: <strong id="kdjSubD">0.00</strong></span>
+                <span style="color: #e040fb;">J: <strong id="kdjSubJ">0.00</strong></span>
+              </div>
+            </div>
+            <div id="tvKdjChart" style="height: 110px; width: 100%;"></div>
+          </div>
+
+          <!-- OBV Sub-chart Container (Toggleable) -->
+          <div class="macd-chart-wrapper" id="obvChartContainer" style="display: none;">
+            <div class="macd-chart-header">
+              <div class="macd-header-title">
+                <i data-lucide="bar-chart"></i>
+                <span>OBV (On-Balance Volume)</span>
+              </div>
+              <div class="macd-header-vals font-mono" id="obvHeaderVals">
+                <span style="color: #00d2ff;">OBV: <strong id="obvSubVal">0</strong></span>
+              </div>
+            </div>
+            <div id="tvObvChart" style="height: 100px; width: 100%;"></div>
+          </div>
+
+          <!-- ATR Sub-chart Container (Toggleable) -->
+          <div class="macd-chart-wrapper" id="atrChartContainer" style="display: none;">
+            <div class="macd-chart-header">
+              <div class="macd-header-title">
+                <i data-lucide="compass"></i>
+                <span>ATR (14) - Volatilidade Média</span>
+              </div>
+              <div class="macd-header-vals font-mono" id="atrHeaderVals">
+                <span style="color: #ff9800;">ATR: <strong id="atrSubVal">$0.00</strong></span>
+              </div>
+            </div>
+            <div id="tvAtrChart" style="height: 100px; width: 100%;"></div>
           </div>
 
           <!-- Historical Summary Bar -->

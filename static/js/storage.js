@@ -38,17 +38,31 @@ function exportCurrentLayoutState() {
 
   // 3. Indicator Visibility (Ler do DOM com fallback das variáveis globais)
   const btnEma20 = document.getElementById('toggleEma20');
+  const btnEma25 = document.getElementById('toggleEma25');
   const btnEma50 = document.getElementById('toggleEma50');
+  const btnEma99 = document.getElementById('toggleEma99');
   const btnRsi = document.getElementById('toggleRsi');
   const btnBands = document.getElementById('toggleBands');
+  const btnSuperTrend = document.getElementById('toggleSuperTrend');
+  const btnSar = document.getElementById('toggleSar');
   const btnMacd = document.getElementById('toggleMacd');
+  const btnKdj = document.getElementById('toggleKdj');
+  const btnObv = document.getElementById('toggleObv');
+  const btnAtr = document.getElementById('toggleAtr');
 
   const indicatorsState = {
     showEma20: btnEma20 ? btnEma20.classList.contains('active') : Boolean(showEma20),
+    showEma25: btnEma25 ? btnEma25.classList.contains('active') : Boolean(showEma25),
     showEma50: btnEma50 ? btnEma50.classList.contains('active') : Boolean(showEma50),
+    showEma99: btnEma99 ? btnEma99.classList.contains('active') : Boolean(showEma99),
     showRsi: btnRsi ? btnRsi.classList.contains('active') : Boolean(showRsi),
     showBands: btnBands ? btnBands.classList.contains('active') : Boolean(showBands),
+    showSuperTrend: btnSuperTrend ? btnSuperTrend.classList.contains('active') : Boolean(showSuperTrend),
+    showSar: btnSar ? btnSar.classList.contains('active') : Boolean(showSar),
     showMacd: btnMacd ? btnMacd.classList.contains('active') : Boolean(showMacd),
+    showKdj: btnKdj ? btnKdj.classList.contains('active') : Boolean(showKdj),
+    showObv: btnObv ? btnObv.classList.contains('active') : Boolean(showObv),
+    showAtr: btnAtr ? btnAtr.classList.contains('active') : Boolean(showAtr),
   };
 
   // 4. View & Window Layout Settings
@@ -301,16 +315,29 @@ function applySettingsObject(settings) {
   // 3. Indicators State
   if (settings.indicators) {
     showEma20 = Boolean(settings.indicators.showEma20);
+    showEma25 = Boolean(settings.indicators.showEma25);
     showEma50 = Boolean(settings.indicators.showEma50);
+    showEma99 = Boolean(settings.indicators.showEma99);
     showRsi = Boolean(settings.indicators.showRsi);
     showBands = Boolean(settings.indicators.showBands);
+    showSuperTrend = Boolean(settings.indicators.showSuperTrend);
+    showSar = Boolean(settings.indicators.showSar);
     showMacd = Boolean(settings.indicators.showMacd);
+    showKdj = Boolean(settings.indicators.showKdj);
+    showObv = Boolean(settings.indicators.showObv);
+    showAtr = Boolean(settings.indicators.showAtr);
 
     const toggleEma20 = document.getElementById('toggleEma20');
     if (toggleEma20) toggleEma20.classList.toggle('active', showEma20);
 
+    const toggleEma25 = document.getElementById('toggleEma25');
+    if (toggleEma25) toggleEma25.classList.toggle('active', showEma25);
+
     const toggleEma50 = document.getElementById('toggleEma50');
     if (toggleEma50) toggleEma50.classList.toggle('active', showEma50);
+
+    const toggleEma99 = document.getElementById('toggleEma99');
+    if (toggleEma99) toggleEma99.classList.toggle('active', showEma99);
 
     const toggleRsi = document.getElementById('toggleRsi');
     if (toggleRsi) toggleRsi.classList.toggle('active', showRsi);
@@ -320,11 +347,35 @@ function applySettingsObject(settings) {
     const toggleBands = document.getElementById('toggleBands');
     if (toggleBands) toggleBands.classList.toggle('active', showBands);
 
+    const toggleSuperTrend = document.getElementById('toggleSuperTrend');
+    if (toggleSuperTrend) toggleSuperTrend.classList.toggle('active', showSuperTrend);
+
+    const toggleSar = document.getElementById('toggleSar');
+    if (toggleSar) toggleSar.classList.toggle('active', showSar);
+
     const toggleMacd = document.getElementById('toggleMacd');
     if (toggleMacd) toggleMacd.classList.toggle('active', showMacd);
 
+    const toggleKdj = document.getElementById('toggleKdj');
+    if (toggleKdj) toggleKdj.classList.toggle('active', showKdj);
+
+    const toggleObv = document.getElementById('toggleObv');
+    if (toggleObv) toggleObv.classList.toggle('active', showObv);
+
+    const toggleAtr = document.getElementById('toggleAtr');
+    if (toggleAtr) toggleAtr.classList.toggle('active', showAtr);
+
     if (typeof setMacdVisibility === 'function') {
       setMacdVisibility(showMacd);
+    }
+    if (typeof setKdjVisibility === 'function') {
+      setKdjVisibility(showKdj);
+    }
+    if (typeof setObvVisibility === 'function') {
+      setObvVisibility(showObv);
+    }
+    if (typeof setAtrVisibility === 'function') {
+      setAtrVisibility(showAtr);
     }
 
     if (typeof updateIndicatorsData === 'function') {

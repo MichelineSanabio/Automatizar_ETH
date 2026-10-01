@@ -278,34 +278,69 @@ class QuantTradingEngine:
     # 3. DADOS MACRO E WEB3 / ON-CHAIN
     # ---------------------------------------------------------
     def fetch_macro_assets(self) -> Dict[str, Any]:
-        """Obtém cotações macro (Ouro, Petróleo, Dólar, DXY, S&P 500)."""
+        """Obtém cotações macro em tempo real (Ouro PAXG/GC=F, Petróleo WTI, Dólar, DXY, S&P 500)."""
+        now = time.time()
+        if hasattr(self, "cached_macro") and self.cached_macro and (now - getattr(self, "last_macro_time", 0)) < getattr(self, "macro_ttl", 30.0):
+            p_brl = self.fetch_spot_ticker("USDTBRL")
+            if p_brl:
+                self.cached_macro["usdt_brl"] = p_brl
+            return dict(self.cached_macro)
+
         macro = {
             "usdt_brl": 5.68,
-            "gold_usd": 2685.40,
-            "oil_wti": 71.20,
-            "sp500": 5860.50,
-            "dxy": 103.80,
+            "gold": 4173.0,
+            "gold_usd": 4173.0,
+            "oil_wti": 90.50,
+            "sp500": 7650.0,
+            "dxy": 101.50,
             "status": "Pressão de Liquidez Global Ativa"
         }
+
+        # 1. Cotação do Dólar USDT/BRL via Binance Spot
         p_brl = self.fetch_spot_ticker("USDTBRL")
         if p_brl:
             macro["usdt_brl"] = p_brl
 
+        # 2. Cotação de Ouro via PAXG (PAX Gold na Binance Spot - 1:1 lastro em ouro físico XAU)
+        p_paxg = self.fetch_spot_ticker("PAXGUSDT")
+        if p_paxg:
+            paxg_val = round(p_paxg, 2)
+            macro["gold"] = paxg_val
+            macro["gold_usd"] = paxg_val
+
+        # 3. Consulta de índices globais e futuros (GC=F, CL=F, ^GSPC, DX-Y.NYB) via Yahoo Finance Chart API pública
         try:
-            import yfinance as yf
-            tickers = yf.Tickers("GC=F CL=F ^GSPC DX-Y.NYB")
-            if hasattr(tickers, "tickers"):
-                if "GC=F" in tickers.tickers:
-                    macro["gold_usd"] = round(tickers.tickers["GC=F"].fast_info.get("lastPrice", 2685.4), 2)
-                if "CL=F" in tickers.tickers:
-                    macro["oil_wti"] = round(tickers.tickers["CL=F"].fast_info.get("lastPrice", 71.2), 2)
-                if "^GSPC" in tickers.tickers:
-                    macro["sp500"] = round(tickers.tickers["^GSPC"].fast_info.get("lastPrice", 5860.5), 2)
-                if "DX-Y.NYB" in tickers.tickers:
-                    macro["dxy"] = round(tickers.tickers["DX-Y.NYB"].fast_info.get("lastPrice", 103.8), 2)
+            macro_symbols = {
+                "GC=F": "gold",
+                "CL=F": "oil_wti",
+                "^GSPC": "sp500",
+                "DX-Y.NYB": "dxy"
+            }
+            for sym, key in macro_symbols.items():
+                try:
+                    y_url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?interval=1d&range=1d"
+                    y_res = requests.get(y_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=2.5)
+                    if y_res.ok:
+                        data = y_res.json()
+                        price = data["chart"]["result"][0]["meta"].get("regularMarketPrice")
+                        if price is not None and float(price) > 0:
+                            price_val = round(float(price), 2)
+                            macro[key] = price_val
+                            if key == "gold":
+                                macro["gold_usd"] = price_val
+                except Exception:
+                    pass
         except Exception:
             pass
 
+        # Garante consistência total entre as chaves 'gold' e 'gold_usd'
+        if "gold" in macro and "gold_usd" not in macro:
+            macro["gold_usd"] = macro["gold"]
+        elif "gold_usd" in macro and "gold" not in macro:
+            macro["gold"] = macro["gold_usd"]
+
+        self.cached_macro = macro
+        self.last_macro_time = now
         return macro
 
     def fetch_web3_status(self) -> Dict[str, Any]:

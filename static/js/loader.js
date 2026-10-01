@@ -8,6 +8,9 @@
 async function loadSymbolData(symbol, interval) {
   showLoading(true);
   updateBaseAssetLabel(symbol);
+  if (typeof resetWhaleOrdersFeed === 'function') {
+    resetWhaleOrdersFeed(symbol);
+  }
 
   try {
     const startTime = performance.now();

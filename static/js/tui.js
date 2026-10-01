@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (valSp500) valSp500.textContent = (macro.sp500 || 0).toLocaleString();
     if (valDxy) valDxy.textContent = (macro.dxy || 0).toFixed(2);
-    if (valGold) valGold.textContent = fmtUsd(macro.gold);
+    if (valGold) valGold.textContent = fmtUsd(macro.gold || macro.gold_usd);
     if (valOil) valOil.textContent = fmtUsd(macro.oil_wti);
 
     if (valWeb3Status) {

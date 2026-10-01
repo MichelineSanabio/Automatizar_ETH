@@ -94,7 +94,8 @@ def make_header_panel(state: dict) -> Panel:
     # Coluna 3: Macro & Relógio
     macro_text = Text()
     macro_text.append(f"S&P500: {macro.get('sp500', 0):,.0f} | DXY: {macro.get('dxy', 0):.2f}\n", style="dim white")
-    macro_text.append(f"OURO: ${macro.get('gold', 0):,.1f} | WTI: ${macro.get('oil_wti', 0):.1f}\n", style="dim white")
+    gold_price = macro.get('gold') or macro.get('gold_usd') or 0
+    macro_text.append(f"OURO: ${gold_price:,.1f} | WTI: ${macro.get('oil_wti', 0):.1f}\n", style="dim white")
 
     tg_status = "TG: ● ATIVO" if telegram_notifier.is_configured() else "TG: ○ STANDBY"
     tg_style = "bold green" if telegram_notifier.is_configured() else "dim yellow"

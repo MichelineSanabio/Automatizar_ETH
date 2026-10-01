@@ -174,14 +174,19 @@ function handleRealtimeKline(k) {
     el.statClose.textContent = formatPrice(close);
   }
 
-  // If candle closed, add to historical list and recalculate indicators
+  // If candle closed, add/update in historical list and recalculate indicators
   if (k.x) {
     const closedCandle = {
       time: candleTime,
       open, high, low, close, volume,
       closeTime: k.T,
     };
-    historicalCandles.push(closedCandle);
+    const lastIdx = historicalCandles.length - 1;
+    if (lastIdx >= 0 && historicalCandles[lastIdx].time === candleTime) {
+      historicalCandles[lastIdx] = closedCandle;
+    } else {
+      historicalCandles.push(closedCandle);
+    }
     if (typeof candlesByTimeMap !== 'undefined' && candlesByTimeMap.set) {
       candlesByTimeMap.set(candleTime, closedCandle);
     }
@@ -206,12 +211,21 @@ function handleRealtimeTrade(trade) {
   const tradeType = isBuyerMaker ? 'sell' : 'buy';
 
   const sym = currentSymbol ? currentSymbol.toUpperCase() : 'ETHUSDT';
-  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && (MARKET_TIERS[sym] || MARKET_TIERS['ETHUSDT'])) || {};
-  const whaleCfg = tierConfig.whale || { minQty: 10.0, minUsd: 25000.0 };
-  const megaCfg = tierConfig.mega_whale || { minQty: 40.0, minUsd: 90000.0 };
+  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && MARKET_TIERS[sym]) ? MARKET_TIERS[sym] : null;
+  const usdValue = qty * price;
 
-  const isWhaleTrade = qty >= (whaleCfg.minQty || 10.0) || (qty * price >= (whaleCfg.minUsd || 25000.0));
-  const isMega = qty >= (megaCfg.minQty || 40.0) || (qty * price >= (megaCfg.minUsd || 90000.0));
+  let isWhaleTrade = false;
+  let isMega = false;
+
+  if (tierConfig && tierConfig.whale) {
+    const whaleCfg = tierConfig.whale;
+    const megaCfg = tierConfig.mega_whale || { minQty: whaleCfg.minQty * 3.5, minUsd: 90000.0 };
+    isWhaleTrade = (qty >= whaleCfg.minQty) || (usdValue >= (whaleCfg.minUsd || 25000.0));
+    isMega = (qty >= megaCfg.minQty) || (usdValue >= (megaCfg.minUsd || 90000.0));
+  } else {
+    isWhaleTrade = usdValue >= 25000.0;
+    isMega = usdValue >= 90000.0;
+  }
 
   // If Whale Trade, record in Whale Radar Feed & plot marker on chart
   if (isWhaleTrade) {

@@ -52,6 +52,7 @@ function initChart() {
       timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
     },
     rightPriceScale: {
+      minimumWidth: 75,
       autoScale: true,
       mode: LightweightCharts.PriceScaleMode.Normal,
       borderColor: 'rgba(255, 255, 255, 0.08)',
@@ -151,6 +152,46 @@ function initChart() {
     crosshairMarkerVisible: false,
   });
 
+  // EMA 25 (Amber / Laranja)
+  ema25Series = tvChart.addLineSeries({
+    color: '#ff9800',
+    lineWidth: 1.5,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  });
+
+  // EMA 99 (Roxo Suave Institucional)
+  ema99Series = tvChart.addLineSeries({
+    color: '#b388ff',
+    lineWidth: 2,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  });
+
+  // SuperTrend (Bull = Verde, Bear = Vermelho)
+  superTrendBullSeries = tvChart.addLineSeries({
+    color: '#0ecb81',
+    lineWidth: 2,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  });
+  superTrendBearSeries = tvChart.addLineSeries({
+    color: '#f6465d',
+    lineWidth: 2,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  });
+
+  // Parabolic SAR (Pontos Ciano)
+  sarSeries = tvChart.addLineSeries({
+    color: '#00e5ff',
+    lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dotted,
+    pointMarkersVisible: true,
+    priceLineVisible: false,
+    crosshairMarkerVisible: false,
+  });
+
   // 2. Create Separate Volume Sub-Chart
   if (volContainer && volWrapper) {
     volumeChart = LightweightCharts.createChart(volContainer, {
@@ -185,6 +226,7 @@ function initChart() {
         timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
       },
       rightPriceScale: {
+        minimumWidth: 75,
         borderColor: 'rgba(255, 255, 255, 0.08)',
         scaleMargins: {
           top: 0.12,
@@ -232,23 +274,12 @@ function initChart() {
     });
 
     // Synchronize Time Scale between Candlestick Chart and Volume Chart
-    let isSyncingRange = false;
     tvChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-      if (isSyncingRange || !range || !volumeChart || !isVolumeSeparated) return;
-      isSyncingRange = true;
-      try {
-        volumeChart.timeScale().setVisibleLogicalRange(range);
-      } catch (e) {}
-      isSyncingRange = false;
+      syncAllChartsRange(tvChart, range);
     });
 
     volumeChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-      if (isSyncingRange || !range || !tvChart || !isVolumeSeparated) return;
-      isSyncingRange = true;
-      try {
-        tvChart.timeScale().setVisibleLogicalRange(range);
-      } catch (e) {}
-      isSyncingRange = false;
+      syncAllChartsRange(volumeChart, range);
     });
   }
 
@@ -303,6 +334,19 @@ function initChart() {
         liveVolEl.textContent = `${matched.volume.toFixed(2)} ${symbolLabel} ($${formatCompactNumber(matched.volume * matched.close)})`;
       }
     }
+
+    // Update MACD sub-chart header values on crosshair move
+    if (showMacd && typeof macdValuesByTimeMap !== 'undefined' && macdValuesByTimeMap.has(param.time)) {
+      const mVal = macdValuesByTimeMap.get(param.time);
+      if (mVal) {
+        if (el.macdSubVal && !isNaN(mVal.macd)) el.macdSubVal.textContent = mVal.macd.toFixed(2);
+        if (el.macdSubSignal && !isNaN(mVal.signal)) el.macdSubSignal.textContent = mVal.signal.toFixed(2);
+        if (el.macdSubHist && !isNaN(mVal.hist)) {
+          el.macdSubHist.textContent = (mVal.hist >= 0 ? '+' : '') + mVal.hist.toFixed(2);
+          el.macdSubHist.style.color = mVal.hist >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+      }
+    }
   });
 
   // 6. Clique Interativo no Gráfico para Traçar Linhas de Preço
@@ -352,6 +396,27 @@ function resizeAllCharts() {
     macdChart.applyOptions({
       width: macdWrapper.clientWidth,
       height: 110,
+    });
+  }
+  const kdjWrapper = el.tvKdjChart || document.getElementById('tvKdjChart');
+  if (kdjChart && kdjWrapper && showKdj) {
+    kdjChart.applyOptions({
+      width: kdjWrapper.clientWidth,
+      height: 110,
+    });
+  }
+  const obvWrapper = el.tvObvChart || document.getElementById('tvObvChart');
+  if (obvChart && obvWrapper && showObv) {
+    obvChart.applyOptions({
+      width: obvWrapper.clientWidth,
+      height: 100,
+    });
+  }
+  const atrWrapper = el.tvAtrChart || document.getElementById('tvAtrChart');
+  if (atrChart && atrWrapper && showAtr) {
+    atrChart.applyOptions({
+      width: atrWrapper.clientWidth,
+      height: 100,
     });
   }
 }
@@ -509,6 +574,10 @@ function processAndRenderCandles(rawKlines) {
   }));
 
   // Ensure strictly ascending and deduplicated by time for TradingView Lightweight Charts
+  chartWhaleMarkers = [];
+  if (candleSeries) {
+    try { candleSeries.setMarkers([]); } catch (e) {}
+  }
   const candleMap = new Map();
   historicalCandles.forEach(c => candleMap.set(c.time, c));
   const sortedUnique = Array.from(candleMap.values()).sort((a, b) => a.time - b.time);
@@ -624,12 +693,15 @@ function processAndRenderCandles(rawKlines) {
 // Compute Technical Indicators Data on Chart
 function updateIndicatorsData() {
   const closes = historicalCandles.map(c => c.close);
+  const highs = historicalCandles.map(c => c.high);
+  const lows = historicalCandles.map(c => c.low);
+  const volumes = historicalCandles.map(c => c.volume);
   const times = historicalCandles.map(c => c.time);
 
   // EMA 20
   if (showEma20 && ema20Series) {
     const ema20 = calculateEMA(closes, 20);
-    const ema20Data = times.map((t, i) => ({ time: t, value: ema20[i] })).filter(d => !isNaN(d.value));
+    const ema20Data = times.map((t, i) => isNaN(ema20[i]) ? { time: t } : { time: t, value: ema20[i] });
     ema20Series.setData(ema20Data);
     const lastEma20 = ema20[ema20.length - 1];
     if (el.valEma20) el.valEma20.textContent = formatPrice(lastEma20);
@@ -639,10 +711,19 @@ function updateIndicatorsData() {
     if (el.valEma20) el.valEma20.textContent = 'Off';
   }
 
+  // EMA 25 (Laranja)
+  if (showEma25 && ema25Series) {
+    const ema25 = calculateEMA(closes, 25);
+    const ema25Data = times.map((t, i) => isNaN(ema25[i]) ? { time: t } : { time: t, value: ema25[i] });
+    ema25Series.setData(ema25Data);
+  } else if (ema25Series) {
+    ema25Series.setData([]);
+  }
+
   // EMA 50
   if (showEma50 && ema50Series) {
     const ema50 = calculateEMA(closes, 50);
-    const ema50Data = times.map((t, i) => ({ time: t, value: ema50[i] })).filter(d => !isNaN(d.value));
+    const ema50Data = times.map((t, i) => isNaN(ema50[i]) ? { time: t } : { time: t, value: ema50[i] });
     ema50Series.setData(ema50Data);
     const lastEma50 = ema50[ema50.length - 1];
     if (el.valEma50) el.valEma50.textContent = formatPrice(lastEma50);
@@ -664,11 +745,47 @@ function updateIndicatorsData() {
     if (el.valEma50) el.valEma50.textContent = 'Off';
   }
 
+  // EMA 99 (Roxo Suave)
+  if (showEma99 && ema99Series) {
+    const ema99 = calculateEMA(closes, 99);
+    const ema99Data = times.map((t, i) => isNaN(ema99[i]) ? { time: t } : { time: t, value: ema99[i] });
+    ema99Series.setData(ema99Data);
+  } else if (ema99Series) {
+    ema99Series.setData([]);
+  }
+
+  // SuperTrend (10, 3)
+  if (showSuperTrend && superTrendBullSeries && superTrendBearSeries) {
+    const { superTrend, direction } = calculateSuperTrend(highs, lows, closes, 10, 3.0);
+    const bullData = times.map((t, i) => {
+      const v = superTrend[i];
+      return (direction[i] === 1 && !isNaN(v)) ? { time: t, value: v } : { time: t };
+    });
+    const bearData = times.map((t, i) => {
+      const v = superTrend[i];
+      return (direction[i] === -1 && !isNaN(v)) ? { time: t, value: v } : { time: t };
+    });
+    superTrendBullSeries.setData(bullData);
+    superTrendBearSeries.setData(bearData);
+  } else if (superTrendBullSeries && superTrendBearSeries) {
+    superTrendBullSeries.setData([]);
+    superTrendBearSeries.setData([]);
+  }
+
+  // Parabolic SAR (0.02, 0.20)
+  if (showSar && sarSeries) {
+    const { sar } = calculateSAR(highs, lows, closes, 0.02, 0.20);
+    const sarData = times.map((t, i) => isNaN(sar[i]) ? { time: t } : { time: t, value: sar[i] });
+    sarSeries.setData(sarData);
+  } else if (sarSeries) {
+    sarSeries.setData([]);
+  }
+
   // Bollinger Bands (20 periods, 2 std dev)
   if (showBands && upperBandSeries && lowerBandSeries) {
     const { upper, lower } = calculateBollingerBands(closes, 20, 2);
-    const upperData = times.map((t, i) => ({ time: t, value: upper[i] })).filter(d => !isNaN(d.value));
-    const lowerData = times.map((t, i) => ({ time: t, value: lower[i] })).filter(d => !isNaN(d.value));
+    const upperData = times.map((t, i) => isNaN(upper[i]) ? { time: t } : { time: t, value: upper[i] });
+    const lowerData = times.map((t, i) => isNaN(lower[i]) ? { time: t } : { time: t, value: lower[i] });
     upperBandSeries.setData(upperData);
     lowerBandSeries.setData(lowerData);
   } else if (upperBandSeries && lowerBandSeries) {
@@ -728,17 +845,93 @@ function updateIndicatorsData() {
 
   // Populate MACD Sub-chart if active
   if (showMacd && macdChart) {
-    const macdData = times.map((t, i) => ({ time: t, value: macdLine[i] })).filter(d => !isNaN(d.value));
-    const signalData = times.map((t, i) => ({ time: t, value: signalLine[i] })).filter(d => !isNaN(d.value));
-    const histData = times.map((t, i) => ({
-      time: t,
-      value: histogram[i],
-      color: histogram[i] >= 0 ? 'rgba(14, 203, 129, 0.85)' : 'rgba(246, 70, 93, 0.85)',
-    })).filter(d => !isNaN(d.value));
+    if (typeof macdValuesByTimeMap === 'undefined') window.macdValuesByTimeMap = new Map();
+    macdValuesByTimeMap.clear();
+    times.forEach((t, i) => {
+      macdValuesByTimeMap.set(t, {
+        macd: macdLine[i],
+        signal: signalLine[i],
+        hist: histogram[i]
+      });
+    });
+
+    const macdData = times.map((t, i) => {
+      const val = macdLine[i];
+      return isNaN(val) ? { time: t } : { time: t, value: val };
+    });
+    const signalData = times.map((t, i) => {
+      const val = signalLine[i];
+      return isNaN(val) ? { time: t } : { time: t, value: val };
+    });
+    const histData = times.map((t, i) => {
+      const val = histogram[i];
+      return isNaN(val) ? { time: t } : {
+        time: t,
+        value: val,
+        color: val >= 0 ? 'rgba(14, 203, 129, 0.85)' : 'rgba(246, 70, 93, 0.85)',
+      };
+    });
 
     if (macdLineSeries) macdLineSeries.setData(macdData);
     if (signalLineSeries) signalLineSeries.setData(signalData);
     if (macdHistogramSeries) macdHistogramSeries.setData(histData);
+  }
+
+  // Populate KDJ (9, 3, 3) Sub-chart if active
+  if (showKdj && kdjChart) {
+    if (typeof kdjValuesByTimeMap === 'undefined') window.kdjValuesByTimeMap = new Map();
+    kdjValuesByTimeMap.clear();
+    const { k, d, j } = calculateKDJ(highs, lows, closes, 9, 3, 3);
+    times.forEach((t, i) => {
+      kdjValuesByTimeMap.set(t, { k: k[i], d: d[i], j: j[i] });
+    });
+    const lastK = k[k.length - 1];
+    const lastD = d[d.length - 1];
+    const lastJ = j[j.length - 1];
+    if (el.kdjSubK && !isNaN(lastK)) el.kdjSubK.textContent = lastK.toFixed(2);
+    if (el.kdjSubD && !isNaN(lastD)) el.kdjSubD.textContent = lastD.toFixed(2);
+    if (el.kdjSubJ && !isNaN(lastJ)) el.kdjSubJ.textContent = lastJ.toFixed(2);
+
+    const kData = times.map((t, i) => isNaN(k[i]) ? { time: t } : { time: t, value: k[i] });
+    const dData = times.map((t, i) => isNaN(d[i]) ? { time: t } : { time: t, value: d[i] });
+    const jData = times.map((t, i) => isNaN(j[i]) ? { time: t } : { time: t, value: j[i] });
+
+    if (kdjKSeries) kdjKSeries.setData(kData);
+    if (kdjDSeries) kdjDSeries.setData(dData);
+    if (kdjJSeries) kdjJSeries.setData(jData);
+  }
+
+  // Populate OBV Sub-chart if active
+  if (showObv && obvChart) {
+    if (typeof obvValuesByTimeMap === 'undefined') window.obvValuesByTimeMap = new Map();
+    obvValuesByTimeMap.clear();
+    const { obv, obvEma } = calculateOBV(closes, volumes);
+    times.forEach((t, i) => {
+      obvValuesByTimeMap.set(t, { obv: obv[i] });
+    });
+    const lastObv = obv[obv.length - 1];
+    if (el.obvSubVal && !isNaN(lastObv)) el.obvSubVal.textContent = formatCompactNumber(lastObv);
+
+    const obvData = times.map((t, i) => isNaN(obv[i]) ? { time: t } : { time: t, value: obv[i] });
+    const obvEmaData = times.map((t, i) => isNaN(obvEma[i]) ? { time: t } : { time: t, value: obvEma[i] });
+
+    if (obvLineSeries) obvLineSeries.setData(obvData);
+    if (obvSignalSeries) obvSignalSeries.setData(obvEmaData);
+  }
+
+  // Populate ATR 14 Sub-chart if active
+  if (showAtr && atrChart) {
+    if (typeof atrValuesByTimeMap === 'undefined') window.atrValuesByTimeMap = new Map();
+    atrValuesByTimeMap.clear();
+    const atr = calculateATR(highs, lows, closes, 14);
+    times.forEach((t, i) => {
+      atrValuesByTimeMap.set(t, { atr: atr[i] });
+    });
+    const lastAtr = atr[atr.length - 1];
+    if (el.atrSubVal && !isNaN(lastAtr)) el.atrSubVal.textContent = `$${formatPrice(lastAtr)}`;
+
+    const atrData = times.map((t, i) => isNaN(atr[i]) ? { time: t } : { time: t, value: atr[i] });
+    if (atrLineSeries) atrLineSeries.setData(atrData);
   }
 }
 
@@ -781,6 +974,7 @@ function initMacdChart() {
       timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
     },
     rightPriceScale: {
+      minimumWidth: 75,
       borderColor: 'rgba(255, 255, 255, 0.08)',
       scaleMargins: {
         top: 0.1,
@@ -791,6 +985,12 @@ function initMacdChart() {
       borderColor: 'rgba(255, 255, 255, 0.08)',
       timeVisible: true,
       secondsVisible: false,
+      rightOffset: 12,
+      barSpacing: 9,
+      minBarSpacing: 1.0,
+      shiftVisibleRangeOnNewBar: true,
+      fixLeftEdge: false,
+      fixRightEdge: false,
     },
   });
 
@@ -810,22 +1010,54 @@ function initMacdChart() {
     priceLineVisible: false,
   });
 
-  // Sync TimeScale with Main Chart
-  let isSyncingRange = false;
-  tvChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-    if (isSyncingRange || !range || !macdChart || !showMacd) return;
-    isSyncingRange = true;
-    try { macdChart.timeScale().setVisibleLogicalRange(range); } catch (e) {}
-    isSyncingRange = false;
+  // Sync TimeScale with Main & Volume Charts
+  macdChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    syncAllChartsRange(macdChart, range);
   });
 
-  macdChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-    if (isSyncingRange || !range || !tvChart || !showMacd) return;
-    isSyncingRange = true;
-    try { tvChart.timeScale().setVisibleLogicalRange(range); } catch (e) {}
-    isSyncingRange = false;
+  // Crosshair move on MACD chart
+  macdChart.subscribeCrosshairMove(param => {
+    if (!param || !param.time) return;
+    if (typeof macdValuesByTimeMap !== 'undefined' && macdValuesByTimeMap.has(param.time)) {
+      const mVal = macdValuesByTimeMap.get(param.time);
+      if (mVal) {
+        if (el.macdSubVal && !isNaN(mVal.macd)) el.macdSubVal.textContent = mVal.macd.toFixed(2);
+        if (el.macdSubSignal && !isNaN(mVal.signal)) el.macdSubSignal.textContent = mVal.signal.toFixed(2);
+        if (el.macdSubHist && !isNaN(mVal.hist)) {
+          el.macdSubHist.textContent = (mVal.hist >= 0 ? '+' : '') + mVal.hist.toFixed(2);
+          el.macdSubHist.style.color = mVal.hist >= 0 ? 'var(--green)' : 'var(--red)';
+        }
+      }
+    }
   });
 }
+
+// Global TimeScale synchronizer across Price, Volume, MACD, KDJ, OBV, ATR
+let isGlobalSyncingLogicalRange = false;
+function syncAllChartsRange(sourceChart, range) {
+  if (isGlobalSyncingLogicalRange || !range) return;
+  isGlobalSyncingLogicalRange = true;
+  try {
+    const list = [
+      tvChart,
+      (isVolumeSeparated ? volumeChart : null),
+      (showMacd ? macdChart : null),
+      (showKdj ? kdjChart : null),
+      (showObv ? obvChart : null),
+      (showAtr ? atrChart : null)
+    ];
+    for (const c of list) {
+      if (c && c !== sourceChart) {
+        try {
+          c.timeScale().setVisibleLogicalRange(range);
+        } catch (e) {}
+      }
+    }
+  } finally {
+    isGlobalSyncingLogicalRange = false;
+  }
+}
+window.syncAllChartsRange = syncAllChartsRange;
 
 // Toggle MACD Sub-Chart Visibility
 function setMacdVisibility(show) {
@@ -841,7 +1073,7 @@ function setMacdVisibility(show) {
   if (showMacd) {
     if (!macdChart) initMacdChart();
     updateIndicatorsData();
-    if (macdChart) {
+    if (macdChart && tvChart) {
       setTimeout(() => {
         const container = el.tvMacdChart || document.getElementById('tvMacdChart');
         if (container) {
@@ -849,7 +1081,18 @@ function setMacdVisibility(show) {
             width: container.clientWidth,
             height: 110,
           });
-          macdChart.timeScale().fitContent();
+          const tvOpts = tvChart.timeScale().options();
+          macdChart.timeScale().applyOptions({
+            rightOffset: tvOpts.rightOffset !== undefined ? tvOpts.rightOffset : 12,
+            barSpacing: tvOpts.barSpacing || 9,
+            minBarSpacing: tvOpts.minBarSpacing || 1.0,
+          });
+          const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+          if (currentRange) {
+            try {
+              macdChart.timeScale().setVisibleLogicalRange(currentRange);
+            } catch (e) {}
+          }
         }
       }, 50);
     }
@@ -860,6 +1103,348 @@ function setMacdVisibility(show) {
   } else if (typeof saveLayoutDebounced === 'function') {
     saveLayoutDebounced();
   }
+}
+
+// Initialize Separate KDJ Sub-Chart
+function initKdjChart() {
+  const container = el.tvKdjChart || document.getElementById('tvKdjChart');
+  const wrapper = el.kdjChartContainer || document.getElementById('kdjChartContainer');
+  if (!container || !wrapper) return;
+  container.innerHTML = '';
+
+  kdjChart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 600,
+    height: 110,
+    layout: {
+      background: { color: '#0b0e14' },
+      textColor: '#848e9c',
+      fontSize: 10,
+      fontFamily: "'JetBrains Mono', monospace",
+    },
+    grid: {
+      vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: {
+        color: '#f0b90b',
+        width: 1,
+        style: LightweightCharts.LineStyle.Dashed,
+        labelBackgroundColor: '#1f273b',
+      },
+      horzLine: { visible: false, labelVisible: false },
+    },
+    localization: {
+      locale: 'pt-BR',
+      dateFormat: 'dd/MM/yyyy',
+      timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
+    },
+    rightPriceScale: {
+      minimumWidth: 75,
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      scaleMargins: { top: 0.1, bottom: 0.1 },
+    },
+    timeScale: {
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      timeVisible: true,
+      secondsVisible: false,
+      rightOffset: 12,
+      barSpacing: 9,
+      minBarSpacing: 1.0,
+      shiftVisibleRangeOnNewBar: true,
+      fixLeftEdge: false,
+      fixRightEdge: false,
+    },
+  });
+
+  kdjKSeries = kdjChart.addLineSeries({
+    color: '#f0b90b',
+    lineWidth: 1.5,
+    priceLineVisible: false,
+  });
+  kdjDSeries = kdjChart.addLineSeries({
+    color: '#2962ff',
+    lineWidth: 1.5,
+    priceLineVisible: false,
+  });
+  kdjJSeries = kdjChart.addLineSeries({
+    color: '#e040fb',
+    lineWidth: 1.5,
+    priceLineVisible: false,
+  });
+
+  kdjChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    syncAllChartsRange(kdjChart, range);
+  });
+
+  kdjChart.subscribeCrosshairMove(param => {
+    if (!param || !param.time) return;
+    if (typeof kdjValuesByTimeMap !== 'undefined' && kdjValuesByTimeMap.has(param.time)) {
+      const v = kdjValuesByTimeMap.get(param.time);
+      if (v) {
+        if (el.kdjSubK && !isNaN(v.k)) el.kdjSubK.textContent = v.k.toFixed(2);
+        if (el.kdjSubD && !isNaN(v.d)) el.kdjSubD.textContent = v.d.toFixed(2);
+        if (el.kdjSubJ && !isNaN(v.j)) el.kdjSubJ.textContent = v.j.toFixed(2);
+      }
+    }
+  });
+}
+
+function setKdjVisibility(show) {
+  showKdj = show;
+  const wrapper = el.kdjChartContainer || document.getElementById('kdjChartContainer');
+  const btn = el.toggleKdj || document.getElementById('toggleKdj');
+
+  if (btn) btn.classList.toggle('active', showKdj);
+  if (wrapper) wrapper.style.display = showKdj ? 'block' : 'none';
+
+  if (showKdj) {
+    if (!kdjChart) initKdjChart();
+    updateIndicatorsData();
+    if (kdjChart && tvChart) {
+      setTimeout(() => {
+        const container = el.tvKdjChart || document.getElementById('tvKdjChart');
+        if (container) {
+          kdjChart.applyOptions({ width: container.clientWidth, height: 110 });
+          const tvOpts = tvChart.timeScale().options();
+          kdjChart.timeScale().applyOptions({
+            rightOffset: tvOpts.rightOffset !== undefined ? tvOpts.rightOffset : 12,
+            barSpacing: tvOpts.barSpacing || 9,
+            minBarSpacing: tvOpts.minBarSpacing || 1.0,
+          });
+          const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+          if (currentRange) {
+            try { kdjChart.timeScale().setVisibleLogicalRange(currentRange); } catch (e) {}
+          }
+        }
+      }, 50);
+    }
+  }
+  resizeAllCharts();
+  if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+}
+
+// Initialize Separate OBV Sub-Chart
+function initObvChart() {
+  const container = el.tvObvChart || document.getElementById('tvObvChart');
+  const wrapper = el.obvChartContainer || document.getElementById('obvChartContainer');
+  if (!container || !wrapper) return;
+  container.innerHTML = '';
+
+  obvChart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 600,
+    height: 100,
+    layout: {
+      background: { color: '#0b0e14' },
+      textColor: '#848e9c',
+      fontSize: 10,
+      fontFamily: "'JetBrains Mono', monospace",
+    },
+    grid: {
+      vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: {
+        color: '#f0b90b',
+        width: 1,
+        style: LightweightCharts.LineStyle.Dashed,
+        labelBackgroundColor: '#1f273b',
+      },
+      horzLine: { visible: false, labelVisible: false },
+    },
+    localization: {
+      locale: 'pt-BR',
+      dateFormat: 'dd/MM/yyyy',
+      timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
+    },
+    rightPriceScale: {
+      minimumWidth: 75,
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      scaleMargins: { top: 0.1, bottom: 0.1 },
+    },
+    timeScale: {
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      timeVisible: true,
+      secondsVisible: false,
+      rightOffset: 12,
+      barSpacing: 9,
+      minBarSpacing: 1.0,
+      shiftVisibleRangeOnNewBar: true,
+      fixLeftEdge: false,
+      fixRightEdge: false,
+    },
+  });
+
+  obvLineSeries = obvChart.addLineSeries({
+    color: '#00d2ff',
+    lineWidth: 2,
+    priceLineVisible: false,
+  });
+  obvSignalSeries = obvChart.addLineSeries({
+    color: 'rgba(255, 171, 0, 0.8)',
+    lineWidth: 1,
+    lineStyle: LightweightCharts.LineStyle.Dashed,
+    priceLineVisible: false,
+  });
+
+  obvChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    syncAllChartsRange(obvChart, range);
+  });
+
+  obvChart.subscribeCrosshairMove(param => {
+    if (!param || !param.time) return;
+    if (typeof obvValuesByTimeMap !== 'undefined' && obvValuesByTimeMap.has(param.time)) {
+      const v = obvValuesByTimeMap.get(param.time);
+      if (v && el.obvSubVal && !isNaN(v.obv)) {
+        el.obvSubVal.textContent = formatCompactNumber(v.obv);
+      }
+    }
+  });
+}
+
+function setObvVisibility(show) {
+  showObv = show;
+  const wrapper = el.obvChartContainer || document.getElementById('obvChartContainer');
+  const btn = el.toggleObv || document.getElementById('toggleObv');
+
+  if (btn) btn.classList.toggle('active', showObv);
+  if (wrapper) wrapper.style.display = showObv ? 'block' : 'none';
+
+  if (showObv) {
+    if (!obvChart) initObvChart();
+    updateIndicatorsData();
+    if (obvChart && tvChart) {
+      setTimeout(() => {
+        const container = el.tvObvChart || document.getElementById('tvObvChart');
+        if (container) {
+          obvChart.applyOptions({ width: container.clientWidth, height: 100 });
+          const tvOpts = tvChart.timeScale().options();
+          obvChart.timeScale().applyOptions({
+            rightOffset: tvOpts.rightOffset !== undefined ? tvOpts.rightOffset : 12,
+            barSpacing: tvOpts.barSpacing || 9,
+            minBarSpacing: tvOpts.minBarSpacing || 1.0,
+          });
+          const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+          if (currentRange) {
+            try { obvChart.timeScale().setVisibleLogicalRange(currentRange); } catch (e) {}
+          }
+        }
+      }, 50);
+    }
+  }
+  resizeAllCharts();
+  if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
+}
+
+// Initialize Separate ATR Sub-Chart
+function initAtrChart() {
+  const container = el.tvAtrChart || document.getElementById('tvAtrChart');
+  const wrapper = el.atrChartContainer || document.getElementById('atrChartContainer');
+  if (!container || !wrapper) return;
+  container.innerHTML = '';
+
+  atrChart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 600,
+    height: 100,
+    layout: {
+      background: { color: '#0b0e14' },
+      textColor: '#848e9c',
+      fontSize: 10,
+      fontFamily: "'JetBrains Mono', monospace",
+    },
+    grid: {
+      vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
+      horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: {
+        color: '#f0b90b',
+        width: 1,
+        style: LightweightCharts.LineStyle.Dashed,
+        labelBackgroundColor: '#1f273b',
+      },
+      horzLine: { visible: false, labelVisible: false },
+    },
+    localization: {
+      locale: 'pt-BR',
+      dateFormat: 'dd/MM/yyyy',
+      timeFormatter: (ts) => typeof formatBrasiliaTime === 'function' ? formatBrasiliaTime(ts, false) : new Date(ts * 1000).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour12: false, hour: '2-digit', minute: '2-digit' }),
+    },
+    rightPriceScale: {
+      minimumWidth: 75,
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      scaleMargins: { top: 0.1, bottom: 0.1 },
+    },
+    timeScale: {
+      borderColor: 'rgba(255, 255, 255, 0.08)',
+      timeVisible: true,
+      secondsVisible: false,
+      rightOffset: 12,
+      barSpacing: 9,
+      minBarSpacing: 1.0,
+      shiftVisibleRangeOnNewBar: true,
+      fixLeftEdge: false,
+      fixRightEdge: false,
+    },
+  });
+
+  atrLineSeries = atrChart.addLineSeries({
+    color: '#ff9800',
+    lineWidth: 2,
+    priceLineVisible: false,
+  });
+
+  atrChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    syncAllChartsRange(atrChart, range);
+  });
+
+  atrChart.subscribeCrosshairMove(param => {
+    if (!param || !param.time) return;
+    if (typeof atrValuesByTimeMap !== 'undefined' && atrValuesByTimeMap.has(param.time)) {
+      const v = atrValuesByTimeMap.get(param.time);
+      if (v && el.atrSubVal && !isNaN(v.atr)) {
+        el.atrSubVal.textContent = `$${formatPrice(v.atr)}`;
+      }
+    }
+  });
+}
+
+function setAtrVisibility(show) {
+  showAtr = show;
+  const wrapper = el.atrChartContainer || document.getElementById('atrChartContainer');
+  const btn = el.toggleAtr || document.getElementById('toggleAtr');
+
+  if (btn) btn.classList.toggle('active', showAtr);
+  if (wrapper) wrapper.style.display = showAtr ? 'block' : 'none';
+
+  if (showAtr) {
+    if (!atrChart) initAtrChart();
+    updateIndicatorsData();
+    if (atrChart && tvChart) {
+      setTimeout(() => {
+        const container = el.tvAtrChart || document.getElementById('tvAtrChart');
+        if (container) {
+          atrChart.applyOptions({ width: container.clientWidth, height: 100 });
+          const tvOpts = tvChart.timeScale().options();
+          atrChart.timeScale().applyOptions({
+            rightOffset: tvOpts.rightOffset !== undefined ? tvOpts.rightOffset : 12,
+            barSpacing: tvOpts.barSpacing || 9,
+            minBarSpacing: tvOpts.minBarSpacing || 1.0,
+          });
+          const currentRange = tvChart.timeScale().getVisibleLogicalRange();
+          if (currentRange) {
+            try { atrChart.timeScale().setVisibleLogicalRange(currentRange); } catch (e) {}
+          }
+        }
+      }, 50);
+    }
+  }
+  resizeAllCharts();
+  if (typeof saveLayoutImmediate === 'function') saveLayoutImmediate();
 }
 
 // Whale Visual Markers & Price Lines on Candlestick Chart
@@ -873,9 +1458,12 @@ function addWhaleMarkerToChart(timeSeconds, price, qty, isBuy, isMega) {
   const markerTime = timeSeconds || lastCandle.time;
 
   // High contrast label and distinct emoji icon
+  const asset = (typeof getBaseAssetFromSymbol === 'function')
+    ? getBaseAssetFromSymbol(currentSymbol)
+    : (currentSymbol ? currentSymbol.replace('USDT', '') : 'ETH');
   const label = isMega
-    ? (isBuy ? `🐳 MEGA COMPRA ${qty.toFixed(1)} ETH` : `🐳 MEGA VENDA ${qty.toFixed(1)} ETH`)
-    : (isBuy ? `🐋 COMPRA ${qty.toFixed(1)} ETH` : `🐋 VENDA ${qty.toFixed(1)} ETH`);
+    ? (isBuy ? `🐳 MEGA COMPRA ${qty.toFixed(1)} ${asset}` : `🐳 MEGA VENDA ${qty.toFixed(1)} ${asset}`)
+    : (isBuy ? `🐋 COMPRA ${qty.toFixed(1)} ${asset}` : `🐋 VENDA ${qty.toFixed(1)} ${asset}`);
 
   // Fixed contrast: Buy markers are bright golden yellow (#f0b90b) so they are NEVER faded green!
   const marker = {
@@ -1122,6 +1710,18 @@ function zoomInCandles(factor = 1.25) {
   if (volumeChart && isVolumeSeparated) {
     volumeChart.timeScale().applyOptions({ barSpacing: newSpacing });
   }
+  if (macdChart && showMacd) {
+    macdChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (kdjChart && showKdj) {
+    kdjChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (obvChart && showObv) {
+    obvChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (atrChart && showAtr) {
+    atrChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
 }
 
 function zoomOutCandles(factor = 1.25) {
@@ -1131,6 +1731,18 @@ function zoomOutCandles(factor = 1.25) {
   tvChart.timeScale().applyOptions({ barSpacing: newSpacing });
   if (volumeChart && isVolumeSeparated) {
     volumeChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (macdChart && showMacd) {
+    macdChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (kdjChart && showKdj) {
+    kdjChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (obvChart && showObv) {
+    obvChart.timeScale().applyOptions({ barSpacing: newSpacing });
+  }
+  if (atrChart && showAtr) {
+    atrChart.timeScale().applyOptions({ barSpacing: newSpacing });
   }
 }
 
@@ -1171,6 +1783,38 @@ function resetChartZoom() {
     });
     safeScrollToRealtime(volumeChart);
   }
+  if (macdChart && showMacd) {
+    macdChart.priceScale('right').applyOptions({ autoScale: true });
+    macdChart.timeScale().applyOptions({
+      rightOffset: 12,
+      barSpacing: 9,
+    });
+    safeScrollToRealtime(macdChart);
+  }
+  if (kdjChart && showKdj) {
+    kdjChart.priceScale('right').applyOptions({ autoScale: true });
+    kdjChart.timeScale().applyOptions({
+      rightOffset: 12,
+      barSpacing: 9,
+    });
+    safeScrollToRealtime(kdjChart);
+  }
+  if (obvChart && showObv) {
+    obvChart.priceScale('right').applyOptions({ autoScale: true });
+    obvChart.timeScale().applyOptions({
+      rightOffset: 12,
+      barSpacing: 9,
+    });
+    safeScrollToRealtime(obvChart);
+  }
+  if (atrChart && showAtr) {
+    atrChart.priceScale('right').applyOptions({ autoScale: true });
+    atrChart.timeScale().applyOptions({
+      rightOffset: 12,
+      barSpacing: 9,
+    });
+    safeScrollToRealtime(atrChart);
+  }
   showDrawingToast('Escala automática & velas centralizadas!');
 }
 
@@ -1179,6 +1823,18 @@ function scrollChartToRealtime() {
   safeScrollToRealtime(tvChart);
   if (volumeChart && isVolumeSeparated) {
     safeScrollToRealtime(volumeChart);
+  }
+  if (macdChart && showMacd) {
+    safeScrollToRealtime(macdChart);
+  }
+  if (kdjChart && showKdj) {
+    safeScrollToRealtime(kdjChart);
+  }
+  if (obvChart && showObv) {
+    safeScrollToRealtime(obvChart);
+  }
+  if (atrChart && showAtr) {
+    safeScrollToRealtime(atrChart);
   }
 }
 

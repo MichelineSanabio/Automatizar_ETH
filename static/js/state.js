@@ -29,6 +29,13 @@ let MARKET_TIERS = {
     shark: { minQty: 0.25, minUsd: 15000.0 },
     whale: { minQty: 0.50, minUsd: 30000.0 },
     mega_whale: { minQty: 1.80, minUsd: 100000.0 }
+  },
+  SOLUSDT: {
+    retail: { maxQty: 20.0, maxUsd: 2500.0 },
+    medium: { minQty: 20.0, minUsd: 2500.0 },
+    shark: { minQty: 100.0, minUsd: 12000.0 },
+    whale: { minQty: 200.0, minUsd: 25000.0 },
+    mega_whale: { minQty: 750.0, minUsd: 90000.0 }
   }
 };
 
@@ -81,19 +88,47 @@ let isVolumeSeparated = true;
 let volumeHeight = 120;
 let ema20Series = null;
 let ema50Series = null;
+let ema25Series = null;
+let ema99Series = null;
 let upperBandSeries = null;
 let lowerBandSeries = null;
+let superTrendBullSeries = null;
+let superTrendBearSeries = null;
+let sarSeries = null;
+
 let macdChart = null;
 let macdLineSeries = null;
 let signalLineSeries = null;
 let macdHistogramSeries = null;
 
+let rsiChart = null;
+let rsiLineSeries = null;
+
+let obvChart = null;
+let obvLineSeries = null;
+let obvSignalSeries = null;
+
+let atrChart = null;
+let atrLineSeries = null;
+
+let kdjChart = null;
+let kdjKSeries = null;
+let kdjDSeries = null;
+let kdjJSeries = null;
+
 // Indicator Visibility Toggles
 let showEma20 = false;
 let showEma50 = false;
+let showEma25 = false;
+let showEma99 = false;
 let showRsi = false;
 let showBands = false;
 let showMacd = false;
+let showSuperTrend = false;
+let showSar = false;
+let showObv = false;
+let showAtr = false;
+let showKdj = false;
 
 // User Custom Price Markings (Horizontal Price Lines, Supports, Resistances)
 let userPriceMarkings = []; // [{ id, price, label, color, lineStyle, lineWidth }]
@@ -165,6 +200,33 @@ function initDOMElements() {
   el.macdSubVal = document.getElementById('macdSubVal');
   el.macdSubSignal = document.getElementById('macdSubSignal');
   el.macdSubHist = document.getElementById('macdSubHist');
+
+  // Novos Indicadores (EMA 25, EMA 99, SuperTrend, SAR, OBV, ATR 14, KDJ)
+  el.toggleEma25 = document.getElementById('toggleEma25');
+  el.toggleEma99 = document.getElementById('toggleEma99');
+  el.toggleSuperTrend = document.getElementById('toggleSuperTrend');
+  el.toggleSar = document.getElementById('toggleSar');
+  el.toggleObv = document.getElementById('toggleObv');
+  el.toggleAtr = document.getElementById('toggleAtr');
+  el.toggleKdj = document.getElementById('toggleKdj');
+
+  el.obvChartContainer = document.getElementById('obvChartContainer');
+  el.tvObvChart = document.getElementById('tvObvChart');
+  el.obvSubVal = document.getElementById('obvSubVal');
+
+  el.atrChartContainer = document.getElementById('atrChartContainer');
+  el.tvAtrChart = document.getElementById('tvAtrChart');
+  el.atrSubVal = document.getElementById('atrSubVal');
+
+  el.kdjChartContainer = document.getElementById('kdjChartContainer');
+  el.tvKdjChart = document.getElementById('tvKdjChart');
+  el.kdjSubK = document.getElementById('kdjSubK');
+  el.kdjSubD = document.getElementById('kdjSubD');
+  el.kdjSubJ = document.getElementById('kdjSubJ');
+
+  el.rsiChartContainer = document.getElementById('rsiChartContainer');
+  el.tvRsiContainer = document.getElementById('tvRsiContainer');
+  el.rsiSubVal = document.getElementById('rsiSubVal');
   // Analytics Card
   el.cardRsi = document.getElementById('cardRsi');
   el.cardEma20 = document.getElementById('cardEma20');

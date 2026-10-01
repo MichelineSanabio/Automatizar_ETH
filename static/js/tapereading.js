@@ -114,16 +114,26 @@ function setMainView(view) {
 // Classify Order Size Tier via centralized market_tiers.json
 function getTradeTier(qty, price, symbol) {
   const sym = symbol ? symbol.toUpperCase() : 'ETHUSDT';
-  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && (MARKET_TIERS[sym] || MARKET_TIERS['ETHUSDT'])) || {};
-  const megaCfg = tierConfig.mega_whale || { minQty: 40.0, minUsd: 90000.0 };
-  const whaleCfg = tierConfig.whale || { minQty: 10.0, minUsd: 25000.0 };
-  const sharkCfg = tierConfig.shark || { minQty: 5.0, minUsd: 12000.0 };
-  const medCfg = tierConfig.medium || { minQty: 1.0, minUsd: 2500.0 };
-
+  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && MARKET_TIERS[sym]) ? MARKET_TIERS[sym] : null;
   const usdValue = qty * price;
 
+  let megaCfg, whaleCfg, sharkCfg, medCfg;
+
+  if (tierConfig) {
+    megaCfg = tierConfig.mega_whale || { minQty: 40.0, minUsd: 90000.0 };
+    whaleCfg = tierConfig.whale || { minQty: 10.0, minUsd: 25000.0 };
+    sharkCfg = tierConfig.shark || { minQty: 5.0, minUsd: 12000.0 };
+    medCfg = tierConfig.medium || { minQty: 1.0, minUsd: 2500.0 };
+  } else {
+    // Para ativos sem tier específico, a regra é puramente financeira em USD
+    megaCfg = { minQty: Infinity, minUsd: 90000.0 };
+    whaleCfg = { minQty: Infinity, minUsd: 25000.0 };
+    sharkCfg = { minQty: Infinity, minUsd: 12000.0 };
+    medCfg = { minQty: Infinity, minUsd: 2500.0 };
+  }
+
   // 1. Mega Baleia
-  if (qty >= (megaCfg.minQty || 40.0) || usdValue >= (megaCfg.minUsd || 90000.0)) {
+  if (qty >= megaCfg.minQty || usdValue >= megaCfg.minUsd) {
     return {
       id: 'whale',
       label: '🐳 MEGA BALEIA',
@@ -134,7 +144,7 @@ function getTradeTier(qty, price, symbol) {
   }
 
   // 2. Baleia
-  if (qty >= (whaleCfg.minQty || 10.0) || usdValue >= (whaleCfg.minUsd || 25000.0)) {
+  if (qty >= whaleCfg.minQty || usdValue >= whaleCfg.minUsd) {
     return {
       id: 'whale',
       label: '🐋 BALEIA',
@@ -145,12 +155,12 @@ function getTradeTier(qty, price, symbol) {
   }
 
   // 3. Tubarão
-  if (qty >= (sharkCfg.minQty || 5.0) || usdValue >= (sharkCfg.minUsd || 12000.0)) {
+  if (qty >= sharkCfg.minQty || usdValue >= sharkCfg.minUsd) {
     return { id: 'shark', label: '🐬 TUBARÃO', cssClass: 'shark', isWhale: false, isMegaWhale: false };
   }
 
   // 4. Médio
-  if (qty >= (medCfg.minQty || 1.0) || usdValue >= (medCfg.minUsd || 2500.0)) {
+  if (qty >= medCfg.minQty || usdValue >= medCfg.minUsd) {
     return { id: 'medium', label: '🐟 MÉDIO', cssClass: 'medium', isWhale: false, isMegaWhale: false };
   }
 

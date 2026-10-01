@@ -9,11 +9,99 @@ let whaleSearchQuery = '';
 let whaleOrdersCount = 0;
 let whaleOrdersTotalUSD = 0.0;
 
+// Helper to extract clean base asset (ETH, SOL, BTC, etc.)
+function getBaseAssetFromSymbol(symbol) {
+  const sym = symbol || (typeof currentSymbol !== 'undefined' ? currentSymbol : 'ETHUSDT');
+  if (sym.startsWith('ETH')) return 'ETH';
+  if (sym.startsWith('BTC')) return 'BTC';
+  if (sym.startsWith('SOL')) return 'SOL';
+  return sym.replace('USDT', '').replace('BUSD', '').replace('USDC', '').replace('BTC', '') || 'Crypto';
+}
+window.getBaseAssetFromSymbol = getBaseAssetFromSymbol;
+
+// Update UI text labels for the selected cryptocurrency symbol
+function updateWhaleUIForSymbol(symbol) {
+  const sym = symbol || (typeof currentSymbol !== 'undefined' ? currentSymbol : 'ETHUSDT');
+  const baseAsset = getBaseAssetFromSymbol(sym);
+
+  // 1. Atualizar Aba lateral "Baleias [ATIVO]"
+  const tabWhalesSpan = document.querySelector('#tabWhales span');
+  if (tabWhalesSpan) {
+    tabWhalesSpan.textContent = `Baleias ${baseAsset}`;
+  }
+  const tabWhales = document.getElementById('tabWhales');
+  if (tabWhales) {
+    tabWhales.title = `Rastreador de Baleias ${baseAsset}`;
+  }
+
+  // 2. Tiers config
+  const tierConfig = (typeof MARKET_TIERS !== 'undefined' && MARKET_TIERS[sym]) ? MARKET_TIERS[sym] : null;
+  const whaleCfg = (tierConfig && tierConfig.whale) ? tierConfig.whale : { minQty: null, minUsd: 25000.0 };
+  const minQtyLabel = whaleCfg.minQty ? `${whaleCfg.minQty} ${baseAsset}` : `$${Math.round((whaleCfg.minUsd || 25000) / 1000)}k`;
+  const usdK = Math.round((whaleCfg.minUsd || 25000) / 1000);
+
+  // 3. Atualizar Botão Subview Top 50
+  const btnHolders = document.getElementById('subviewHolders');
+  if (btnHolders) {
+    if (baseAsset === 'ETH') {
+      btnHolders.innerHTML = `🏆 Top 50 Baleias ETH`;
+    } else {
+      btnHolders.innerHTML = `🏆 Top 50 Baleias ETH (On-Chain)`;
+    }
+  }
+
+  // 4. Atualizar Header da coluna de ordens ("Volume ETH" -> "Volume SOL")
+  const headerCols = document.querySelectorAll('.whale-orders-header span');
+  if (headerCols && headerCols.length >= 2) {
+    headerCols[1].textContent = `Volume ${baseAsset}`;
+  }
+
+  // 5. Atualizar Banner explicativo
+  const bannerDesc = document.querySelector('.whale-orders-banner .banner-desc');
+  if (bannerDesc) {
+    bannerDesc.innerHTML = `Captura instantânea de compras e vendas na Binance com volume ≥ <strong>${minQtyLabel}</strong> (~$${usdK}k+).`;
+  }
+
+  // 6. Atualizar Checkbox de filtro no histórico de trades
+  const toggleWhalesSpan = document.querySelector('#paneTrades .whale-filter-toggle span');
+  if (toggleWhalesSpan) {
+    toggleWhalesSpan.textContent = `Filtrar Apenas Baleias (≥ ${minQtyLabel})`;
+  }
+}
+window.updateWhaleUIForSymbol = updateWhaleUIForSymbol;
+
+// Reset Whale Orders Feed when symbol changes
+function resetWhaleOrdersFeed(symbol) {
+  whaleOrdersCount = 0;
+  whaleOrdersTotalUSD = 0.0;
+  const sym = symbol || (typeof currentSymbol !== 'undefined' ? currentSymbol : 'ETHUSDT');
+  const baseAsset = getBaseAssetFromSymbol(sym);
+
+  if (el.whaleTradesCount) {
+    el.whaleTradesCount.textContent = '0 ordens';
+  }
+  if (el.whaleSessionTotal) {
+    el.whaleSessionTotal.textContent = 'Total: $0.00';
+  }
+
+  if (el.whaleOrdersFeed) {
+    el.whaleOrdersFeed.innerHTML = `
+      <div class="whale-empty-state">
+        <span>🐋 Aguardando ordens de baleias em ${baseAsset} (${sym})...</span>
+      </div>
+    `;
+  }
+
+  updateWhaleUIForSymbol(sym);
+}
+window.resetWhaleOrdersFeed = resetWhaleOrdersFeed;
+
 // Record real-time whale trade in sidebar feed
 function recordWhaleOrder(side, price, qty, time) {
   whaleOrdersCount++;
   const totalUSD = price * qty;
   whaleOrdersTotalUSD += totalUSD;
+  const baseAsset = getBaseAssetFromSymbol(currentSymbol);
 
   if (el.whaleTradesCount) {
     el.whaleTradesCount.textContent = `${whaleOrdersCount} ordens`;
@@ -36,7 +124,7 @@ function recordWhaleOrder(side, price, qty, time) {
 
     row.innerHTML = `
       <span>${sideBadge} @ ${formatPrice(price)}</span>
-      <span class="font-bold">${qty.toFixed(2)} ${currentSymbol.slice(0, 3)}</span>
+      <span class="font-bold">${qty.toFixed(2)} ${baseAsset}</span>
       <span>$${formatCompactNumber(totalUSD)} <small style="color:var(--text-muted);font-size:9.5px">${time}</small></span>
     `;
     el.whaleOrdersFeed.prepend(row);
